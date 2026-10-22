@@ -37,9 +37,9 @@ main{flex:1;overflow-y:auto;padding:.6em 1em 5.5em;overscroll-behavior:contain}
 .now{padding:0 .6em .6em;color:var(--m);font-size:.75em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.6em}
 .card:not(.tv) b{padding-bottom:.6em}
 nav{position:fixed;z-index:5;display:flex;background:rgba(20,14,16,.85);backdrop-filter:blur(16px);left:0;right:0;bottom:0;padding:.4em .4em calc(env(safe-area-inset-bottom) + .4em);justify-content:space-around;border-top:1px solid rgba(255,255,255,.1)}
-nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:.1em;font-size:.72em;padding:.4em .9em;border-radius:12px;cursor:pointer;color:var(--m)}
+nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:.1em;font-size:.72em;padding:.4em .2em;flex:1;min-width:0;border-radius:12px;cursor:pointer;color:var(--m)}
 nav .on{color:#2a0006}
-body.tv #app{padding-left:6.5em}
+body.tv #app{padding-left:6.5em}body.tv nav button{flex:none;padding:.4em .9em}
 body.tv nav{top:0;right:auto;width:6.5em;flex-direction:column;justify-content:center;gap:.6em;border:0;border-right:1px solid rgba(255,255,255,.1);padding:1em .4em}
 body.tv header{padding-top:1em}body.tv #grid{grid-template-columns:repeat(auto-fill,minmax(11em,1fr));gap:1.2em}
 body.tv main{padding-bottom:2em}
@@ -75,6 +75,11 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 .dt{display:flex;gap:1em}.dt img{width:7em;aspect-ratio:2/3;object-fit:cover;border-radius:12px;flex:none}.sy{color:#cfc7ca;font-size:.9em;margin-top:.5em;max-height:10em;overflow:auto}
 #toast{position:fixed;left:50%;bottom:6em;transform:translateX(-50%);background:#2b1115;border:1px solid var(--r);padding:.7em 1.1em;border-radius:12px;z-index:60;max-width:90%}
 .empty{grid-column:1/-1;text-align:center;color:var(--m);padding:3em 1em}
+#home{display:flex;flex-direction:column;gap:1.1em}
+.sx{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:0 .2em .5em}.sx h2{font-size:1.1em;font-weight:800}
+.rail{display:flex;gap:.9em;overflow-x:auto;margin:0 -1em;padding:.2em 1em .8em;scrollbar-width:none;overscroll-behavior-x:contain}
+.rail::-webkit-scrollbar{display:none}.rail .card{flex:none;width:9em}.rail .card.tv{width:13em}
+body.tv .rail .card{width:10.5em}body.tv .rail .card.tv{width:15em}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -85,6 +90,7 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
 <symbol id="phone" viewBox="0 0 24 24"><path d="M7 2h10v20H7zM11 19h2"/></symbol>
 <symbol id="fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
 <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
 <symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
 <symbol id="play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
@@ -116,11 +122,11 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 
 <div id="app" hidden>
  <header><span class="logo">ASC play</span><input id="q" type="search" placeholder="Buscar…"></header>
- <div id="chips"></div>
  <button class="chip catb" id="catb" hidden><span id="cl">Todas as categorias</span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button>
- <main id="main"><div id="grid"></div><div id="more" style="height:1px"></div></main>
+ <main id="main"><div id="home" hidden></div><div id="grid"></div><div id="more" style="height:1px"></div></main>
  <nav>
-  <button data-t="tv"><svg class="i"><use href="#tv"/></svg>TV</button>
+  <button data-t="home"><svg class="i"><use href="#home"/></svg>Início</button>
+  <button data-t="tv"><svg class="i"><use href="#tv"/></svg>Canais</button>
   <button data-t="movie"><svg class="i"><use href="#film"/></svg>Filmes</button>
   <button data-t="series"><svg class="i"><use href="#series"/></svg>Séries</button>
   <button data-t="fav"><svg class="i"><use href="#star"/></svg>Favoritos</button>
@@ -141,7 +147,7 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 <script>
 const $=s=>document.querySelector(s),LS=localStorage,V=$('#v'),G=$('#grid'),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jg=(k,d)=>{try{return JSON.parse(LS[k])||d}catch{return d}};
-const S={dev:LS.asc_dev,items:[],tab:'tv',cat:'Todos',q:'',epg:{},al:{},fav:jg('asc_fav',[]),view:[],pos:0};
+const S={dev:LS.asc_dev,items:[],tab:'home',rails:{},rt:null,cat:'Todos',q:'',epg:{},al:{},fav:jg('asc_fav',[]),view:[],pos:0};
 const db=()=>new Promise(r=>{const q=indexedDB.open('asc',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onsuccess=()=>r(q.result)});
 const kv=async(m,k,v)=>{const d=await db();return new Promise(r=>{const o=d.transaction('k',m=='get'?'readonly':'readwrite').objectStore('k'),q=m=='get'?o.get(k):o.put(v,k);q.onsuccess=()=>r(q.result)})};
 const toast=m=>{const t=document.createElement('div');t.id='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),4000)};
@@ -164,7 +170,7 @@ function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text){const{out,tvg}=parse(text);if(!out.length)return $('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';
- await kv('put','pl',text);S.items=out;S.cat='Todos';show('app');nav();render();const e=LS.asc_epg||tvg;if(e)loadEPG(e)}
+ await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();const e=LS.asc_epg||tvg;if(e)loadEPG(e);rate().then(()=>{if(S.tab=='home'&&!S.q.trim())home()})}
 
 /* ---------- EPG (XMLTV) ---------- */
 const dec=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
@@ -179,46 +185,84 @@ async function loadEPG(url){try{let r=await fetch(url);let t;
 function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]];if(!l)return null;const n=Date.now();
  const i=l.findIndex(p=>p.s<=n&&n<p.e);return i<0?null:{p:l[i],nx:l[i+1]}}
 const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-function fillNow(){G.querySelectorAll('.card.tv .now').forEach(el=>{const x=epgOf(S.view[el.parentNode.dataset.i]);el.textContent=x?x.p.t:''})}
+function fillNow(){document.querySelectorAll('.card.tv .now').forEach(el=>{const it=itemOf(el.parentNode),x=it&&epgOf(it);el.textContent=x?x.p.t:''})}
 
 /* ---------- Lista ---------- */
-function view(){let a=S.tab=='fav'?S.items.filter(i=>S.fav.includes(i.u)):S.items.filter(i=>i.t==S.tab);
- const q=nz(S.q.trim());if(q)a=a.filter(i=>i.k.includes(q));else if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);
- if(S.tab=='series'){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}a=[...m.values()]}return a}
-const card=(i,k)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}" onerror="this.remove()">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
+function grp(a){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}return[...m.values()]}
+function view(){const q=nz(S.q.trim());
+ if(S.tab=='home'){if(!q)return[];const r=S.items.filter(i=>i.k.includes(q));return[...r.filter(i=>i.t!='series'),...grp(r.filter(i=>i.t=='series'))]}
+ let a=S.tab=='fav'?S.items.filter(i=>S.fav.includes(i.u)):S.items.filter(i=>i.t==S.tab);
+ if(q)a=a.filter(i=>i.k.includes(q));else if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);
+ if(S.tab=='series')a=grp(a);return a}
+const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}" onerror="this.remove()">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
+const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dataset.i];
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
- const c=['Todos',...new Set(S.items.filter(i=>S.tab=='fav'||i.t==S.tab).map(i=>i.g))].slice(0,400);
- const vod=S.tab=='movie'||S.tab=='series';$('#chips').hidden=S.tab=='fav'||vod;$('#catb').hidden=!vod;$('#cl').textContent=S.cat=='Todos'?'Todas as categorias':S.cat;$('#chips').innerHTML=vod?'':c.map(x=>`<button class="chip ${x==S.cat?'on':''}" data-c="${esc(x)}">${esc(x)}</button>`).join('')}
-function render(){S.view=view();S.pos=0;G.innerHTML='';$('#main').scrollTop=0;if(!S.view.length)G.innerHTML='<div class="empty">Nada por aqui ainda.</div>';else more()}
+ const dd=S.tab=='tv'||S.tab=='movie'||S.tab=='series';$('#catb').hidden=!dd;$('#cl').textContent=S.cat=='Todos'?'Todas as categorias':S.cat}
+function render(){S.view=view();S.pos=0;G.innerHTML='';$('#main').scrollTop=0;
+ const ih=S.tab=='home'&&!S.q.trim();G.hidden=ih;$('#home').hidden=!ih;if(ih)return home();
+ if(!S.view.length)G.innerHTML='<div class="empty">Nada por aqui ainda.</div>';else more()}
 function more(){if(S.pos>=S.view.length)return;const e=Math.min(S.pos+60,S.view.length);let h='';for(let k=S.pos;k<e;k++)h+=card(S.view[k],k);S.pos=e;G.insertAdjacentHTML('beforeend',h);fillNow()}
 new IntersectionObserver(e=>e[0].isIntersecting&&more(),{rootMargin:'600px'}).observe($('#more'));
 
+/* ---------- Início: indicações e Canal do cliente ---------- */
+const HEUR=/lan[cç]amento|novidade|recomend|destaque|estreia|cinema|\btop\b|202[4-9]/i;
+const mb=a=>function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const sgrp=()=>S._sg||(S._sg=grp(S.items.filter(i=>i.t=='series')));
+function pick(a,n,sc){const L=a.filter(x=>x.l),b=L.length>=n?L:a,R=mb(+new Date().toISOString().slice(0,10).replace(/-/g,''));
+ return b.map(x=>({x,s:(sc&&sc(x)||0)+(HEUR.test(x.g)?2:0)+R()*2})).sort((p,q)=>q.s-p.s).slice(0,n).map(o=>o.x)}
+const mid=u=>(u.match(/\/movie\/[^/]+\/[^/]+\/(\d+)/)||[])[1];
+const recM=()=>pick(S.items.filter(i=>i.t=='movie'),20,x=>S.rt?S.rt.m.get(mid(x.u))||0:0);
+const recS=()=>pick(sgrp(),20,x=>S.rt?S.rt.s.get(nz(x.n))||0:0);
+function ccNames(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))],sel=LS.asc_cc;
+ if(sel&&sel!='auto'&&g.includes(sel))return[sel];
+ let m=g.filter(x=>/cliente/i.test(x));if(!m.length)m=g.filter(x=>/jogos?\b|jogo do dia|eventos?|ppv|futebol/i.test(x));return m}
+const clientCh=()=>{const n=ccNames();return S.items.filter(i=>i.t=='tv'&&n.includes(i.g)).slice(0,80)};
+const rail=(id,t,l,go,cat)=>l.length?`<section class="sec"><div class="sx"><h2>${esc(t)}</h2><button class="chip" data-go="${go}"${cat?` data-cat="${esc(cat)}"`:''}>Ver tudo ›</button></div><div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}</div></section>`:'';
+function home(){const c=clientCh(),n=ccNames();S.rails={m:recM(),s:recS(),c};
+ let h=rail('m','Indicações de filmes',S.rails.m,'movie')+rail('s','Indicações de séries',S.rails.s,'series');
+ h+=c.length?rail('c','Canal do cliente',c,'tv',n.length==1?n[0]:''):'<section class="sec"><div class="sx"><h2>Canal do cliente</h2></div><button class="btn" id="pickcc">Escolher a categoria dos jogos do dia</button></section>';
+ $('#home').innerHTML=h||'<div class="empty">Nada por aqui ainda.</div>';fillNow()}
+function pickCC(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))];
+ sh('<b>Categoria do Canal do cliente</b><button class="btn" data-g="auto">Automático</button>'+g.map(x=>`<button class="btn" data-g="${esc(x)}">${esc(x)}</button>`).join(''));
+ $('#sh').onclick=e=>{const b=e.target.closest('[data-g]');if(b){LS.asc_cc=b.dataset.g;$('#sheet').hidden=true;if(S.tab=='home'&&!S.q.trim())home()}}}
+async function rate(){const A=xapi();if(!A)return;
+ try{const c=await kv('get','rt');if(c&&c.u==A&&Date.now()-c.t<432e5){S.rt={m:new Map(c.m),s:new Map(c.s)};return}
+  const[v,l]=await Promise.all([fetch(A+'&action=get_vod_streams').then(r=>r.json()),fetch(A+'&action=get_series').then(r=>r.json())]);
+  const now=Date.now()/1e3,bn=a=>{a=+a;return a>0?Math.max(0,2-(now-a)/31536e3):0},m=new Map(),s=new Map();
+  for(const x of v){const r=+x.rating||0;if(r>0)m.set(String(x.stream_id),r+bn(x.added))}
+  for(const x of l){const r=+x.rating||0;if(r>0)s.set(nz(title(x.name||'')),r+bn(x.last_modified))}
+  S.rt={m,s};kv('put','rt',{t:Date.now(),u:A,m:[...m],s:[...s]})}catch{}}
+const H=$('#home');
+H.onclick=e=>{const g=e.target.closest('[data-go]');if(g){S.tab=g.dataset.go;S.cat=g.dataset.cat||'Todos';nav();render();return}
+ if(e.target.closest('#pickcc'))return pickCC();
+ const c=e.target.closest('.card');if(c){const l=S.rails[c.dataset.r]||[];openIt(l[c.dataset.i],l)}};
+H.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('card'))e.target.click()});
+
 document.querySelectorAll('nav [data-t]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;S.cat='Todos';nav();render()});
-$('#chips').onclick=e=>{const c=e.target.closest('[data-c]');if(c){S.cat=c.dataset.c;nav();render()}};
 let qt;$('#q').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value;render()},250)};
-G.onclick=e=>{const c=e.target.closest('.card');if(!c)return;const it=S.view[c.dataset.i];it.eps?eps(it):it.t=='tv'?play(it,S.view.filter(x=>x.t=='tv')):info(it)};
+const openIt=(it,l)=>it&&(it.eps?eps(it):it.t=='tv'?play(it,l.filter(x=>x.t=='tv')):info(it));
+G.onclick=e=>{const c=e.target.closest('.card');if(c)openIt(S.view[c.dataset.i],S.view)};
 G.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('card'))e.target.click()});
 
 /* EPG ao passar o mouse / focar (TV) */
 const tip=$('#tip');
-function tipOn(e){const c=e.target.closest&&e.target.closest('.card.tv');if(!c)return;const it=S.view[c.dataset.i],x=epgOf(it);
+function tipOn(e){const c=e.target.closest&&e.target.closest('.card.tv');if(!c)return;const it=itemOf(c);if(!it)return;const x=epgOf(it);
  tip.innerHTML=`<b>${esc(it.n)}</b>`+(x?`<div>${esc(x.p.t)}</div><div class="bar"><i style="width:${Math.min(100,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100)}%"></i></div><small>${hm(x.p.s)} – ${hm(x.p.e)}</small>${x.nx?`<div style="color:#a39a9d;margin-top:.4em">A seguir: ${esc(x.nx.t)} (${hm(x.nx.s)})</div>`:''}`:'<div style="color:#a39a9d">Programação indisponível</div>');
  const r=c.getBoundingClientRect();tip.hidden=false;tip.style.left=Math.max(8,Math.min(innerWidth-tip.offsetWidth-8,r.left))+'px';
  tip.style.top=(r.bottom+tip.offsetHeight+8>innerHeight?Math.max(8,r.top-tip.offsetHeight-8):r.bottom+8)+'px'}
-G.addEventListener('pointerover',e=>e.pointerType=='mouse'&&tipOn(e));G.addEventListener('focusin',tipOn);
-G.addEventListener('pointerout',()=>tip.hidden=true);G.addEventListener('focusout',()=>tip.hidden=true);
+const MN=$('#main');MN.addEventListener('pointerover',e=>e.pointerType=='mouse'&&tipOn(e));MN.addEventListener('focusin',tipOn);
+MN.addEventListener('pointerout',()=>tip.hidden=true);MN.addEventListener('focusout',()=>tip.hidden=true);
 
 /* ---------- Sheets ---------- */
 const sh=h=>{$('#sh').onclick=null;$('#sh').innerHTML=h;$('#sheet').hidden=false;const f=$('#sh button');f&&f.focus()};
 $('#sheet').onclick=e=>{if(e.target.id=='sheet')$('#sheet').hidden=true};
 const fav=u=>{const i=S.fav.indexOf(u);i<0?S.fav.push(u):S.fav.splice(i,1);LS.asc_fav=JSON.stringify(S.fav);return i<0};
 const xapi=()=>{try{const b=new URL(LS.asc_url||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
-let XS;
+let XS;const gs=()=>XS=XS||fetch(xapi()+'&action=get_series').then(r=>r.json()).then(l=>{const m=new Map();for(const x of l)m.set(nz(title(x.name||'')),x);return m}).catch(e=>{XS=null;throw e});
 async function meta(it,isS){const A=xapi();if(!A)return;
  try{if(!isS){const id=(it.u.match(/\/movie\/[^/]+\/[^/]+\/(\d+)/)||[])[1];if(!id)return;const i=(await(await fetch(A+'&action=get_vod_info&vod_id='+id)).json()).info||{};
    return{p:i.plot||i.description,m:[i.genre,(i.releasedate||'').slice(0,4),i.duration,i.rating&&'★ '+i.rating].filter(Boolean).join(' • ')}}
-  XS=XS||fetch(A+'&action=get_series').then(r=>r.json()).then(l=>{const m=new Map();for(const x of l)m.set(nz(title(x.name||'')),x);return m});
-  const x=(await XS).get(nz(it.n));return x&&{p:x.plot,m:[x.genre,(x.releaseDate||x.release_date||'').slice(0,4),x.rating&&'★ '+x.rating].filter(Boolean).join(' • ')}}catch{}}
+  const x=(await gs()).get(nz(it.n));return x&&{p:x.plot,m:[x.genre,(x.releaseDate||x.release_date||'').slice(0,4),x.rating&&'★ '+x.rating].filter(Boolean).join(' • ')}}catch{}}
 const hdr=it=>`<div class="dt">${it.l?`<img src="${esc(it.l)}" onerror="this.remove()">`:''}<div><b>${esc(it.n)}</b><small style="display:block;color:#a39a9d">${esc(it.g)}</small><small id="my" style="color:#a39a9d"></small><p class="sy" id="sy">${esc(it.p||'Sem sinopse disponível.')}</p></div></div>`;
 async function fillMeta(it,s){const x=await meta(it,s);if(x&&$('#sy')){if(x.p)$('#sy').textContent=x.p;if(x.m)$('#my').textContent=x.m}}
 function info(it){sh(hdr(it)+`<button class="btn p" id="i1">Assistir</button><button class="btn" id="i2">${S.fav.includes(it.u)?'Remover dos favoritos':'Adicionar aos favoritos'}</button>`);
@@ -229,10 +273,10 @@ function eps(s){const m={};for(const e of s.eps){const k=(e.n.match(/[ST](\d{1,2
 $('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}
  sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
  $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
-$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
+$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
  $('#a1').onclick=()=>{$('#sheet').hidden=true;show('add')};$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
  $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=LS.asc_epg;e?loadEPG(e):toast('Informe o link do EPG ao carregar a lista.')};
- $('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');$('#sheet').hidden=true;render()}};
+ $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');$('#sheet').hidden=true;render()}};
 
 /* ---------- Orientação / tela cheia ---------- */
 const CP=(window.Capacitor&&Capacitor.Plugins)||{};
