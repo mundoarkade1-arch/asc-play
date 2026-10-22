@@ -47,16 +47,28 @@ sed -i 's#<category android:name="android.intent.category.LAUNCHER" />#&<categor
 
 # --- Icones e banner
 im() { if command -v magick >/dev/null 2>&1; then magick "$@"; else convert "$@"; fi; }
-icons() {
-  rm -rf $R/mipmap-anydpi-v26
-  rm -f $R/mipmap-*/ic_launcher*.webp
-  for d in "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
-    set -- $d
-    mkdir -p $R/mipmap-$1
-    for n in ic_launcher ic_launcher_round ic_launcher_foreground; do im icon.png -resize ${2}x${2} $R/mipmap-$1/$n.png; done
-  done
-  mkdir -p $R/drawable-xhdpi
-  cp banner.png $R/drawable-xhdpi/banner.png
-  sed -i 's#<application#<application android:banner="@drawable/banner"#' $M
-}
-icons || echo "Nao foi possivel gerar o icone"
+
+# Aceita icon.png, icone.png ou ícone.png (com acento) e normaliza o nome
+ICON=""
+for c in icon.png icone.png "ícone.png" Icon.png Icone.png; do
+  [ -f "$c" ] && { ICON="$c"; break; }
+done
+[ -n "$ICON" ] || { echo "ERRO: icone nao encontrado (esperado icon.png na raiz do repositorio)"; ls -la; exit 1; }
+cp "$ICON" /tmp/asc_icon.png
+echo "Icone usado: $ICON"
+
+rm -rf $R/mipmap-anydpi-v26
+rm -f $R/mipmap-*/ic_launcher*.webp $R/mipmap-*/ic_launcher*.png
+for d in "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
+  set -- $d
+  mkdir -p $R/mipmap-$1
+  im /tmp/asc_icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher.png
+  # versao redonda: recorta em circulo
+  im /tmp/asc_icon.png -resize ${2}x${2} \( -size ${2}x${2} xc:none -fill white -draw "circle $(( $2 / 2 )),$(( $2 / 2 )) $(( $2 / 2 )),0" \) -compose DstIn -composite $R/mipmap-$1/ic_launcher_round.png
+  im /tmp/asc_icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher_foreground.png
+  [ -s $R/mipmap-$1/ic_launcher.png ] || { echo "ERRO: falha ao gerar icone $1"; exit 1; }
+done
+mkdir -p $R/drawable-xhdpi
+cp banner.png $R/drawable-xhdpi/banner.png
+grep -q 'android:banner=' $M || sed -i 's#<application#<application android:banner="@drawable/banner"#' $M
+echo "Icones gerados:"; ls -la $R/mipmap-xxxhdpi
