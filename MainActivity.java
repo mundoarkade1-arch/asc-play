@@ -28,6 +28,9 @@ public class MainActivity extends BridgeActivity {
             c.setAppearanceLightStatusBars(false);
             c.setAppearanceLightNavigationBars(false);
         }
+        if (getBridge() != null) {
+            ImmersivePlugin.installInsets(getBridge().getWebView());
+        }
     }
 
     // Se o player estiver aberto, esconde as barras de novo ao voltar o foco
