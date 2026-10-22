@@ -18,6 +18,7 @@ svg.i{width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:1.8;st
 .scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1em;padding:1.5em;text-align:center}
 .scr h1{font-size:2.6em}.scr p{color:var(--m);max-width:34em}
 .row{display:flex;gap:1em;flex-wrap:wrap;justify-content:center}
+.fm{display:flex;flex-direction:column;align-items:center;gap:1em;width:100%}
 .dev{width:11em;padding:1.4em .6em;flex-direction:column}.dev svg{width:3em;height:3em}
 input,textarea{width:min(34em,100%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.7em .9em}
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
@@ -134,13 +135,22 @@ body.tv main.hm{padding-bottom:1em}
 
 <section class="scr" id="add" hidden>
  <div class="logo" style="font-size:2.4em">ASC play</div>
- <h1 style="font-size:1.6em">Adicione sua lista M3U</h1>
- <input id="u" placeholder="Link da lista (http://...)" inputmode="url">
- <input id="e" placeholder="Link do EPG/XMLTV (opcional)" inputmode="url">
- <div class="row"><button class="btn p" id="go">Carregar lista</button>
- <label class="btn" tabindex="0" id="fl">Abrir arquivo<input type="file" id="f" accept=".m3u,.m3u8,.txt" hidden></label>
- <button class="btn" id="pa">Colar texto</button></div>
- <textarea id="ta" rows="5" placeholder="Cole aqui o conteúdo da lista" hidden></textarea>
+ <h1 style="font-size:1.6em">Como você quer entrar?</h1>
+ <div class="row"><button class="btn p" id="m1">Servidor e login</button><button class="btn" id="m2">Lista M3U</button></div>
+ <div class="fm" id="xt">
+  <input id="xs" placeholder="Servidor (ex.: http://servidor.com:8080)" inputmode="url" autocapitalize="none" autocomplete="off">
+  <input id="xu" placeholder="Login" autocapitalize="none" autocomplete="off">
+  <input id="xp" type="password" placeholder="Senha" autocapitalize="none" autocomplete="off">
+  <button class="btn p" id="xg">Entrar</button>
+ </div>
+ <div class="fm" id="ml" hidden>
+  <input id="u" placeholder="Link da lista (http://...)" inputmode="url">
+  <input id="e" placeholder="Link do EPG/XMLTV (opcional)" inputmode="url">
+  <div class="row"><button class="btn p" id="go">Carregar lista</button>
+  <label class="btn" tabindex="0" id="fl">Abrir arquivo<input type="file" id="f" accept=".m3u,.m3u8,.txt" hidden></label>
+  <button class="btn" id="pa">Colar texto</button></div>
+  <textarea id="ta" rows="5" placeholder="Cole aqui o conteúdo da lista" hidden></textarea>
+ </div>
  <p id="st"></p>
 </section>
 
@@ -194,19 +204,30 @@ function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text){const{out,tvg}=parse(text);if(!out.length)return $('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';
- await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();const e=LS.asc_epg||tvg;if(e)loadEPG(e)}
+ await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();if(tvg)LS.asc_tvg=tvg;else LS.removeItem('asc_tvg');const e=epgUrl();if(e)loadEPG(e)}
 
 /* ---------- EPG (XMLTV) ---------- */
 const dec=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
 const ms=(d,z)=>{const o=z?(z[0]=='-'?-1:1)*(+z.slice(1,3)*60+ +z.slice(3,5))*6e4:0;return Date.UTC(+d.slice(0,4),+d.slice(4,6)-1,+d.slice(6,8),+d.slice(8,10),+d.slice(10,12),+d.slice(12,14))-o};
-async function loadEPG(url){try{let r=await fetch(url);let t;
+const nk=s=>nz(s).replace(/\b(fhd|uhd|hd|sd|4k|h265|hevc)\b/g,'').replace(/[^a-z0-9]/g,'');
+/* Guia: link informado > xmltv.php do servidor (login/senha) > url-tvg da lista */
+const xepg=()=>{try{const b=new URL(LS.asc_url||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/xmltv.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
+const epgUrl=()=>LS.asc_epg||xepg()||LS.asc_tvg||'';
+async function loadEPG(url){try{const r=await fetch(url);if(!r.ok)throw 0;let t;
   if(/\.gz(\?|$)/i.test(url)&&window.DecompressionStream)t=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();else t=await r.text();
   const now=Date.now(),lim=now+12*36e5,E={},A={};
-  for(const m of t.matchAll(/<channel id="([^"]+)">([\s\S]*?)<\/channel>/g)){for(const n of m[2].matchAll(/<display-name[^>]*>([^<]+)/g))A[dec(n[1]).toLowerCase()]=m[1].toLowerCase()}
-  for(const m of t.matchAll(/<programme start="(\d{14}) ?([+-]\d{4})?" stop="(\d{14}) ?([+-]\d{4})?" channel="([^"]*)"[^>]*>\s*<title[^>]*>([^<]*)/g)){
-   const s=ms(m[1],m[2]),e=ms(m[3],m[4]);if(e<now||s>lim)continue;(E[m[5].toLowerCase()]||=[]).push({s,e,t:dec(m[6])})}
-  S.epg=E;S.al=A;fillNow();if(!P.hidden&&cur&&live())epgBar();toast('Guia de programação carregado')}catch{toast('Não foi possível carregar o EPG (bloqueio do servidor ou link inválido).')}}
-function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]];if(!l)return null;const n=Date.now();
+  for(const m of t.matchAll(/<channel\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/channel>/g)){const id=dec(m[1]).toLowerCase();A[id]=id;
+   for(const n of m[2].matchAll(/<display-name[^>]*>([^<]+)/g)){const d=dec(n[1]).trim();A[d.toLowerCase()]=id;A[nk(d)]=id}}
+  for(const m of t.matchAll(/<programme\s([^>]*)>([\s\S]*?)<\/programme>/g)){const a=m[1],
+   st=a.match(/start="(\d{14})\s?([+-]\d{4})?"/),sp=a.match(/stop="(\d{14})\s?([+-]\d{4})?"/),ch=a.match(/channel="([^"]*)"/),
+   ti=m[2].match(/<title[^>]*>\s*(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))/);
+   if(!st||!sp||!ch||!ti)continue;const s=ms(st[1],st[2]),e=ms(sp[1],sp[2]);if(e<now||s>lim)continue;
+   (E[dec(ch[1]).toLowerCase()]||=[]).push({s,e,t:dec(ti[1]!=null?ti[1]:ti[2]||'').trim()})}
+  for(const k in E)E[k].sort((a,b)=>a.s-b.s);
+  S.epg=E;S.al=A;fillNow();if(!P.hidden&&cur&&live())epgBar();
+  toast(Object.keys(E).length?'Guia de programação carregado':'O guia veio vazio ou fora do horário.')}
+ catch{toast('Não foi possível carregar o guia de programação (bloqueio do servidor ou link inválido).')}}
+function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]]||S.epg[S.al[nk(it.n)]];if(!l)return null;const n=Date.now();
  const i=l.findIndex(p=>p.s<=n&&n<p.e);return i<0?null:{p:l[i],nx:l[i+1]}}
 const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 function fillNow(){document.querySelectorAll('.card.tv .now').forEach(el=>{const it=itemOf(el.parentNode),x=it&&epgOf(it);el.textContent=x?x.p.t:''})}
@@ -317,7 +338,7 @@ $('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){
  $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
 $('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
  $('#a1').onclick=()=>{$('#sheet').hidden=true;show('add')};$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
- $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=LS.asc_epg;e?loadEPG(e):toast('Informe o link do EPG ao carregar a lista.')};
+ $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=epgUrl();e?loadEPG(e):toast('Sem guia disponível. Entre com servidor e login ou informe um link de EPG.')};
  $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');LS.removeItem('asc_last');$('#sheet').hidden=true;render()}};
 
 /* ---------- Orientação / tela cheia ---------- */
@@ -400,6 +421,15 @@ $('#go').onclick=async()=>{const u=$('#u').value.trim(),st=$('#st');if(!u)return
  try{const r=await fetch(u);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
 $('#f').onchange=async e=>{const f=e.target.files[0];if(f){LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');useList(await f.text())}};
 $('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
+const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
+$('#m1').onclick=()=>mode('x');$('#m2').onclick=()=>mode('m');mode(LS.asc_mode=='m'?'m':'x');
+$('#xs').value=LS.asc_xs||'';$('#xu').value=LS.asc_xu||'';$('#xp').value=LS.asc_xp||'';
+$('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').value.trim();let s=$('#xs').value.trim();
+ if(!s||!u||!p)return st.textContent='Preencha servidor, login e senha.';
+ if(!/^https?:\/\//i.test(s))s='http://'+s;let o;try{o=new URL(s).origin}catch{return st.textContent='Endereço do servidor inválido.'}
+ LS.asc_xs=o;LS.asc_xu=u;LS.asc_xp=p;LS.removeItem('asc_epg');
+ const url=`${o}/get.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&type=m3u_plus&output=m3u8`;LS.asc_url=url;st.textContent='Entrando…';
+ try{const r=await fetch(url);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
 $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');useList(t.value)}};
 (async()=>{if(!S.dev){show('setup');return}setDev(S.dev);const t=await kv('get','pl');t?useList(t):show('add')})();
 try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}
