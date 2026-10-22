@@ -13,11 +13,11 @@ const uid=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(1
 /* ---------- Cofre: tudo que e sensivel (listas, logins, links, favoritos, progresso) fica CRIPTOGRAFADO (AES-GCM).
    A chave do cofre fica protegida pelo Android Keystore (hardware, quando o aparelho tem). ---------- */
 const b64e=u=>btoa(String.fromCharCode(...u)),b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-let DKP;const dek=()=>DKP||(DKP=(async()=>{const N=plug('Secure');let k;
- if(N&&nat()){let raw;try{if(LS.asc_dk)raw=b64d((await N.unwrap({data:LS.asc_dk})).data)}catch{}
+let DKP;const dek=()=>DKP||(DKP=(async()=>{const N=plug('Secure');
+ if(N&&nat()){try{let raw;try{if(LS.asc_dk)raw=b64d((await N.unwrap({data:LS.asc_dk})).data)}catch{}
   if(!raw){raw=crypto.getRandomValues(new Uint8Array(32));LS.asc_dk=(await N.wrap({data:b64e(raw)})).data}
-  k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);raw.fill(0)}
- else{k=await kv('get','dek');if(!k){k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await kv('put','dek',k)}}
+  const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);raw.fill(0);return k}catch{}}
+ let k=await kv('get','dek');if(!k){k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await kv('put','dek',k)}
  return k})());
 async function cEnc(str){const k=await dek(),iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(str))),o=new Uint8Array(12+ct.length);o.set(iv);o.set(ct,12);return o.buffer}
 async function cDec(buf){try{const k=await dek(),u=new Uint8Array(buf);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},k,u.slice(12)))}catch{return null}}
@@ -41,7 +41,11 @@ async function wipeAll(){try{const N=plug('Secure');N&&nat()&&await N.reset()}ca
  try{LS.clear();sessionStorage.clear()}catch{}
  location.reload()}
 const toast=m=>{const t=document.createElement('div');t.id='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),4000)};
-const show=id=>['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id);
+const show=id=>{$('#boot').hidden=true;['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id)};
+const bootErr=m=>{$('#boot').hidden=false;$('#bm').textContent='Erro: '+m};
+addEventListener('unhandledrejection',e=>bootErr((e.reason&&e.reason.message)||e.reason));
+addEventListener('error',e=>{if(e.target===window)bootErr(e.message)});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 /* ---------- M3U ---------- */
 const nz=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -444,11 +448,13 @@ $('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').
  try{const r=await tf(url,6e4);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(o).host),m:'x',u:url,epg:''}))doneAdd()}
  catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
 $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{const ep=$('#e').value.trim();useList(t.value,{id:uid(),n:lname('Lista colada'),m:'f',u:'',epg:okU(ep)?ep:''}).then(ok=>ok&&doneAdd())}};
-(async()=>{
- if(!await envOk()){$('#blk').hidden=false;return}
- await loadVault();await migrate();syncScr();
+(async()=>{try{
+ if(!await Promise.race([envOk(),sleep(4000).then(()=>true)])){$('#boot').hidden=true;$('#blk').hidden=false;return}
+ try{await loadVault();await migrate()}catch(e){console.warn(e)}
+ syncScr();
  if(PIN.on)await unlockLoop();
- if(!S.dev){show('setup')}else{setDev(S.dev);boot()}
- setTimeout(()=>checkUpd(),2500)})();
+ if(!S.dev)show('setup');else{setDev(S.dev);await boot()}
+ setTimeout(()=>checkUpd(),2500)
+}catch(e){bootErr((e&&e.message)||e)}})();
 addEventListener('error',e=>{const t=e.target;if(t&&t.tagName=='IMG')t.remove()},true);
 try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!LK.hidden)A.exitApp();else if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}
