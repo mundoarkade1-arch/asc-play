@@ -18,6 +18,8 @@ svg.i{width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:1.8;st
 .scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1em;padding:1.5em;text-align:center}
 .scr h1{font-size:2.6em}.scr p{color:var(--m);max-width:34em}
 .row{display:flex;gap:1em;flex-wrap:wrap;justify-content:center}
+#exp{display:flex;align-items:center;gap:.6em;margin:.2em 1em;padding:.5em .8em;border-radius:12px;background:rgba(245,197,24,.15);border:1px solid #f5c518;font-size:.85em}
+#exp.bad{background:rgba(255,42,61,.18);border-color:var(--r)}#exp span{flex:1}
 .fm{display:flex;flex-direction:column;align-items:center;gap:1em;width:100%}
 .dev{width:11em;padding:1.4em .6em;flex-direction:column}.dev svg{width:3em;height:3em}
 input,textarea{width:min(34em,100%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.7em .9em}
@@ -156,6 +158,7 @@ body.tv main.hm{padding-bottom:1em}
 
 <div id="app" hidden>
  <header><span class="logo">ASC play</span><input id="q" type="search" placeholder="Buscar…"></header>
+ <div id="exp" hidden><span id="et"></span><button class="chip" id="er">Renovar</button><button class="chip" id="ex" aria-label="Fechar">✕</button></div>
  <button class="chip catb" id="catb" hidden><span id="cl">Todas as categorias</span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button>
  <main id="main"><div id="home" hidden></div><div id="grid"></div><div id="more" style="height:1px"></div></main>
  <nav>
@@ -204,7 +207,7 @@ function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text){const{out,tvg}=parse(text);if(!out.length)return $('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';
- await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();if(tvg)LS.asc_tvg=tvg;else LS.removeItem('asc_tvg');const e=epgUrl();if(e)loadEPG(e)}
+ await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();if(tvg)LS.asc_tvg=tvg;else LS.removeItem('asc_tvg');const e=epgUrl();if(e)loadEPG(e);acct();expSync()}
 
 /* ---------- EPG (XMLTV) ---------- */
 const dec=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
@@ -336,9 +339,11 @@ function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
 $('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}
  sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
  $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
-$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
+$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><small id="av" style="color:#a39a9d"></small><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a6">Vencimento e renovação</button><button class="btn" id="a7">Verificar atualização</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
  $('#a1').onclick=()=>{$('#sheet').hidden=true;show('add')};$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
  $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=epgUrl();e?loadEPG(e):toast('Sem guia disponível. Entre com servidor e login ou informe um link de EPG.')};
+ ver().then(v=>{if(v&&$('#av'))$('#av').textContent='Versão '+v.name});
+ $('#a6').onclick=expSheet;$('#a7').onclick=()=>{$('#sheet').hidden=true;checkUpd(true)};
  $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');LS.removeItem('asc_last');$('#sheet').hidden=true;render()}};
 
 /* ---------- Orientação / tela cheia ---------- */
@@ -414,12 +419,64 @@ function nvg(e,root){if(e.target.tagName=='INPUT'&&['ArrowLeft','ArrowRight'].in
  for(const x of ls){if(x===a)continue;const q=x.getBoundingClientRect(),dx=q.left+q.width/2-cx,dy=q.top+q.height/2-cy,pr=dx*d[0]+dy*d[1];if(pr<=1)continue;const pp=Math.abs(dx*d[1])+Math.abs(dy*d[0]),s=pr+pp*2.5;if(s<bs){bs=s;best=x}}
  e.preventDefault();if(best){best.focus();best.scrollIntoView({block:'nearest',inline:'nearest'})}}
 
+/* ---------- Atualização, vencimento e lembretes ---------- */
+const REPO='__REPO__',UPD=REPO.startsWith('__')?'':`https://github.com/${REPO}/releases/latest/download/version.json`;
+const plug=n=>{try{return CP[n]||(window.Capacitor&&Capacitor.registerPlugin&&Capacitor.registerPlugin(n))}catch{}};
+const nat=()=>{try{return !!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())}catch{return false}};
+const dmy=t=>new Date(t).toLocaleDateString('pt-BR'),daysTo=t=>Math.ceil((t-Date.now())/864e5);
+const isoD=t=>{const d=new Date(t),p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`};
+let VER=null;
+async function ver(){if(VER)return VER;const U=plug('Updater');if(!U||!nat())return null;try{VER=await U.info()}catch{}return VER}
+/* Atualização: compara com version.json publicado no GitHub Releases */
+async function checkUpd(manual){const v=await ver();
+ if(!v||!UPD){if(manual)toast(v?'Atualização não configurada.':'A atualização funciona no app instalado (APK).');return}
+ try{const r=await fetch(UPD);if(!r.ok)throw 0;const j=JSON.parse(await r.text());
+  if(!(+j.code>+v.code)){if(manual)toast('Você já está na versão mais recente ('+v.name+').');return}
+  sh(`<b>Nova versão ${esc(j.name||'')}</b>${j.notes?`<p class="sy" style="max-height:8em">${esc(j.notes)}</p>`:''}<small id="up" style="color:#a39a9d">Você está na versão ${esc(v.name)}. Seu login e seus dados são mantidos.</small><button class="btn p" id="u1">Atualizar agora</button><button class="btn" id="u2">Depois</button>`);
+  $('#u2').onclick=()=>$('#sheet').hidden=true;
+  $('#u1').onclick=async()=>{const U=plug('Updater'),up=$('#up'),b=$('#u1');b.disabled=true;let h;
+   try{h=await U.addListener('progress',e=>{up.textContent='Baixando… '+e.percent+'%'})}catch{}
+   try{up.textContent='Baixando…';const x=await U.install({url:j.url});
+    up.textContent=x&&x.needPermission?'Permita "instalar apps desta fonte" para o ASC play e toque em Atualizar de novo.':'Pronto! Confirme a instalação na tela do Android.'}
+   catch{up.textContent='Falha ao baixar a atualização. Tente de novo mais tarde.'}
+   h&&h.remove&&h.remove();b.disabled=false}
+ }catch{if(manual)toast('Não consegui verificar atualizações.')}}
+/* Vencimento: Xtream informa exp_date; em lista M3U a data é digitada */
+const expAt=()=>+LS.asc_exp||0;
+const resetExp=()=>{LS.removeItem('asc_exp');LS.removeItem('asc_expm')};
+async function acct(){const A=xapi();if(!A)return;
+ try{const r=await fetch(A);if(!r.ok)return;const j=JSON.parse(await r.text()),u=j&&j.user_info;if(!u)return;
+  const e=+u.exp_date;if(e>0)LS.asc_exp=String(e*1e3);else LS.removeItem('asc_exp');LS.removeItem('asc_expm');expSync()}catch{}}
+function expSync(){bn();sched()}
+function bn(){const b=$('#exp'),e=expAt();if(!e){b.hidden=true;return}const d=daysTo(e);if(d>7){b.hidden=true;return}
+ b.hidden=false;b.className=d<=0?'bad':'';
+ $('#et').textContent=d<0?`Sua lista venceu em ${dmy(e)}.`:d==0?'Sua lista vence hoje!':`Sua lista vence em ${d} dia${d>1?'s':''} (${dmy(e)}).`}
+const renewUrl=()=>{const r=(LS.asc_renew||'').trim();if(!r)return'';if(/^https?:/i.test(r))return r;const d=r.replace(/\D/g,'');return d.length>=8?'https://wa.me/'+d:''};
+function renew(){const u=renewUrl();if(u)location.href=u;else expSheet()}
+$('#er').onclick=renew;$('#ex').onclick=()=>$('#exp').hidden=true;
+function expSheet(){const e=expAt(),x=!!xapi(),d=e?daysTo(e):0;
+ sh(`<b>Vencimento e renovação</b><small style="color:#a39a9d">${e?`Vence em ${dmy(e)} (${d<0?'vencida':d+' dia'+(d==1?'':'s')})`:x?'O servidor não informou data de vencimento.':'Informe a data para receber lembretes.'}</small>`
+  +(x?'':`<small style="color:#a39a9d">Data de vencimento</small><input type="date" id="ed" value="${e?isoD(e):''}">`)
+  +`<small style="color:#a39a9d">WhatsApp ou link para renovar</small><input id="er2" placeholder="Ex.: 5592999999999 ou https://..." value="${esc(LS.asc_renew||'')}"><button class="btn p" id="es">Salvar</button>`+(renewUrl()?'<button class="btn" id="eb">Renovar agora</button>':''));
+ $('#es').onclick=()=>{LS.asc_renew=$('#er2').value.trim();const ed=$('#ed');
+  if(ed){if(ed.value){LS.asc_exp=String(new Date(ed.value+'T23:59:00').getTime());LS.asc_expm='1'}else resetExp()}
+  $('#sheet').hidden=true;expSync();toast('Salvo.')};
+ const eb=$('#eb');if(eb)eb.onclick=renew}
+/* Notificações no celular: 7, 3 e 1 dia antes e no dia, às 9h (funcionam com o app fechado) */
+async function sched(){const N=plug('LocalNotifications');if(!N||!nat())return;const e=expAt();
+ try{await N.cancel({notifications:[9001,9002,9003,9004].map(id=>({id}))});if(!e)return;
+  let p=await N.checkPermissions();if(p.display=='prompt'||p.display=='prompt-with-rationale')p=await N.requestPermissions();if(p.display!='granted')return;
+  const L=[[7,9001,'vence em 7 dias'],[3,9002,'vence em 3 dias'],[1,9003,'vence amanhã'],[0,9004,'vence hoje']],out=[];
+  for(const[d,id,t]of L){const a=new Date(e);a.setDate(a.getDate()-d);a.setHours(9,0,0,0);if(a.getTime()>e)a.setTime(e-36e5);
+   if(a.getTime()>Date.now())out.push({id,title:'ASC play',body:`Sua lista ${t} (${dmy(e)}). Renove para não ficar sem sinal.`,schedule:{at:a,allowWhileIdle:true}})}
+  if(out.length)await N.schedule({notifications:out})}catch{}}
+
 /* ---------- Início ---------- */
 function setDev(d){S.dev=d;LS.asc_dev=d;document.body.className=d=='tv'?'tv':'mob';ori(d=='tv'?'landscape':'portrait')}
 document.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{setDev(b.dataset.d);const t=await kv('get','pl');t&&S.items.length?(show('app'),render()):t?useList(t):show('add')});
-$('#go').onclick=async()=>{const u=$('#u').value.trim(),st=$('#st');if(!u)return st.textContent='Cole o link da lista.';LS.asc_epg=$('#e').value.trim();LS.asc_url=u;st.textContent='Carregando…';
+$('#go').onclick=async()=>{const u=$('#u').value.trim(),st=$('#st');if(!u)return st.textContent='Cole o link da lista.';LS.asc_epg=$('#e').value.trim();LS.asc_url=u;resetExp();st.textContent='Carregando…';
  try{const r=await fetch(u);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
-$('#f').onchange=async e=>{const f=e.target.files[0];if(f){LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');useList(await f.text())}};
+$('#f').onchange=async e=>{const f=e.target.files[0];if(f){LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');resetExp();useList(await f.text())}};
 $('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
 const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
 $('#m1').onclick=()=>mode('x');$('#m2').onclick=()=>mode('m');mode(LS.asc_mode=='m'?'m':'x');
@@ -427,10 +484,11 @@ $('#xs').value=LS.asc_xs||'';$('#xu').value=LS.asc_xu||'';$('#xp').value=LS.asc_
 $('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').value.trim();let s=$('#xs').value.trim();
  if(!s||!u||!p)return st.textContent='Preencha servidor, login e senha.';
  if(!/^https?:\/\//i.test(s))s='http://'+s;let o;try{o=new URL(s).origin}catch{return st.textContent='Endereço do servidor inválido.'}
- LS.asc_xs=o;LS.asc_xu=u;LS.asc_xp=p;LS.removeItem('asc_epg');
+ LS.asc_xs=o;LS.asc_xu=u;LS.asc_xp=p;LS.removeItem('asc_epg');resetExp();
  const url=`${o}/get.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&type=m3u_plus&output=m3u8`;LS.asc_url=url;st.textContent='Entrando…';
  try{const r=await fetch(url);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
-$('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');useList(t.value)}};
+$('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');resetExp();useList(t.value)}};
 (async()=>{if(!S.dev){show('setup');return}setDev(S.dev);const t=await kv('get','pl');t?useList(t):show('add')})();
+setTimeout(()=>checkUpd(),2500);
 try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}
 </script></body></html>

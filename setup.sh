@@ -18,9 +18,27 @@ F=$(find android/app/src/main/java -name MainActivity.java | head -n1)
 [ -n "$F" ] || { echo "MainActivity.java nao encontrado"; exit 1; }
 D=$(dirname "$F")
 PK=$(sed -n 's/^package \(.*\);.*/\1/p' "$F" | head -n1)
-cp MainActivity.java ImmersivePlugin.java "$D/"
-sed -i "s/^package .*;/package $PK;/" "$D/MainActivity.java" "$D/ImmersivePlugin.java"
+cp MainActivity.java ImmersivePlugin.java UpdaterPlugin.java "$D/"
+sed -i "s/^package .*;/package $PK;/" "$D/MainActivity.java" "$D/ImmersivePlugin.java" "$D/UpdaterPlugin.java"
 echo "Package: $PK"
+
+# --- Versao do app (o workflow passa VERSION_CODE e VERSION_NAME; cada build precisa de codigo maior)
+G=android/app/build.gradle
+sed -i -E "s/versionCode [0-9]+/versionCode ${VERSION_CODE:-1}/; s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME:-1.0}\"/" "$G"
+echo "Versao: ${VERSION_NAME:-1.0} (${VERSION_CODE:-1})"
+
+# --- Permissoes: instalar atualizacao e avisar vencimento (notificacao)
+grep -q REQUEST_INSTALL_PACKAGES $M || sed -i 's#<application#<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><application#' $M
+
+# --- FileProvider: pasta de cache de onde o instalador le o APK baixado
+mkdir -p $R/xml
+cat > $R/xml/file_paths.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="my_images" path="." />
+    <cache-path name="my_cache_images" path="." />
+</paths>
+XML
 
 # --- Manifest (TV + trafego http)
 grep -q usesCleartextTraffic $M || sed -i 's#<application#<uses-feature android:name="android.software.leanback" android:required="false"/><uses-feature android:name="android.hardware.touchscreen" android:required="false"/><application android:usesCleartextTraffic="true"#' $M
