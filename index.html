@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' blob: data: http: https:; connect-src 'self' http: https: data: blob:; worker-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="asc-repo" content="__REPO__">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c0a0b"><title>ASC Play</title>
 <style>
@@ -107,6 +110,9 @@ body.tv main.hm{padding-bottom:1em}
 #epg{align-self:flex-start;max-width:min(34em,100%);background:rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:.6em .9em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 #epg div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #epg .n{font-weight:700}#epg .x{font-size:.85em;color:#e4e0e1}#epg .bar{margin:.35em 0}
+#lock,#blk,#cover{z-index:100;background:radial-gradient(120% 60% at 0 0,#3a0509,var(--bg) 60%)}#blk{z-index:120}#cover{position:fixed;inset:0;z-index:90;background:var(--bg)}
+#kp{display:grid;grid-template-columns:repeat(3,4.2em);gap:.6em}#kp .btn{height:3.3em;padding:0;font-size:1.2em}
+#ld{letter-spacing:.35em;font-size:1.5em;min-height:1.6em}#lm{min-height:1.4em}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -139,6 +145,7 @@ body.tv main.hm{padding-bottom:1em}
  <div class="logo" style="font-size:2.4em">ASC play</div>
  <h1 style="font-size:1.6em">Como você quer entrar?</h1>
  <div class="row"><button class="btn p" id="m1">Servidor e login</button><button class="btn" id="m2">Lista M3U</button></div>
+ <input id="ln" placeholder="Nome da lista (opcional)" maxlength="40" autocomplete="off">
  <div class="fm" id="xt">
   <input id="xs" placeholder="Servidor (ex.: http://servidor.com:8080)" inputmode="url" autocapitalize="none" autocomplete="off">
   <input id="xu" placeholder="Login" autocapitalize="none" autocomplete="off">
@@ -154,11 +161,21 @@ body.tv main.hm{padding-bottom:1em}
   <textarea id="ta" rows="5" placeholder="Cole aqui o conteúdo da lista" hidden></textarea>
  </div>
  <p id="st"></p>
+ <button class="btn" id="ac" hidden>Voltar</button>
 </section>
+
+<section class="scr" id="lock" hidden>
+ <div class="logo" style="font-size:2.4em">ASC play</div>
+ <h1 id="lt" style="font-size:1.3em"></h1><div id="ld"></div><p id="lm"></p>
+ <div id="kp"><button class="btn" data-k="1">1</button><button class="btn" data-k="2">2</button><button class="btn" data-k="3">3</button><button class="btn" data-k="4">4</button><button class="btn" data-k="5">5</button><button class="btn" data-k="6">6</button><button class="btn" data-k="7">7</button><button class="btn" data-k="8">8</button><button class="btn" data-k="9">9</button><button class="btn" data-k="x">⌫</button><button class="btn" data-k="0">0</button><button class="btn p" data-k="ok">OK</button></div>
+ <div class="row"><button class="btn" id="lc" hidden>Cancelar</button><button class="btn" id="lf" hidden>Esqueci o PIN</button></div>
+</section>
+<div id="cover" hidden></div>
+<section class="scr" id="blk" hidden><div class="logo" style="font-size:2.4em">ASC play</div><h1 style="font-size:1.4em">Ambiente inseguro</h1><p>Por segurança, o app não abre com depuração ou ferramentas de interceptação ativas. Feche essas ferramentas e abra o app de novo.</p></section>
 
 <div id="app" hidden>
  <header><span class="logo">ASC play</span><input id="q" type="search" placeholder="Buscar…"></header>
- <div id="exp" hidden><span id="et"></span><button class="chip" id="er">Renovar</button><button class="chip" id="ex" aria-label="Fechar">✕</button></div>
+ <div id="exp" hidden><span id="et"></span><button class="chip" id="ex" aria-label="Fechar">✕</button></div>
  <button class="chip catb" id="catb" hidden><span id="cl">Todas as categorias</span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button>
  <main id="main"><div id="home" hidden></div><div id="grid"></div><div id="more" style="height:1px"></div></main>
  <nav>
@@ -181,314 +198,4 @@ body.tv main.hm{padding-bottom:1em}
  <div class="ov" id="ob"><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="epg" hidden></div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
 </div>
 
-<script>
-const $=s=>document.querySelector(s),LS=localStorage,V=$('#v'),G=$('#grid'),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const jg=(k,d)=>{try{return JSON.parse(LS[k])||d}catch{return d}};
-const S={dev:LS.asc_dev,items:[],tab:'home',rails:{},rt:null,cat:'Todos',q:'',epg:{},al:{},fav:jg('asc_fav',[]),view:[],pos:0};
-const db=()=>new Promise(r=>{const q=indexedDB.open('asc',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onsuccess=()=>r(q.result)});
-const kv=async(m,k,v)=>{const d=await db();return new Promise(r=>{const o=d.transaction('k',m=='get'?'readonly':'readwrite').objectStore('k'),q=m=='get'?o.get(k):o.put(v,k);q.onsuccess=()=>r(q.result)})};
-const toast=m=>{const t=document.createElement('div');t.id='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),4000)};
-const show=id=>['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id);
-
-/* ---------- M3U ---------- */
-const nz=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const EP=/\bS\d{1,2}\s?E\d{1,3}\b|\bT\d{1,2}\s?E\d{1,3}\b|\b\d{1,2}x\d{2,3}\b|temporada/i;
-const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();
- if(/\/series\//.test(u))return 'series';if(/\/movie\//.test(u))return 'movie';if(/\/live\//.test(u))return 'tv';
- if(/\.(mp4|mkv|avi|mov|wmv|flv|mpg|mpeg|webm)$/.test(u))return EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?|temporada/.test(g)?'series':'movie';
- if(/\.(m3u8|ts)$/.test(u)||/rtmp|rtsp/.test(u))return 'tv';
- if(/canais|canal|24\s?h|ao vivo|live|\btv\b|esporte|abertos|not[ií]cias/.test(g))return 'tv';
- if(EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?/.test(g))return 'series';
- if(/filmes?|movies?|\bvod\b|cine|lan[cç]amentos?/.test(g))return 'movie';return 'tv'};
-const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,3}.*$|\s*[-–]?\s*\d{1,2}x\d{2,3}.*$/i,'').trim()||n;
-function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1];let cur=null;
- for(const raw of t.split(/\r?\n/)){const ln=raw.trim();
-  if(ln.startsWith('#EXTINF')){const a=k=>(ln.match(new RegExp(k+'="([^"]*)"','i'))||[])[1]||'';cur={n:ln.slice(ln.lastIndexOf(',')+1).trim()||a('tvg-name'),l:a('tvg-logo'),g:a('group-title')||'Outros',id:a('tvg-id'),p:a('tvg-plot')||a('plot')||a('tvg-description')||a('description')}}
-  else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
- return{out,tvg}}
-async function useList(text){const{out,tvg}=parse(text);if(!out.length)return $('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';
- await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();if(tvg)LS.asc_tvg=tvg;else LS.removeItem('asc_tvg');const e=epgUrl();if(e)loadEPG(e);acct();expSync()}
-
-/* ---------- EPG (XMLTV) ---------- */
-const dec=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
-const ms=(d,z)=>{const o=z?(z[0]=='-'?-1:1)*(+z.slice(1,3)*60+ +z.slice(3,5))*6e4:0;return Date.UTC(+d.slice(0,4),+d.slice(4,6)-1,+d.slice(6,8),+d.slice(8,10),+d.slice(10,12),+d.slice(12,14))-o};
-const nk=s=>nz(s).replace(/\b(fhd|uhd|hd|sd|4k|h265|hevc)\b/g,'').replace(/[^a-z0-9]/g,'');
-/* Guia: link informado > xmltv.php do servidor (login/senha) > url-tvg da lista */
-const xepg=()=>{try{const b=new URL(LS.asc_url||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/xmltv.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
-const epgUrl=()=>LS.asc_epg||xepg()||LS.asc_tvg||'';
-async function loadEPG(url){try{const r=await fetch(url);if(!r.ok)throw 0;let t;
-  if(/\.gz(\?|$)/i.test(url)&&window.DecompressionStream)t=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();else t=await r.text();
-  const now=Date.now(),lim=now+12*36e5,E={},A={};
-  for(const m of t.matchAll(/<channel\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/channel>/g)){const id=dec(m[1]).toLowerCase();A[id]=id;
-   for(const n of m[2].matchAll(/<display-name[^>]*>([^<]+)/g)){const d=dec(n[1]).trim();A[d.toLowerCase()]=id;A[nk(d)]=id}}
-  for(const m of t.matchAll(/<programme\s([^>]*)>([\s\S]*?)<\/programme>/g)){const a=m[1],
-   st=a.match(/start="(\d{14})\s?([+-]\d{4})?"/),sp=a.match(/stop="(\d{14})\s?([+-]\d{4})?"/),ch=a.match(/channel="([^"]*)"/),
-   ti=m[2].match(/<title[^>]*>\s*(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))/);
-   if(!st||!sp||!ch||!ti)continue;const s=ms(st[1],st[2]),e=ms(sp[1],sp[2]);if(e<now||s>lim)continue;
-   (E[dec(ch[1]).toLowerCase()]||=[]).push({s,e,t:dec(ti[1]!=null?ti[1]:ti[2]||'').trim()})}
-  for(const k in E)E[k].sort((a,b)=>a.s-b.s);
-  S.epg=E;S.al=A;fillNow();if(!P.hidden&&cur&&live())epgBar();
-  toast(Object.keys(E).length?'Guia de programação carregado':'O guia veio vazio ou fora do horário.')}
- catch{toast('Não foi possível carregar o guia de programação (bloqueio do servidor ou link inválido).')}}
-function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]]||S.epg[S.al[nk(it.n)]];if(!l)return null;const n=Date.now();
- const i=l.findIndex(p=>p.s<=n&&n<p.e);return i<0?null:{p:l[i],nx:l[i+1]}}
-const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-function fillNow(){document.querySelectorAll('.card.tv .now').forEach(el=>{const it=itemOf(el.parentNode),x=it&&epgOf(it);el.textContent=x?x.p.t:''})}
-
-/* ---------- Lista ---------- */
-function grp(a){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}return[...m.values()]}
-function view(){const q=nz(S.q.trim());
- if(S.tab=='home'){if(!q)return[];const r=S.items.filter(i=>i.k.includes(q));return[...r.filter(i=>i.t!='series'),...grp(r.filter(i=>i.t=='series'))]}
- if(S.tab=='fav'){let f=[...S.items.filter(i=>i.t!='series'&&S.fav.includes(i.u)),...sgrp().filter(g=>S.fav.includes('S:'+g.n))];if(q)f=f.filter(i=>nz(i.n).includes(q));return f}
- let a=S.items.filter(i=>i.t==S.tab);
- if(q)a=a.filter(i=>i.k.includes(q));else if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);
- if(S.tab=='series')a=grp(a);return a}
-const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}" onerror="this.remove()">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
-const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dataset.i];
-function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
- const dd=S.tab=='tv'||S.tab=='movie'||S.tab=='series';$('#catb').hidden=!dd;$('#cl').textContent=S.cat=='Todos'?'Todas as categorias':S.cat}
-function render(){S.view=view();S.pos=0;G.innerHTML='';$('#main').scrollTop=0;
- const ih=S.tab=='home'&&!S.q.trim();G.hidden=ih;$('#main').classList.toggle('hm',ih);$('#home').hidden=!ih;if(ih)return home();
- if(!S.view.length)G.innerHTML='<div class="empty">Nada por aqui ainda.</div>';else more()}
-function more(){if(S.pos>=S.view.length)return;const e=Math.min(S.pos+60,S.view.length);let h='';for(let k=S.pos;k<e;k++)h+=card(S.view[k],k);S.pos=e;G.insertAdjacentHTML('beforeend',h);fillNow()}
-new IntersectionObserver(e=>e[0].isIntersecting&&more(),{rootMargin:'600px'}).observe($('#more'));
-
-/* ---------- Início: favoritos, ao vivo, filmes e séries ---------- */
-const sgrp=()=>S._sg||(S._sg=grp(S.items.filter(i=>i.t=='series')));
-function ccNames(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))],sel=LS.asc_cc;
- if(sel&&sel!='auto'&&g.includes(sel))return[sel];
- let m=g.filter(x=>/cliente/i.test(x));if(!m.length)m=g.filter(x=>/jogos?\b|jogo do dia|eventos?|ppv|futebol/i.test(x));return m}
-const clientCh=()=>{const n=ccNames();return S.items.filter(i=>i.t=='tv'&&n.includes(i.g)).slice(0,80)};
-const favItems=()=>({tv:S.items.filter(i=>i.t=='tv'&&S.fav.includes(i.u)),movie:S.items.filter(i=>i.t=='movie'&&S.fav.includes(i.u)),series:sgrp().filter(g=>S.fav.includes('S:'+g.n))});
-const vmCard=go=>`<div class="card vm" tabindex="0" data-go="${go}"><svg class="i" style="transform:rotate(-90deg)"><use href="#chev"/></svg>Ver mais</div>`;
-const rail=(id,l,go)=>`<div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}${go?vmCard(go):''}</div>`;
-function home(){const t=S.items.filter(i=>i.t=='tv'),c=clientCh().slice(0,10),lv=[...c,...t.filter(x=>!c.includes(x))].slice(0,10),
- mv=S.items.filter(i=>i.t=='movie'),sg=sgrp(),F=favItems(),
- ft=[['tv','Canais'],['movie','Filmes'],['series','Séries']].filter(([k])=>F[k].length);
- S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10)};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
- let h=ft.length?`<section class="sec"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
-  :'<section><div class="sx"><h2>Favoritos</h2></div></section>';
- h+=[['tv','Ao vivo',lv,t.length],['movie','Filmes',S.rails.movie,mv.length],['series','Séries',S.rails.series,sg.length]]
-  .map(([k,n,l,tot])=>l.length?`<section class="sec"><div class="sx"><h2>${n}</h2><button class="chip" data-go="${k}">Ver mais ›</button></div>${rail(k,l,tot>l.length?k:'')}</section>`:'').join('');
- $('#home').innerHTML=h;fillNow()}
-function pickCC(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))];
- sh('<b>Categoria do Canal do cliente</b><button class="btn" data-g="auto">Automático</button>'+g.map(x=>`<button class="btn" data-g="${esc(x)}">${esc(x)}</button>`).join(''));
- $('#sh').onclick=e=>{const b=e.target.closest('[data-g]');if(b){LS.asc_cc=b.dataset.g;$('#sheet').hidden=true;refresh()}}}
-const refresh=()=>{if(S.tab=='home'&&!S.q.trim())home();else if(S.tab=='fav')render()};
-const H=$('#home');
-H.onclick=e=>{const g=e.target.closest('[data-go]');if(g){S.tab=g.dataset.go;S.cat=g.dataset.cat||'Todos';nav();render();return}
- if(e.target.closest('#pickcc'))return pickCC();
- const c=e.target.closest('.card');if(c){const l=S.rails[c.dataset.r]||[];openIt(l[c.dataset.i],l)}};
-H.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('card'))e.target.click()});
-
-document.querySelectorAll('nav [data-t]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;S.cat='Todos';nav();render()});
-let qt;$('#q').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value;render()},250)};
-const openIt=(it,l)=>it&&(it.eps?eps(it):it.t=='tv'?play(it,l.filter(x=>x.t=='tv')):info(it));
-G.onclick=e=>{const c=e.target.closest('.card');if(c)openIt(S.view[c.dataset.i],S.view)};
-G.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('card'))e.target.click()});
-
-/* EPG ao passar o mouse / focar (TV) */
-const tip=$('#tip');
-function tipOn(e){const c=e.target.closest&&e.target.closest('.card.tv');if(!c)return;const it=itemOf(c);if(!it)return;const x=epgOf(it);
- tip.innerHTML=`<b>${esc(it.n)}</b>`+(x?`<div>${esc(x.p.t)}</div><div class="bar"><i style="width:${Math.min(100,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100)}%"></i></div><small>${hm(x.p.s)} – ${hm(x.p.e)}</small>${x.nx?`<div style="color:#a39a9d;margin-top:.4em">A seguir: ${esc(x.nx.t)} (${hm(x.nx.s)})</div>`:''}`:'<div style="color:#a39a9d">Programação indisponível</div>');
- const r=c.getBoundingClientRect();tip.hidden=false;tip.style.left=Math.max(8,Math.min(innerWidth-tip.offsetWidth-8,r.left))+'px';
- tip.style.top=(r.bottom+tip.offsetHeight+8>innerHeight?Math.max(8,r.top-tip.offsetHeight-8):r.bottom+8)+'px'}
-const MN=$('#main');MN.addEventListener('pointerover',e=>e.pointerType=='mouse'&&tipOn(e));MN.addEventListener('focusin',tipOn);
-MN.addEventListener('pointerout',()=>tip.hidden=true);MN.addEventListener('focusout',()=>tip.hidden=true);
-
-/* ---------- Sheets ---------- */
-const sh=h=>{$('#sh').onclick=null;$('#sh').innerHTML=h;$('#sheet').hidden=false;const f=$('#sh button');f&&f.focus()};
-$('#sheet').onclick=e=>{if(e.target.id=='sheet')$('#sheet').hidden=true};
-const fav=u=>{const i=S.fav.indexOf(u);i<0?S.fav.push(u):S.fav.splice(i,1);LS.asc_fav=JSON.stringify(S.fav);return i<0};
-const xapi=()=>{try{const b=new URL(LS.asc_url||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
-let XS;const gs=()=>XS=XS||fetch(xapi()+'&action=get_series').then(r=>r.json()).then(l=>{const m=new Map();for(const x of l)m.set(nz(title(x.name||'')),x);return m}).catch(e=>{XS=null;throw e});
-async function meta(it,isS){const A=xapi();if(!A)return;
- try{if(!isS){const id=(it.u.match(/\/movie\/[^/]+\/[^/]+\/(\d+)/)||[])[1];if(!id)return;const i=(await(await fetch(A+'&action=get_vod_info&vod_id='+id)).json()).info||{};
-   return{p:i.plot||i.description,m:[i.genre,(i.releasedate||'').slice(0,4),i.duration,i.rating&&'★ '+i.rating].filter(Boolean).join(' • ')}}
-  const x=(await gs()).get(nz(it.n));return x&&{p:x.plot,m:[x.genre,(x.releaseDate||x.release_date||'').slice(0,4),x.rating&&'★ '+x.rating].filter(Boolean).join(' • ')}}catch{}}
-const hdr=it=>`<div class="dt">${it.l?`<img src="${esc(it.l)}" onerror="this.remove()">`:''}<div><b>${esc(it.n)}</b><small style="display:block;color:#a39a9d">${esc(it.g)}</small><small id="my" style="color:#a39a9d"></small><p class="sy" id="sy">${esc(it.p||'Sem sinopse disponível.')}</p></div></div>`;
-async function fillMeta(it,s){const x=await meta(it,s);if(x&&$('#sy')){if(x.p)$('#sy').textContent=x.p;if(x.m)$('#my').textContent=x.m}}
-/* progresso: asc_pos[u]={t,d,done}; asc_last[serie]=url do ultimo episodio visto */
-const favK=it=>it.t=='series'?'S:'+(it.eps?it.n:title(it.n)):it.u;
-const prog=u=>{const p=jg('asc_pos',{})[u];return typeof p=='number'?{t:p,d:0}:p||null};
-const fin=p=>!!p&&p.d>0&&p.t/p.d>=.92;
-const isPart=u=>{const p=prog(u);return !!p&&p.t>10&&!fin(p)};
-const isDone=u=>{const p=prog(u);return !!p&&(!!p.done||fin(p))};
-const epn=e=>{const m=e.n.match(/[ST]\d{1,2}\s?E(\d{1,3})/i)||e.n.match(/\d{1,2}x(\d{2,3})/);return m?+m[1]:0};
-const seas=e=>+((e.n.match(/[ST](\d{1,2})\s?E/i)||e.n.match(/(\d{1,2})x\d/)||[])[1]||1);
-function resume(it,list){const p=prog(it.u);if(!isPart(it.u))return play(it,list,0);
- sh(`<b>${esc(it.n)}</b><button class="btn p" id="r1">Continuar de ${fmt(p.t)}</button><button class="btn" id="r2">Assistir do começo</button>`);
- $('#r1').onclick=()=>{$('#sheet').hidden=true;play(it,list,p.t)};$('#r2').onclick=()=>{$('#sheet').hidden=true;play(it,list,0)}}
-function info(it){const p=prog(it.u),rs=isPart(it.u),k=favK(it);
- sh(hdr(it)+(rs?`<button class="btn p" id="i1">Continuar de ${fmt(p.t)}</button><button class="btn" id="i3">Assistir do começo</button>`:`<button class="btn p" id="i1">Assistir</button>`)+`<button class="btn" id="i2">${S.fav.includes(k)?'Remover dos favoritos':'Adicionar aos favoritos'}</button>`);
- $('#i1').onclick=()=>{$('#sheet').hidden=true;play(it,[it],rs?p.t:0)};
- if(rs)$('#i3').onclick=()=>{$('#sheet').hidden=true;play(it,[it],0)};
- $('#i2').onclick=()=>{fav(k);$('#sheet').hidden=true;refresh()};fillMeta(it,0)}
-function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
- const ks=Object.keys(m).map(Number).sort((a,b)=>a-b);ks.forEach(k=>m[k].sort((a,b)=>epn(a)-epn(b)));
- const flat=ks.flatMap(k=>m[k]),L=jg('asc_last',{})[s.n];let t=L&&flat.find(e=>e.u==L),nx=null;
- if(t&&isDone(t.u)&&!isPart(t.u)){const j=flat.indexOf(t)+1;if(flat[j]){t=flat[j];nx=t}}
- let cs=t?seas(t):ks[0];const fk=favK(s);
- sh(hdr(s)+`<div class="sbar"><button class="btn" id="sb"><span id="sbt"></span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button><button class="btn fv${S.fav.includes(fk)?' on':''}" id="sf"><svg class="i"><use href="#star"/></svg></button></div><div class="sg" id="sl" hidden>${ks.map(k=>`<button class="btn" data-s="${k}">Temporada ${k}</button>`).join('')}</div><div class="eg" id="eg"></div><div class="lg"><span><i style="background:#f5c518"></i>Assistido</span><span><i style="background:#22c55e"></i>Parei aqui</span></div>`);
- const draw=()=>{$('#sbt').textContent='Temporada '+cs;$('#sl').hidden=true;$('#eg').innerHTML=m[cs].map((e,i)=>{const c=isPart(e.u)?'pg':isDone(e.u)?'dn':nx&&e===nx?'nx':'';return`<button class="ep ${c}" data-u="${esc(e.u)}" title="${esc(e.n)}">${epn(e)||i+1}</button>`}).join('')};draw();
- $('#sh').onclick=e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.id=='sb')$('#sl').hidden=!$('#sl').hidden;
-  else if(b.id=='sf'){b.classList.toggle('on',fav(fk));refresh()}
-  else if(b.dataset.s){cs=+b.dataset.s;draw()}
-  else if(b.dataset.u){$('#sheet').hidden=true;resume(flat.find(x=>x.u==b.dataset.u),flat)}};fillMeta(s,1)}
-$('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}
- sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
- $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
-$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><small id="av" style="color:#a39a9d"></small><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a6">Vencimento e renovação</button><button class="btn" id="a7">Verificar atualização</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
- $('#a1').onclick=()=>{$('#sheet').hidden=true;show('add')};$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
- $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=epgUrl();e?loadEPG(e):toast('Sem guia disponível. Entre com servidor e login ou informe um link de EPG.')};
- ver().then(v=>{if(v&&$('#av'))$('#av').textContent='Versão '+v.name});
- $('#a6').onclick=expSheet;$('#a7').onclick=()=>{$('#sheet').hidden=true;checkUpd(true)};
- $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');LS.removeItem('asc_last');$('#sheet').hidden=true;render()}};
-
-/* ---------- Orientação / tela cheia ---------- */
-const CP=(window.Capacitor&&Capacitor.Plugins)||{};
-let IM=CP.Immersive;try{if(!IM&&window.Capacitor&&Capacitor.registerPlugin)IM=Capacitor.registerPlugin('Immersive')}catch{}
-const ori2=o=>{try{if(CP.ScreenOrientation)CP.ScreenOrientation.lock({orientation:o}).catch(()=>{});else if(screen.orientation&&screen.orientation.lock){const q=screen.orientation.lock(o);q&&q.catch&&q.catch(()=>{})}}catch{}};
-const ori=o=>{if(!IM)return ori2(o);try{Promise.resolve(IM.orientation({mode:o})).catch(()=>ori2(o))}catch{ori2(o)}};
-const fs=h=>{try{if(h){const e=document.documentElement;e.requestFullscreen&&e.requestFullscreen().catch(()=>{})}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch{}};
-const bars=h=>{if(!IM){try{if(CP.StatusBar)h?CP.StatusBar.hide():CP.StatusBar.show()}catch{}return fs(h)}try{Promise.resolve(IM.set({on:h})).catch(()=>{})}catch{}};
-/* ---------- Player ---------- */
-let hls,cur,zap=[],ht,dr=0,lt=0;const P=$('#player'),sk=$('#sk');
-const fmt=t=>{if(!isFinite(t))return'0:00';t=Math.floor(t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),q=String(t%60).padStart(2,'0');return h?`${h}:${String(m).padStart(2,'0')}:${q}`:`${m}:${q}`};
-const ic=(id,n)=>$(id).querySelector('use').setAttribute('href','#'+n);
-const live=()=>cur&&cur.t=='tv',spin=on=>$('#sp').hidden=!on,posAll=()=>jg('asc_pos',{});
-function ui(){P.classList.remove('h');clearTimeout(ht);ht=setTimeout(()=>!V.paused&&!dr&&P.classList.add('h'),3500)}
-function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').textContent=cur.g||'';E.hidden=!lv;if(!lv)return;
- E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
-function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=jg('asc_pos',{}),o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done))};LS.asc_pos=JSON.stringify(p)}
-function src(u){if(hls){hls.destroy();hls=null}
- const go=()=>{if(window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){hls=new Hls({maxBufferLength:20,enableWorker:true});hls.loadSource(u);hls.attachMedia(V);
-   hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){hls.destroy();hls=null;V.src=u;V.play().catch(()=>{})}})}else V.src=u;V.play().catch(()=>{})};
- if(window.Hls)go();else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js';s.onload=go;s.onerror=go;document.head.append(s)}}
-function play(it,list,from){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
- $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;$('#sk').hidden=tv;$('#tm').hidden=tv;
- $('#pr').style.width=$('#bf').style.width='0';$('#th').style.left='0';$('#t1').textContent=$('#t2').textContent='0:00';
- $('#pf').classList.toggle('on',S.fav.includes(favK(it)));spin(true);src(it.u);epgBar();ui();
- if(it.t=='series'){const L=jg('asc_last',{});L[title(it.n)]=it.u;LS.asc_last=JSON.stringify(L)}
- if(from>0&&!tv)V.addEventListener('loadedmetadata',()=>V.currentTime=from,{once:true});
- if(document.activeElement)document.activeElement.blur()}
-const step=d=>{if(live()){const i=(zap.indexOf(cur)+d+zap.length)%zap.length;play(zap[i],zap)}else V.currentTime=Math.max(0,Math.min(V.duration||1e9,V.currentTime+10*d))};
-const tog=()=>V.paused?V.play().catch(()=>{}):V.pause();
-$('#pv').onclick=()=>step(-1);$('#nx').onclick=()=>step(1);$('#pp').onclick=tog;
-$('#pf').onclick=()=>$('#pf').classList.toggle('on',fav(favK(cur)));
-V.onplay=()=>ic('#pp','pause');V.onpause=()=>{ic('#pp','play');ui()};
-V.onloadstart=V.onwaiting=()=>spin(true);V.onplaying=V.oncanplay=()=>spin(false);
-V.onended=()=>{if(!live()){saveP(1);const i=zap.indexOf(cur);if(zap[i+1])play(zap[i+1],zap)}};
-V.onerror=()=>{spin(false);toast('Falha ao reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.')};
-V.onprogress=()=>{if(V.duration&&V.buffered.length)$('#bf').style.width=V.buffered.end(V.buffered.length-1)/V.duration*100+'%'};
-let sv=0;V.ontimeupdate=()=>{if(!cur||live())return;const d=V.duration||0,t=V.currentTime;
- if(!dr){$('#pr').style.width=$('#th').style.left=d?t/d*100+'%':'0';$('#t1').textContent=fmt(t)}$('#t2').textContent=fmt(d);
- if(Date.now()-sv>5e3){sv=Date.now();saveP()}};
-const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));$('#pr').style.width=$('#th').style.left=f*100+'%';$('#t1').textContent=fmt(f*(V.duration||0));return f};
-sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
-sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};
-sk.onpointerup=e=>{if(dr){const f=seekTo(e);dr=0;if(V.duration)V.currentTime=f*V.duration;ui()}};
-const close=pop=>{saveP();ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav'||S.tab=='home')render();if(pop!==1&&history.state&&history.state.p)history.back()};
-$('#bk').onclick=()=>close();
-setInterval(()=>{if(!P.hidden&&cur&&live())epgBar()},3e4);
-addEventListener('popstate',()=>{if(!P.hidden)close(1)});
-const fitSet=m=>{V.style.objectFit=m;$('#fit').classList.toggle('on',m=='cover');LS.asc_fit=m};
-$('#fit').onclick=()=>fitSet(V.style.objectFit=='cover'?'contain':'cover');fitSet(LS.asc_fit=='cover'?'cover':'contain');
-P.addEventListener('pointerdown',e=>{if(e.target.closest('button,#sk'))return ui();const n=Date.now(),x=e.clientX/innerWidth;
- if(!live()&&n-lt<300&&(x<.35||x>.65)){step(x<.5?-1:1);ui();lt=0;return}lt=n;P.classList.contains('h')?ui():P.classList.add('h')});
-
-/* ---------- Controle remoto (D-pad) ---------- */
-const BACK=['Escape','Backspace','GoBack','BrowserBack'];
-addEventListener('keydown',e=>{const k=e.key;
- if(!P.hidden){const hid=P.classList.contains('h'),onb=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#player button');ui();
-  if(BACK.includes(k)||e.keyCode==4){e.preventDefault();return close()}
-  if(k==' '||k=='MediaPlayPause'){e.preventDefault();return tog()}
-  if(k=='ChannelUp'||k=='PageUp'){if(live())step(1);return}if(k=='ChannelDown'||k=='PageDown'){if(live())step(-1);return}
-  if(S.dev=='tv'&&k.startsWith('Arrow')){e.preventDefault();
-   if(hid){if(live()&&(k=='ArrowUp'||k=='ArrowDown'))step(k=='ArrowUp'?1:-1);else if(!live()&&(k=='ArrowLeft'||k=='ArrowRight'))step(k=='ArrowRight'?1:-1)}else nvg(e,P)}
-  else if(k=='Enter'&&!onb){e.preventDefault();tog()}
-  return}
- if(!$('#sheet').hidden&&BACK.includes(k)){$('#sheet').hidden=true;return}
- if(S.dev=='tv'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(k))nvg(e,$('#sheet').hidden?document.body:$('#sheet'))});
-function nvg(e,root){if(e.target.tagName=='INPUT'&&['ArrowLeft','ArrowRight'].includes(e.key)&&e.target.value)return;
- const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key],a=document.activeElement,
- ls=[...root.querySelectorAll('button,input,textarea,.card,label[tabindex]')].filter(x=>x.offsetParent&&!x.closest('[hidden]')&&(root!==document.body||!x.closest('#player,#sheet')));
- if(!a||!ls.includes(a)){e.preventDefault();return ls[0]&&ls[0].focus()}
- const r=a.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let best,bs=1e9;
- for(const x of ls){if(x===a)continue;const q=x.getBoundingClientRect(),dx=q.left+q.width/2-cx,dy=q.top+q.height/2-cy,pr=dx*d[0]+dy*d[1];if(pr<=1)continue;const pp=Math.abs(dx*d[1])+Math.abs(dy*d[0]),s=pr+pp*2.5;if(s<bs){bs=s;best=x}}
- e.preventDefault();if(best){best.focus();best.scrollIntoView({block:'nearest',inline:'nearest'})}}
-
-/* ---------- Atualização, vencimento e lembretes ---------- */
-const REPO='__REPO__',UPD=REPO.startsWith('__')?'':`https://github.com/${REPO}/releases/latest/download/version.json`;
-const plug=n=>{try{return CP[n]||(window.Capacitor&&Capacitor.registerPlugin&&Capacitor.registerPlugin(n))}catch{}};
-const nat=()=>{try{return !!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform())}catch{return false}};
-const dmy=t=>new Date(t).toLocaleDateString('pt-BR'),daysTo=t=>Math.ceil((t-Date.now())/864e5);
-const isoD=t=>{const d=new Date(t),p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`};
-let VER=null;
-async function ver(){if(VER)return VER;const U=plug('Updater');if(!U||!nat())return null;try{VER=await U.info()}catch{}return VER}
-/* Atualização: compara com version.json publicado no GitHub Releases */
-async function checkUpd(manual){const v=await ver();
- if(!v||!UPD){if(manual)toast(v?'Atualização não configurada.':'A atualização funciona no app instalado (APK).');return}
- try{const r=await fetch(UPD);if(!r.ok)throw 0;const j=JSON.parse(await r.text());
-  if(!(+j.code>+v.code)){if(manual)toast('Você já está na versão mais recente ('+v.name+').');return}
-  sh(`<b>Nova versão ${esc(j.name||'')}</b>${j.notes?`<p class="sy" style="max-height:8em">${esc(j.notes)}</p>`:''}<small id="up" style="color:#a39a9d">Você está na versão ${esc(v.name)}. Seu login e seus dados são mantidos.</small><button class="btn p" id="u1">Atualizar agora</button><button class="btn" id="u2">Depois</button>`);
-  $('#u2').onclick=()=>$('#sheet').hidden=true;
-  $('#u1').onclick=async()=>{const U=plug('Updater'),up=$('#up'),b=$('#u1');b.disabled=true;let h;
-   try{h=await U.addListener('progress',e=>{up.textContent='Baixando… '+e.percent+'%'})}catch{}
-   try{up.textContent='Baixando…';const x=await U.install({url:j.url});
-    up.textContent=x&&x.needPermission?'Permita "instalar apps desta fonte" para o ASC play e toque em Atualizar de novo.':'Pronto! Confirme a instalação na tela do Android.'}
-   catch{up.textContent='Falha ao baixar a atualização. Tente de novo mais tarde.'}
-   h&&h.remove&&h.remove();b.disabled=false}
- }catch{if(manual)toast('Não consegui verificar atualizações.')}}
-/* Vencimento: Xtream informa exp_date; em lista M3U a data é digitada */
-const expAt=()=>+LS.asc_exp||0;
-const resetExp=()=>{LS.removeItem('asc_exp');LS.removeItem('asc_expm')};
-async function acct(){const A=xapi();if(!A)return;
- try{const r=await fetch(A);if(!r.ok)return;const j=JSON.parse(await r.text()),u=j&&j.user_info;if(!u)return;
-  const e=+u.exp_date;if(e>0)LS.asc_exp=String(e*1e3);else LS.removeItem('asc_exp');LS.removeItem('asc_expm');expSync()}catch{}}
-function expSync(){bn();sched()}
-function bn(){const b=$('#exp'),e=expAt();if(!e){b.hidden=true;return}const d=daysTo(e);if(d>7){b.hidden=true;return}
- b.hidden=false;b.className=d<=0?'bad':'';
- $('#et').textContent=d<0?`Sua lista venceu em ${dmy(e)}.`:d==0?'Sua lista vence hoje!':`Sua lista vence em ${d} dia${d>1?'s':''} (${dmy(e)}).`}
-const renewUrl=()=>{const r=(LS.asc_renew||'').trim();if(!r)return'';if(/^https?:/i.test(r))return r;const d=r.replace(/\D/g,'');return d.length>=8?'https://wa.me/'+d:''};
-function renew(){const u=renewUrl();if(u)location.href=u;else expSheet()}
-$('#er').onclick=renew;$('#ex').onclick=()=>$('#exp').hidden=true;
-function expSheet(){const e=expAt(),x=!!xapi(),d=e?daysTo(e):0;
- sh(`<b>Vencimento e renovação</b><small style="color:#a39a9d">${e?`Vence em ${dmy(e)} (${d<0?'vencida':d+' dia'+(d==1?'':'s')})`:x?'O servidor não informou data de vencimento.':'Informe a data para receber lembretes.'}</small>`
-  +(x?'':`<small style="color:#a39a9d">Data de vencimento</small><input type="date" id="ed" value="${e?isoD(e):''}">`)
-  +`<small style="color:#a39a9d">WhatsApp ou link para renovar</small><input id="er2" placeholder="Ex.: 5592999999999 ou https://..." value="${esc(LS.asc_renew||'')}"><button class="btn p" id="es">Salvar</button>`+(renewUrl()?'<button class="btn" id="eb">Renovar agora</button>':''));
- $('#es').onclick=()=>{LS.asc_renew=$('#er2').value.trim();const ed=$('#ed');
-  if(ed){if(ed.value){LS.asc_exp=String(new Date(ed.value+'T23:59:00').getTime());LS.asc_expm='1'}else resetExp()}
-  $('#sheet').hidden=true;expSync();toast('Salvo.')};
- const eb=$('#eb');if(eb)eb.onclick=renew}
-/* Notificações no celular: 7, 3 e 1 dia antes e no dia, às 9h (funcionam com o app fechado) */
-async function sched(){const N=plug('LocalNotifications');if(!N||!nat())return;const e=expAt();
- try{await N.cancel({notifications:[9001,9002,9003,9004].map(id=>({id}))});if(!e)return;
-  let p=await N.checkPermissions();if(p.display=='prompt'||p.display=='prompt-with-rationale')p=await N.requestPermissions();if(p.display!='granted')return;
-  const L=[[7,9001,'vence em 7 dias'],[3,9002,'vence em 3 dias'],[1,9003,'vence amanhã'],[0,9004,'vence hoje']],out=[];
-  for(const[d,id,t]of L){const a=new Date(e);a.setDate(a.getDate()-d);a.setHours(9,0,0,0);if(a.getTime()>e)a.setTime(e-36e5);
-   if(a.getTime()>Date.now())out.push({id,title:'ASC play',body:`Sua lista ${t} (${dmy(e)}). Renove para não ficar sem sinal.`,schedule:{at:a,allowWhileIdle:true}})}
-  if(out.length)await N.schedule({notifications:out})}catch{}}
-
-/* ---------- Início ---------- */
-function setDev(d){S.dev=d;LS.asc_dev=d;document.body.className=d=='tv'?'tv':'mob';ori(d=='tv'?'landscape':'portrait')}
-document.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{setDev(b.dataset.d);const t=await kv('get','pl');t&&S.items.length?(show('app'),render()):t?useList(t):show('add')});
-$('#go').onclick=async()=>{const u=$('#u').value.trim(),st=$('#st');if(!u)return st.textContent='Cole o link da lista.';LS.asc_epg=$('#e').value.trim();LS.asc_url=u;resetExp();st.textContent='Carregando…';
- try{const r=await fetch(u);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
-$('#f').onchange=async e=>{const f=e.target.files[0];if(f){LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');resetExp();useList(await f.text())}};
-$('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
-const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
-$('#m1').onclick=()=>mode('x');$('#m2').onclick=()=>mode('m');mode(LS.asc_mode=='m'?'m':'x');
-$('#xs').value=LS.asc_xs||'';$('#xu').value=LS.asc_xu||'';$('#xp').value=LS.asc_xp||'';
-$('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').value.trim();let s=$('#xs').value.trim();
- if(!s||!u||!p)return st.textContent='Preencha servidor, login e senha.';
- if(!/^https?:\/\//i.test(s))s='http://'+s;let o;try{o=new URL(s).origin}catch{return st.textContent='Endereço do servidor inválido.'}
- LS.asc_xs=o;LS.asc_xu=u;LS.asc_xp=p;LS.removeItem('asc_epg');resetExp();
- const url=`${o}/get.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&type=m3u_plus&output=m3u8`;LS.asc_url=url;st.textContent='Entrando…';
- try{const r=await fetch(url);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
-$('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{LS.asc_epg=$('#e').value.trim();LS.removeItem('asc_url');resetExp();useList(t.value)}};
-(async()=>{if(!S.dev){show('setup');return}setDev(S.dev);const t=await kv('get','pl');t?useList(t):show('add')})();
-setTimeout(()=>checkUpd(),2500);
-try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}
-</script></body></html>
+<script src="app.js"></script></body></html>

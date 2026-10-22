@@ -1,1 +1,1 @@
-{"appId":"com.ascplay.app","appName":"ASC play","webDir":"www","backgroundColor":"#0c0a0b","server":{"androidScheme":"http","cleartext":true},"plugins":{"CapacitorHttp":{"enabled":true}}}
+{"appId":"com.ascplay.app","appName":"ASC play","webDir":"www","backgroundColor":"#0c0a0b","loggingBehavior":"none","server":{"androidScheme":"http","cleartext":true},"android":{"allowMixedContent":false,"webContentsDebuggingEnabled":false},"plugins":{"CapacitorHttp":{"enabled":true}}}

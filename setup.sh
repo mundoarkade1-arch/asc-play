@@ -18,8 +18,8 @@ F=$(find android/app/src/main/java -name MainActivity.java | head -n1)
 [ -n "$F" ] || { echo "MainActivity.java nao encontrado"; exit 1; }
 D=$(dirname "$F")
 PK=$(sed -n 's/^package \(.*\);.*/\1/p' "$F" | head -n1)
-cp MainActivity.java ImmersivePlugin.java UpdaterPlugin.java "$D/"
-sed -i "s/^package .*;/package $PK;/" "$D/MainActivity.java" "$D/ImmersivePlugin.java" "$D/UpdaterPlugin.java"
+cp MainActivity.java ImmersivePlugin.java UpdaterPlugin.java SecurePlugin.java "$D/"
+sed -i "s/^package .*;/package $PK;/" "$D/MainActivity.java" "$D/ImmersivePlugin.java" "$D/UpdaterPlugin.java" "$D/SecurePlugin.java"
 echo "Package: $PK"
 
 # --- Versao do app (o workflow passa VERSION_CODE e VERSION_NAME; cada build precisa de codigo maior)
@@ -30,13 +30,12 @@ echo "Versao: ${VERSION_NAME:-1.0} (${VERSION_CODE:-1})"
 # --- Permissoes: instalar atualizacao e avisar vencimento (notificacao)
 grep -q REQUEST_INSTALL_PACKAGES $M || sed -i 's#<application#<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><application#' $M
 
-# --- FileProvider: pasta de cache de onde o instalador le o APK baixado
+# --- FileProvider: so a pasta "upd" do cache (de onde o instalador le o APK baixado)
 mkdir -p $R/xml
 cat > $R/xml/file_paths.xml <<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="my_images" path="." />
-    <cache-path name="my_cache_images" path="." />
+    <cache-path name="upd" path="upd/" />
 </paths>
 XML
 
@@ -82,3 +81,6 @@ mkdir -p $R/drawable-xhdpi
 cp banner.png $R/drawable-xhdpi/banner.png
 grep -q 'android:banner=' $M || sed -i 's#<application#<application android:banner="@drawable/banner"#' $M
 ls -la $R/mipmap-xxxhdpi
+
+# --- Seguranca do Android: sem backup, so certificados do sistema, regras de extracao de dados
+node harden-android.js

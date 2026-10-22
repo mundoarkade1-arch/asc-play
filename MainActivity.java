@@ -4,6 +4,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
@@ -13,6 +15,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(ImmersivePlugin.class);
         registerPlugin(UpdaterPlugin.class);
+        registerPlugin(SecurePlugin.class);
         super.onCreate(savedInstanceState);
         Window w = getWindow();
         if (Build.VERSION.SDK_INT >= 28) {
@@ -31,6 +34,7 @@ public class MainActivity extends BridgeActivity {
         }
         if (getBridge() != null) {
             ImmersivePlugin.installInsets(getBridge().getWebView());
+            hardenWebView(getBridge().getWebView());
         }
     }
 
@@ -42,5 +46,19 @@ public class MainActivity extends BridgeActivity {
         if (hasFocus && ImmersivePlugin.active) {
             ImmersivePlugin.apply(this, true);
         }
+    }
+
+    // WebView blindado: sem acesso a arquivos locais, sem depuracao remota, sem janelas extras
+    private void hardenWebView(WebView wv) {
+        if (wv == null) return;
+        WebSettings st = wv.getSettings();
+        st.setAllowFileAccess(false);
+        st.setAllowFileAccessFromFileURLs(false);
+        st.setAllowUniversalAccessFromFileURLs(false);
+        st.setGeolocationEnabled(false);
+        st.setSaveFormData(false);
+        st.setSupportMultipleWindows(false);
+        if (Build.VERSION.SDK_INT >= 26) st.setSafeBrowsingEnabled(true);
+        WebView.setWebContentsDebuggingEnabled(false);
     }
 }
