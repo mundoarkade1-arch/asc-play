@@ -29,4 +29,14 @@ public class MainActivity extends BridgeActivity {
             c.setAppearanceLightNavigationBars(false);
         }
     }
+
+    // Se o player estiver aberto, esconde as barras de novo ao voltar o foco
+    // (depois de puxar a cortina de notificacoes, voltar de outro app, etc).
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && ImmersivePlugin.active) {
+            ImmersivePlugin.apply(this, true);
+        }
+    }
 }

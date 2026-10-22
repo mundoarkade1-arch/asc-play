@@ -53,13 +53,13 @@ body.tv #sh{border-radius:20px}
 #sh .btn{justify-content:flex-start;text-align:left}
 #player{position:fixed;inset:0;z-index:40;background:#000;overflow:hidden;user-select:none;-webkit-user-select:none}
 video{width:100%;height:100%;background:#000;object-fit:contain}
-.ov{position:absolute;left:0;right:0;display:flex;align-items:center;gap:.8em;padding:.8em 1.2em;transition:opacity .25s;z-index:2}
+.ov{position:absolute;left:0;right:0;display:flex;align-items:center;gap:.8em;padding:.8em max(1.2em,env(safe-area-inset-right)) .8em max(1.2em,env(safe-area-inset-left));transition:opacity .25s;z-index:2}
 #ot{top:0;padding-top:calc(env(safe-area-inset-top) + .8em);background:linear-gradient(rgba(0,0,0,.75),transparent)}
 #ob{bottom:0;flex-direction:column;align-items:stretch;gap:.2em;padding-bottom:calc(env(safe-area-inset-bottom) + .8em);background:linear-gradient(transparent,rgba(0,0,0,.8))}
 #om{top:50%;transform:translateY(-50%);justify-content:center;gap:2.4em;pointer-events:none}#om>*{pointer-events:auto}
 .gb{width:3em;height:3em;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.14);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;place-items:center;cursor:pointer;padding:0;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 .gb svg.i{width:1.5em;height:1.5em;opacity:1;stroke-width:2}.gb.big{width:4.4em;height:4.4em}.gb.big svg.i{width:2.2em;height:2.2em}
-#pf.on{color:#ff4d5e}#pf.on svg{fill:currentColor}
+#pf.on,#fit.on{color:#ff4d5e}#pf.on svg{fill:currentColor}
 #player.h .ov{opacity:0;pointer-events:none}#player.h{cursor:none}
 #sp{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:1}
 #sp svg{width:4.2em;height:4.2em;animation:rot .9s linear infinite;filter:drop-shadow(0 2px 8px rgba(255,40,60,.6))}@keyframes rot{to{transform:rotate(360deg)}}
@@ -84,6 +84,7 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 <symbol id="star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
 <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
 <symbol id="phone" viewBox="0 0 24 24"><path d="M7 2h10v20H7zM11 19h2"/></symbol>
+<symbol id="fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
 <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
 <symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
 <symbol id="play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
@@ -132,7 +133,7 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 <div id="player" hidden>
  <video id="v" playsinline poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
  <div id="sp"><svg viewBox="0 0 50 50"><defs><linearGradient id="sg"><stop offset="0" stop-color="#e50914"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><circle cx="25" cy="25" r="20" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="80 60"/></svg></div>
- <div class="ov" id="ot"><button class="gb" id="bk"><svg class="i"><use href="#back"/></svg></button><div style="flex:1;min-width:0"><b id="pt"></b><div id="pe"></div></div><button class="gb" id="pf"><svg class="i"><use href="#star"/></svg></button></div>
+ <div class="ov" id="ot"><button class="gb" id="bk"><svg class="i"><use href="#back"/></svg></button><div style="flex:1;min-width:0"><b id="pt"></b><div id="pe"></div></div><button class="gb" id="fit"><svg class="i"><use href="#fit"/></svg></button><button class="gb" id="pf"><svg class="i"><use href="#star"/></svg></button></div>
  <div class="ov" id="om"><button class="gb" id="pv"><svg class="i"><use href="#rw10"/></svg></button><button class="gb big" id="pp"><svg class="i"><use href="#pause"/></svg></button><button class="gb" id="nx"><svg class="i"><use href="#fw10"/></svg></button></div>
  <div class="ov" id="ob"><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
 </div>
@@ -235,8 +236,11 @@ $('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar list
 
 /* ---------- Orientação / tela cheia ---------- */
 const CP=(window.Capacitor&&Capacitor.Plugins)||{};
-const ori=o=>{try{if(CP.ScreenOrientation)CP.ScreenOrientation.lock({orientation:o}).catch(()=>{});else if(screen.orientation&&screen.orientation.lock){const q=screen.orientation.lock(o);q&&q.catch&&q.catch(()=>{})}}catch{}};
-const bars=h=>{try{if(CP.Immersive)Promise.resolve(CP.Immersive.set({on:h})).catch(()=>{});else if(CP.StatusBar)h?CP.StatusBar.hide():CP.StatusBar.show()}catch{}};
+let IM=CP.Immersive;try{if(!IM&&window.Capacitor&&Capacitor.registerPlugin)IM=Capacitor.registerPlugin('Immersive')}catch{}
+const ori2=o=>{try{if(CP.ScreenOrientation)CP.ScreenOrientation.lock({orientation:o}).catch(()=>{});else if(screen.orientation&&screen.orientation.lock){const q=screen.orientation.lock(o);q&&q.catch&&q.catch(()=>{})}}catch{}};
+const ori=o=>{if(!IM)return ori2(o);try{Promise.resolve(IM.orientation({mode:o})).catch(()=>ori2(o))}catch{ori2(o)}};
+const fs=h=>{try{if(h){const e=document.documentElement;e.requestFullscreen&&e.requestFullscreen().catch(()=>{})}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}catch{}};
+const bars=h=>{if(!IM){try{if(CP.StatusBar)h?CP.StatusBar.hide():CP.StatusBar.show()}catch{}return fs(h)}try{Promise.resolve(IM.set({on:h})).catch(()=>{})}catch{}};
 /* ---------- Player ---------- */
 let hls,cur,zap=[],ht,dr=0,lt=0;const P=$('#player'),sk=$('#sk');
 const fmt=t=>{if(!isFinite(t))return'0:00';t=Math.floor(t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),q=String(t%60).padStart(2,'0');return h?`${h}:${String(m).padStart(2,'0')}:${q}`:`${m}:${q}`};
@@ -248,7 +252,7 @@ function src(u){if(hls){hls.destroy();hls=null}
  const go=()=>{if(window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){hls=new Hls({maxBufferLength:20,enableWorker:true});hls.loadSource(u);hls.attachMedia(V);
    hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){hls.destroy();hls=null;V.src=u;V.play().catch(()=>{})}})}else V.src=u;V.play().catch(()=>{})};
  if(window.Hls)go();else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js';s.onload=go;s.onerror=go;document.head.append(s)}}
-function play(it,list){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);P.hidden=false;const tv=live();
+function play(it,list){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
  $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;$('#sk').hidden=tv;$('#tm').hidden=tv;
  $('#pr').style.width=$('#bf').style.width='0';$('#th').style.left='0';$('#t1').textContent=$('#t2').textContent='0:00';
  $('#pf').classList.toggle('on',S.fav.includes(it.u));spin(true);src(it.u);epgBar();ui();
@@ -270,8 +274,11 @@ const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.c
 sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
 sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};
 sk.onpointerup=e=>{if(dr){const f=seekTo(e);dr=0;if(V.duration)V.currentTime=f*V.duration;ui()}};
-const close=()=>{ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav')render()};
-$('#bk').onclick=close;
+const close=pop=>{ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav')render();if(pop!==1&&history.state&&history.state.p)history.back()};
+$('#bk').onclick=()=>close();
+addEventListener('popstate',()=>{if(!P.hidden)close(1)});
+const fitSet=m=>{V.style.objectFit=m;$('#fit').classList.toggle('on',m=='cover');LS.asc_fit=m};
+$('#fit').onclick=()=>fitSet(V.style.objectFit=='cover'?'contain':'cover');fitSet(LS.asc_fit=='cover'?'cover':'contain');
 P.addEventListener('pointerdown',e=>{if(e.target.closest('button,#sk'))return ui();const n=Date.now(),x=e.clientX/innerWidth;
  if(!live()&&n-lt<300&&(x<.35||x>.65)){step(x<.5?-1:1);ui();lt=0;return}lt=n;P.classList.contains('h')?ui():P.classList.add('h')});
 
