@@ -45,30 +45,40 @@ grep -q usesCleartextTraffic $M || sed -i 's#<application#<uses-feature android:
 sed -i 's#<category android:name="android.intent.category.LAUNCHER" />#&<category android:name="android.intent.category.LEANBACK_LAUNCHER" />#' $M
 [ -f debug.keystore ] && { mkdir -p ~/.android; cp debug.keystore ~/.android/debug.keystore; } || true
 
-# --- Icones e banner
-im() { if command -v magick >/dev/null 2>&1; then magick "$@"; else convert "$@"; fi; }
-
-# Aceita icon.png, icone.png ou ícone.png (com acento) e normaliza o nome
+# --- Icones e banner (usa Python + Pillow; nao depende do ImageMagick)
 ICON=""
 for c in icon.png icone.png "ícone.png" Icon.png Icone.png; do
   [ -f "$c" ] && { ICON="$c"; break; }
 done
 [ -n "$ICON" ] || { echo "ERRO: icone nao encontrado (esperado icon.png na raiz do repositorio)"; ls -la; exit 1; }
-cp "$ICON" /tmp/asc_icon.png
 echo "Icone usado: $ICON"
+cp "$ICON" /tmp/asc_icon.png
+
+PY=$(command -v python3 || command -v python || true)
+[ -n "$PY" ] || { echo "ERRO: python nao encontrado"; exit 1; }
+$PY -c "import PIL" 2>/dev/null || $PY -m pip install --quiet pillow || { echo "ERRO: nao consegui instalar o Pillow"; exit 1; }
 
 rm -rf $R/mipmap-anydpi-v26
 rm -f $R/mipmap-*/ic_launcher*.webp $R/mipmap-*/ic_launcher*.png
-for d in "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
-  set -- $d
-  mkdir -p $R/mipmap-$1
-  im /tmp/asc_icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher.png
-  # versao redonda: recorta em circulo
-  im /tmp/asc_icon.png -resize ${2}x${2} \( -size ${2}x${2} xc:none -fill white -draw "circle $(( $2 / 2 )),$(( $2 / 2 )) $(( $2 / 2 )),0" \) -compose DstIn -composite $R/mipmap-$1/ic_launcher_round.png
-  im /tmp/asc_icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher_foreground.png
-  [ -s $R/mipmap-$1/ic_launcher.png ] || { echo "ERRO: falha ao gerar icone $1"; exit 1; }
-done
+$PY - "$R" <<'PYEOF'
+import sys, os
+from PIL import Image, ImageDraw
+R = sys.argv[1]
+src = Image.open('/tmp/asc_icon.png').convert('RGBA')
+for d, n in (("mdpi",48),("hdpi",72),("xhdpi",96),("xxhdpi",144),("xxxhdpi",192)):
+    p = f"{R}/mipmap-{d}"; os.makedirs(p, exist_ok=True)
+    im = src.resize((n, n), Image.LANCZOS)
+    im.save(f"{p}/ic_launcher.png")
+    im.save(f"{p}/ic_launcher_foreground.png")
+    big = 4
+    mask = Image.new("L", (n*big, n*big), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, n*big-1, n*big-1), fill=255)
+    mask = mask.resize((n, n), Image.LANCZOS)
+    rd = Image.new("RGBA", (n, n), (0,0,0,0)); rd.paste(im, (0,0), mask)
+    rd.save(f"{p}/ic_launcher_round.png")
+print("Icones gerados")
+PYEOF
 mkdir -p $R/drawable-xhdpi
 cp banner.png $R/drawable-xhdpi/banner.png
 grep -q 'android:banner=' $M || sed -i 's#<application#<application android:banner="@drawable/banner"#' $M
-echo "Icones gerados:"; ls -la $R/mipmap-xxxhdpi
+ls -la $R/mipmap-xxxhdpi
