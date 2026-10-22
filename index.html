@@ -5,7 +5,7 @@
 <style>
 :root{--g:linear-gradient(120deg,#e50914 0%,#ff6b78 55%,#fff 100%);--bg:#0c0a0b;--c:#1a1618;--t:#f6f2f3;--m:#a39a9d;--r:#ff2a3d;--u:1rem}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px}body.tv{font-size:22px}
+html{font-size:16px;-webkit-text-size-adjust:100%}body.tv{font-size:22px}
 body{background:radial-gradient(120% 60% at 0 0,#3a0509,var(--bg) 60%);color:var(--t);font:400 var(--u)/1.35 "Trebuchet MS","Segoe UI",system-ui,sans-serif;height:100dvh;overflow:hidden}
 button,input,textarea{font:inherit;color:inherit}
 [hidden]{display:none!important}
@@ -29,10 +29,10 @@ main{flex:1;overflow-y:auto;padding:.6em 1em 5.5em;overscroll-behavior:contain}
 #grid{display:grid;gap:.9em;grid-template-columns:repeat(auto-fill,minmax(9.5em,1fr))}
 .card{background:var(--c);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;contain:content;box-shadow:0 6px 16px rgba(0,0,0,.4)}
 .im{aspect-ratio:2/3;background:linear-gradient(160deg,#3b0b11,#1a1618);position:relative;display:grid;place-items:center}
-.tv .im,.card.tv .im{aspect-ratio:16/10}
+.card.tv .im{aspect-ratio:16/10}
 .card.tv img{object-fit:contain;padding:.6em}
 .im img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.ph{font-size:2.4em;font-weight:900;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pi{font-size:2.4em;font-weight:900;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
 .card b{padding:.5em .6em .1em;font-size:.85em;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .now{padding:0 .6em .6em;color:var(--m);font-size:.75em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.6em}
 .card:not(.tv) b{padding-bottom:.6em}
@@ -44,7 +44,7 @@ body.tv nav{top:0;right:auto;width:6.5em;flex-direction:column;justify-content:c
 body.tv header{padding-top:1em}body.tv #grid{grid-template-columns:repeat(auto-fill,minmax(11em,1fr));gap:1.2em}
 body.tv main{padding-bottom:2em}
 #tip{position:fixed;z-index:20;width:19em;background:rgba(18,12,14,.95);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:.8em;box-shadow:0 12px 30px rgba(0,0,0,.6);pointer-events:none;font-size:.85em}
-body.ph #tip{display:none}
+body.mob #tip{display:none}
 .bar{height:5px;border-radius:9px;background:rgba(255,255,255,.15);margin:.4em 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--g)}
 #sheet{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.65);display:flex;align-items:flex-end;justify-content:center}
 body.tv #sheet{align-items:center}
@@ -123,8 +123,15 @@ const toast=m=>{const t=document.createElement('div');t.id='toast';t.textContent
 const show=id=>['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id);
 
 /* ---------- M3U ---------- */
-const kind=i=>{const s=i.u+' '+i.g;return /\/series\/|s[eé]ries?\b/i.test(s)||/\bS\d{1,2}\s?E\d{1,3}\b/i.test(i.n)?'series':/\/movie\/|filmes?\b|movies?\b|\bvod\b|cine/i.test(s)?'movie':'tv'};
-const title=n=>n.replace(/\s*[-–]?\s*S\d{1,2}\s?E\d{1,3}.*$/i,'').trim()||n;
+const EP=/\bS\d{1,2}\s?E\d{1,3}\b|\bT\d{1,2}\s?E\d{1,3}\b|\b\d{1,2}x\d{2,3}\b|temporada/i;
+const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();
+ if(/\/series\//.test(u))return 'series';if(/\/movie\//.test(u))return 'movie';if(/\/live\//.test(u))return 'tv';
+ if(/\.(mp4|mkv|avi|mov|wmv|flv|mpg|mpeg|webm)$/.test(u))return EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?|temporada/.test(g)?'series':'movie';
+ if(/\.(m3u8|ts)$/.test(u)||/rtmp|rtsp/.test(u))return 'tv';
+ if(/canais|canal|24\s?h|ao vivo|live|\btv\b|esporte|abertos|not[ií]cias/.test(g))return 'tv';
+ if(EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?/.test(g))return 'series';
+ if(/filmes?|movies?|\bvod\b|cine|lan[cç]amentos?/.test(g))return 'movie';return 'tv'};
+const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,3}.*$|\s*[-–]?\s*\d{1,2}x\d{2,3}.*$/i,'').trim()||n;
 function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1];let cur=null;
  for(const raw of t.split(/\r?\n/)){const ln=raw.trim();
   if(ln.startsWith('#EXTINF')){const a=k=>(ln.match(new RegExp(k+'="([^"]*)"','i'))||[])[1]||'';cur={n:ln.slice(ln.lastIndexOf(',')+1).trim()||a('tvg-name'),l:a('tvg-logo'),g:a('group-title')||'Outros',id:a('tvg-id')}}
@@ -152,7 +159,7 @@ function fillNow(){G.querySelectorAll('.now').forEach(el=>{const x=epgOf(S.view[
 function view(){let a=S.tab=='fav'?S.items.filter(i=>S.fav.includes(i.u)):S.items.filter(i=>i.t==S.tab);
  if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);const q=S.q.toLowerCase();if(q)a=a.filter(i=>i.n.toLowerCase().includes(q));
  if(S.tab=='series'){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}a=[...m.values()]}return a}
-const card=(i,k)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"><div class="im"><span class="ph">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}" onerror="this.remove()">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
+const card=(i,k)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}" onerror="this.remove()">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
  const c=['Todos',...new Set(S.items.filter(i=>S.tab=='fav'||i.t==S.tab).map(i=>i.g))].slice(0,400);
  $('#chips').hidden=S.tab=='fav';$('#chips').innerHTML=c.map(x=>`<button class="chip ${x==S.cat?'on':''}" data-c="${esc(x)}">${esc(x)}</button>`).join('')}
@@ -186,6 +193,10 @@ $('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar list
  $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=LS.asc_epg;e?loadEPG(e):toast('Informe o link do EPG ao carregar a lista.')};
  $('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');$('#sheet').hidden=true;render()}};
 
+/* ---------- Orientação ---------- */
+const CP=(window.Capacitor&&Capacitor.Plugins)||{};
+const ori=o=>{try{if(CP.ScreenOrientation)CP.ScreenOrientation.lock({orientation:o}).catch(()=>{});else if(screen.orientation&&screen.orientation.lock){const q=screen.orientation.lock(o);q&&q.catch&&q.catch(()=>{})}}catch{}};
+const bars=h=>{try{CP.StatusBar&&(h?CP.StatusBar.hide():CP.StatusBar.show())}catch{}};
 /* ---------- Player ---------- */
 let hls,cur,zap=[],ht;const P=$('#player');
 const posAll=()=>jg('asc_pos',{});
@@ -195,7 +206,7 @@ function src(u){if(hls){hls.destroy();hls=null}
  const go=()=>{if(window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){hls=new Hls({maxBufferLength:20,enableWorker:true});hls.loadSource(u);hls.attachMedia(V);
    hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){hls.destroy();hls=null;V.src=u;V.play().catch(()=>{})}})}else V.src=u;V.play().catch(()=>{})};
  if(window.Hls)go();else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js';s.onload=go;s.onerror=go;document.head.append(s)}}
-function play(it,list){cur=it;zap=list&&list.length?list:[it];P.hidden=false;$('#pt').textContent=it.n;const tv=it.t=='tv';
+function play(it,list){cur=it;ori('landscape');bars(true);zap=list&&list.length?list:[it];P.hidden=false;$('#pt').textContent=it.n;const tv=it.t=='tv';
  $('#pv').textContent=tv?'◀ Canal':'◀ −10s';$('#nx').textContent=tv?'Canal ▶':'+10s ▶';$('#pf').textContent=S.fav.includes(it.u)?'★':'☆';
  src(it.u);epgBar();ui();const p=posAll()[it.u];if(p&&!tv)V.addEventListener('loadedmetadata',()=>V.currentTime=p,{once:true});$('#pp').focus()}
 const step=d=>{if(cur.t=='tv'){const i=(zap.indexOf(cur)+d+zap.length)%zap.length;play(zap[i],zap)}else V.currentTime+=10*d};
@@ -204,7 +215,7 @@ $('#pp').onclick=()=>V.paused?V.play():V.pause();
 V.onplay=()=>$('#pp').textContent='Pausar';V.onpause=()=>{$('#pp').textContent='Continuar';ui()};
 $('#pf').onclick=()=>{const i=S.fav.indexOf(cur.u);i<0?S.fav.push(cur.u):S.fav.splice(i,1);LS.asc_fav=JSON.stringify(S.fav);$('#pf').textContent=i<0?'★':'☆'};
 $('#fs').onclick=()=>document.fullscreenElement?document.exitFullscreen():P.requestFullscreen&&P.requestFullscreen();
-const close=()=>{if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;if(S.tab=='fav')render()};
+const close=()=>{ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;if(S.tab=='fav')render()};
 $('#bk').onclick=close;
 P.addEventListener('pointerdown',e=>{if(e.target===V){P.classList.contains('h')?ui():P.classList.add('h')}else ui()});
 let sv=0;V.ontimeupdate=()=>{if(cur&&cur.t!='tv'&&Date.now()-sv>5e3){sv=Date.now();const p=posAll();p[cur.u]=V.currentTime;LS.asc_pos=JSON.stringify(p)}};
@@ -230,7 +241,7 @@ function nvg(e,root){if(e.target.tagName=='INPUT'&&['ArrowLeft','ArrowRight'].in
  e.preventDefault();if(best){best.focus();best.scrollIntoView({block:'nearest',inline:'nearest'})}}
 
 /* ---------- Início ---------- */
-function setDev(d){S.dev=d;LS.asc_dev=d;document.body.className=d}
+function setDev(d){S.dev=d;LS.asc_dev=d;document.body.className=d=='tv'?'tv':'mob';ori(d=='tv'?'landscape':'portrait')}
 document.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{setDev(b.dataset.d);const t=await kv('get','pl');t&&S.items.length?(show('app'),render()):t?useList(t):show('add')});
 $('#go').onclick=async()=>{const u=$('#u').value.trim(),st=$('#st');if(!u)return st.textContent='Cole o link da lista.';LS.asc_epg=$('#e').value.trim();st.textContent='Carregando…';
  try{const r=await fetch(u);if(!r.ok)throw 0;await useList(await r.text())}catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
