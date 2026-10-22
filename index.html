@@ -72,14 +72,38 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 #lv{display:flex;align-items:center;gap:.5em;font-weight:700;font-size:.85em;padding:.5em 0}.dot{width:.7em;height:.7em;border-radius:50%;background:#ff2a3d;box-shadow:0 0 8px #ff2a3d}
 #pt{font-size:1.05em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#pe{font-size:.8em;color:#d8d8dc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .catb{margin:.3em 1em;display:inline-flex;align-items:center;gap:.5em;align-self:flex-start;max-width:calc(100% - 2em)}.catb span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dt{display:flex;gap:1em}.dt img{width:7em;aspect-ratio:2/3;object-fit:cover;border-radius:12px;flex:none}.sy{color:#cfc7ca;font-size:.9em;margin-top:.5em;max-height:10em;overflow:auto}
+.dt{display:flex;gap:1em}.dt img{width:7em;aspect-ratio:2/3;object-fit:cover;border-radius:12px;flex:none}.sy{color:#cfc7ca;font-size:.9em;margin-top:.5em;max-height:5.5em;overflow:auto}
 #toast{position:fixed;left:50%;bottom:6em;transform:translateX(-50%);background:#2b1115;border:1px solid var(--r);padding:.7em 1.1em;border-radius:12px;z-index:60;max-width:90%}
 .empty{grid-column:1/-1;text-align:center;color:var(--m);padding:3em 1em}
-#home{display:flex;flex-direction:column;gap:1.1em}
-.sx{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:0 .2em .5em}.sx h2{font-size:1.1em;font-weight:800}
-.rail{display:flex;gap:.9em;overflow-x:auto;margin:0 -1em;padding:.2em 1em .8em;scrollbar-width:none;overscroll-behavior-x:contain}
-.rail::-webkit-scrollbar{display:none}.rail .card{flex:none;width:9em}.rail .card.tv{width:13em}
-body.tv .rail .card{width:10.5em}body.tv .rail .card.tv{width:15em}
+#home{flex:1;min-height:0;display:flex;flex-direction:column;gap:.5em}
+main.hm{overflow:hidden;display:flex;flex-direction:column}main.hm #more{display:none}
+body.tv main.hm{padding-bottom:1em}
+.sec{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+.sub{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+.sub small{color:var(--m);font-size:.7em;padding:0 .3em}
+.sx{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:0 .2em .2em}.sx h2{font-size:1em;font-weight:800}
+.sx .chip{padding:.15em .8em;font-size:.8em}
+.rail{flex:1;min-height:0;display:flex;align-items:stretch;gap:.7em;overflow-x:auto;overflow-y:hidden;margin:0 -1em;padding:.1em 1em .2em;scrollbar-width:none;overscroll-behavior-x:contain}
+.rail::-webkit-scrollbar{display:none}
+.rail .card{flex:none;aspect-ratio:.62}.rail .card.tv{aspect-ratio:1.5}
+.rail .card .im{flex:1;min-height:0;aspect-ratio:auto}
+.rail .card b{font-size:.75em;padding:.3em .5em .15em;-webkit-line-clamp:1}
+.rail .card:not(.tv) b{padding-bottom:.4em}
+.rail .card .now{padding:0 .5em .3em;min-height:0}
+.rail .card.vm{background:linear-gradient(160deg,#3b0b11,#1a1618);align-items:center;justify-content:center;gap:.3em;font-weight:700;font-size:.8em;text-align:center;border:1px dashed rgba(255,255,255,.25)}
+.sbar{display:flex;gap:.5em}.sbar #sb{flex:1;justify-content:space-between}
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(5.5em,1fr));gap:.4em}
+.sg .btn{justify-content:center!important;padding:.5em}
+.eg{display:grid;grid-template-columns:repeat(auto-fill,minmax(3.3em,1fr));gap:.4em}
+.ep{border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);border-radius:10px;padding:.55em 0;cursor:pointer;font-weight:700;text-align:center}
+.ep.dn{background:#f5c518;color:#2a2000;border-color:transparent}
+.ep.pg{background:#22c55e;color:#04210f;border-color:transparent}
+.ep.nx{outline:2px solid #fff}
+.lg{font-size:.72em;color:var(--m);display:flex;gap:1em}.lg i{display:inline-block;width:.8em;height:.8em;border-radius:3px;margin-right:.3em;vertical-align:-.1em}
+.btn.fv.on svg{fill:currentColor;color:#ff4d5e}
+#epg{align-self:flex-start;max-width:min(34em,100%);background:rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:.6em .9em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+#epg div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#epg .n{font-weight:700}#epg .x{font-size:.85em;color:#e4e0e1}#epg .bar{margin:.35em 0}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute"><defs>
@@ -141,7 +165,7 @@ body.tv .rail .card{width:10.5em}body.tv .rail .card.tv{width:15em}
  <div id="sp"><svg viewBox="0 0 50 50"><defs><linearGradient id="sg"><stop offset="0" stop-color="#e50914"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><circle cx="25" cy="25" r="20" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="80 60"/></svg></div>
  <div class="ov" id="ot"><button class="gb" id="bk"><svg class="i"><use href="#back"/></svg></button><div style="flex:1;min-width:0"><b id="pt"></b><div id="pe"></div></div><button class="gb" id="fit"><svg class="i"><use href="#fit"/></svg></button><button class="gb" id="pf"><svg class="i"><use href="#star"/></svg></button></div>
  <div class="ov" id="om"><button class="gb" id="pv"><svg class="i"><use href="#rw10"/></svg></button><button class="gb big" id="pp"><svg class="i"><use href="#pause"/></svg></button><button class="gb" id="nx"><svg class="i"><use href="#fw10"/></svg></button></div>
- <div class="ov" id="ob"><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
+ <div class="ov" id="ob"><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="epg" hidden></div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
 </div>
 
 <script>
@@ -170,7 +194,7 @@ function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text){const{out,tvg}=parse(text);if(!out.length)return $('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';
- await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();const e=LS.asc_epg||tvg;if(e)loadEPG(e);rate().then(()=>{if(S.tab=='home'&&!S.q.trim())home()})}
+ await kv('put','pl',text);S.items=out;S._sg=null;S.cat='Todos';S.tab='home';show('app');nav();render();const e=LS.asc_epg||tvg;if(e)loadEPG(e)}
 
 /* ---------- EPG (XMLTV) ---------- */
 const dec=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
@@ -181,7 +205,7 @@ async function loadEPG(url){try{let r=await fetch(url);let t;
   for(const m of t.matchAll(/<channel id="([^"]+)">([\s\S]*?)<\/channel>/g)){for(const n of m[2].matchAll(/<display-name[^>]*>([^<]+)/g))A[dec(n[1]).toLowerCase()]=m[1].toLowerCase()}
   for(const m of t.matchAll(/<programme start="(\d{14}) ?([+-]\d{4})?" stop="(\d{14}) ?([+-]\d{4})?" channel="([^"]*)"[^>]*>\s*<title[^>]*>([^<]*)/g)){
    const s=ms(m[1],m[2]),e=ms(m[3],m[4]);if(e<now||s>lim)continue;(E[m[5].toLowerCase()]||=[]).push({s,e,t:dec(m[6])})}
-  S.epg=E;S.al=A;fillNow();toast('Guia de programação carregado')}catch{toast('Não foi possível carregar o EPG (bloqueio do servidor ou link inválido).')}}
+  S.epg=E;S.al=A;fillNow();if(!P.hidden&&cur&&live())epgBar();toast('Guia de programação carregado')}catch{toast('Não foi possível carregar o EPG (bloqueio do servidor ou link inválido).')}}
 function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]];if(!l)return null;const n=Date.now();
  const i=l.findIndex(p=>p.s<=n&&n<p.e);return i<0?null:{p:l[i],nx:l[i+1]}}
 const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -191,7 +215,8 @@ function fillNow(){document.querySelectorAll('.card.tv .now').forEach(el=>{const
 function grp(a){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}return[...m.values()]}
 function view(){const q=nz(S.q.trim());
  if(S.tab=='home'){if(!q)return[];const r=S.items.filter(i=>i.k.includes(q));return[...r.filter(i=>i.t!='series'),...grp(r.filter(i=>i.t=='series'))]}
- let a=S.tab=='fav'?S.items.filter(i=>S.fav.includes(i.u)):S.items.filter(i=>i.t==S.tab);
+ if(S.tab=='fav'){let f=[...S.items.filter(i=>i.t!='series'&&S.fav.includes(i.u)),...sgrp().filter(g=>S.fav.includes('S:'+g.n))];if(q)f=f.filter(i=>nz(i.n).includes(q));return f}
+ let a=S.items.filter(i=>i.t==S.tab);
  if(q)a=a.filter(i=>i.k.includes(q));else if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);
  if(S.tab=='series')a=grp(a);return a}
 const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}" onerror="this.remove()">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
@@ -199,39 +224,33 @@ const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dat
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
  const dd=S.tab=='tv'||S.tab=='movie'||S.tab=='series';$('#catb').hidden=!dd;$('#cl').textContent=S.cat=='Todos'?'Todas as categorias':S.cat}
 function render(){S.view=view();S.pos=0;G.innerHTML='';$('#main').scrollTop=0;
- const ih=S.tab=='home'&&!S.q.trim();G.hidden=ih;$('#home').hidden=!ih;if(ih)return home();
+ const ih=S.tab=='home'&&!S.q.trim();G.hidden=ih;$('#main').classList.toggle('hm',ih);$('#home').hidden=!ih;if(ih)return home();
  if(!S.view.length)G.innerHTML='<div class="empty">Nada por aqui ainda.</div>';else more()}
 function more(){if(S.pos>=S.view.length)return;const e=Math.min(S.pos+60,S.view.length);let h='';for(let k=S.pos;k<e;k++)h+=card(S.view[k],k);S.pos=e;G.insertAdjacentHTML('beforeend',h);fillNow()}
 new IntersectionObserver(e=>e[0].isIntersecting&&more(),{rootMargin:'600px'}).observe($('#more'));
 
-/* ---------- Início: indicações e Canal do cliente ---------- */
-const HEUR=/lan[cç]amento|novidade|recomend|destaque|estreia|cinema|\btop\b|202[4-9]/i;
-const mb=a=>function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+/* ---------- Início: favoritos, ao vivo, filmes e séries ---------- */
 const sgrp=()=>S._sg||(S._sg=grp(S.items.filter(i=>i.t=='series')));
-function pick(a,n,sc){const L=a.filter(x=>x.l),b=L.length>=n?L:a,R=mb(+new Date().toISOString().slice(0,10).replace(/-/g,''));
- return b.map(x=>({x,s:(sc&&sc(x)||0)+(HEUR.test(x.g)?2:0)+R()*2})).sort((p,q)=>q.s-p.s).slice(0,n).map(o=>o.x)}
-const mid=u=>(u.match(/\/movie\/[^/]+\/[^/]+\/(\d+)/)||[])[1];
-const recM=()=>pick(S.items.filter(i=>i.t=='movie'),20,x=>S.rt?S.rt.m.get(mid(x.u))||0:0);
-const recS=()=>pick(sgrp(),20,x=>S.rt?S.rt.s.get(nz(x.n))||0:0);
 function ccNames(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))],sel=LS.asc_cc;
  if(sel&&sel!='auto'&&g.includes(sel))return[sel];
  let m=g.filter(x=>/cliente/i.test(x));if(!m.length)m=g.filter(x=>/jogos?\b|jogo do dia|eventos?|ppv|futebol/i.test(x));return m}
 const clientCh=()=>{const n=ccNames();return S.items.filter(i=>i.t=='tv'&&n.includes(i.g)).slice(0,80)};
-const rail=(id,t,l,go,cat)=>l.length?`<section class="sec"><div class="sx"><h2>${esc(t)}</h2><button class="chip" data-go="${go}"${cat?` data-cat="${esc(cat)}"`:''}>Ver tudo ›</button></div><div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}</div></section>`:'';
-function home(){const c=clientCh(),n=ccNames();S.rails={m:recM(),s:recS(),c};
- let h=rail('m','Indicações de filmes',S.rails.m,'movie')+rail('s','Indicações de séries',S.rails.s,'series');
- h+=c.length?rail('c','Canal do cliente',c,'tv',n.length==1?n[0]:''):'<section class="sec"><div class="sx"><h2>Canal do cliente</h2></div><button class="btn" id="pickcc">Escolher a categoria dos jogos do dia</button></section>';
- $('#home').innerHTML=h||'<div class="empty">Nada por aqui ainda.</div>';fillNow()}
+const favItems=()=>({tv:S.items.filter(i=>i.t=='tv'&&S.fav.includes(i.u)),movie:S.items.filter(i=>i.t=='movie'&&S.fav.includes(i.u)),series:sgrp().filter(g=>S.fav.includes('S:'+g.n))});
+const vmCard=go=>`<div class="card vm" tabindex="0" data-go="${go}"><svg class="i" style="transform:rotate(-90deg)"><use href="#chev"/></svg>Ver mais</div>`;
+const rail=(id,l,go)=>`<div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}${go?vmCard(go):''}</div>`;
+function home(){const t=S.items.filter(i=>i.t=='tv'),c=clientCh().slice(0,10),lv=[...c,...t.filter(x=>!c.includes(x))].slice(0,10),
+ mv=S.items.filter(i=>i.t=='movie'),sg=sgrp(),F=favItems(),
+ ft=[['tv','Canais'],['movie','Filmes'],['series','Séries']].filter(([k])=>F[k].length);
+ S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10)};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
+ let h=ft.length?`<section class="sec" style="flex:${ft.length} 1 0"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
+  :'<section><div class="sx"><h2>Favoritos</h2></div></section>';
+ h+=[['tv','Ao vivo',lv,t.length],['movie','Filmes',S.rails.movie,mv.length],['series','Séries',S.rails.series,sg.length]]
+  .map(([k,n,l,tot])=>l.length?`<section class="sec"><div class="sx"><h2>${n}</h2><button class="chip" data-go="${k}">Ver mais ›</button></div>${rail(k,l,tot>l.length?k:'')}</section>`:'').join('');
+ $('#home').innerHTML=h;fillNow()}
 function pickCC(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))];
  sh('<b>Categoria do Canal do cliente</b><button class="btn" data-g="auto">Automático</button>'+g.map(x=>`<button class="btn" data-g="${esc(x)}">${esc(x)}</button>`).join(''));
- $('#sh').onclick=e=>{const b=e.target.closest('[data-g]');if(b){LS.asc_cc=b.dataset.g;$('#sheet').hidden=true;if(S.tab=='home'&&!S.q.trim())home()}}}
-async function rate(){const A=xapi();if(!A)return;
- try{const c=await kv('get','rt');if(c&&c.u==A&&Date.now()-c.t<432e5){S.rt={m:new Map(c.m),s:new Map(c.s)};return}
-  const[v,l]=await Promise.all([fetch(A+'&action=get_vod_streams').then(r=>r.json()),fetch(A+'&action=get_series').then(r=>r.json())]);
-  const now=Date.now()/1e3,bn=a=>{a=+a;return a>0?Math.max(0,2-(now-a)/31536e3):0},m=new Map(),s=new Map();
-  for(const x of v){const r=+x.rating||0;if(r>0)m.set(String(x.stream_id),r+bn(x.added))}
-  for(const x of l){const r=+x.rating||0;if(r>0)s.set(nz(title(x.name||'')),r+bn(x.last_modified))}
-  S.rt={m,s};kv('put','rt',{t:Date.now(),u:A,m:[...m],s:[...s]})}catch{}}
+ $('#sh').onclick=e=>{const b=e.target.closest('[data-g]');if(b){LS.asc_cc=b.dataset.g;$('#sheet').hidden=true;refresh()}}}
+const refresh=()=>{if(S.tab=='home'&&!S.q.trim())home();else if(S.tab=='fav')render()};
 const H=$('#home');
 H.onclick=e=>{const g=e.target.closest('[data-go]');if(g){S.tab=g.dataset.go;S.cat=g.dataset.cat||'Todos';nav();render();return}
  if(e.target.closest('#pickcc'))return pickCC();
@@ -265,18 +284,41 @@ async function meta(it,isS){const A=xapi();if(!A)return;
   const x=(await gs()).get(nz(it.n));return x&&{p:x.plot,m:[x.genre,(x.releaseDate||x.release_date||'').slice(0,4),x.rating&&'★ '+x.rating].filter(Boolean).join(' • ')}}catch{}}
 const hdr=it=>`<div class="dt">${it.l?`<img src="${esc(it.l)}" onerror="this.remove()">`:''}<div><b>${esc(it.n)}</b><small style="display:block;color:#a39a9d">${esc(it.g)}</small><small id="my" style="color:#a39a9d"></small><p class="sy" id="sy">${esc(it.p||'Sem sinopse disponível.')}</p></div></div>`;
 async function fillMeta(it,s){const x=await meta(it,s);if(x&&$('#sy')){if(x.p)$('#sy').textContent=x.p;if(x.m)$('#my').textContent=x.m}}
-function info(it){sh(hdr(it)+`<button class="btn p" id="i1">Assistir</button><button class="btn" id="i2">${S.fav.includes(it.u)?'Remover dos favoritos':'Adicionar aos favoritos'}</button>`);
- $('#i1').onclick=()=>{$('#sheet').hidden=true;play(it,[it])};$('#i2').onclick=()=>{fav(it.u);$('#sheet').hidden=true};fillMeta(it,0)}
-function eps(s){const m={};for(const e of s.eps){const k=(e.n.match(/[ST](\d{1,2})\s?E/i)||e.n.match(/(\d{1,2})x\d/)||[])[1]||'1';(m[+k]||=[]).push(e)}
- sh(hdr(s)+Object.keys(m).sort((a,b)=>a-b).map(k=>`<small style="color:#a39a9d">Temporada ${k}</small>`+m[k].map(e=>`<button class="btn" data-u="${esc(e.u)}">${esc(e.n)}</button>`).join('')).join(''));
- $('#sh').onclick=e=>{const b=e.target.closest('[data-u]');if(b){$('#sheet').hidden=true;play(s.eps.find(x=>x.u==b.dataset.u),s.eps)}};fillMeta(s,1)}
+/* progresso: asc_pos[u]={t,d,done}; asc_last[serie]=url do ultimo episodio visto */
+const favK=it=>it.t=='series'?'S:'+(it.eps?it.n:title(it.n)):it.u;
+const prog=u=>{const p=jg('asc_pos',{})[u];return typeof p=='number'?{t:p,d:0}:p||null};
+const fin=p=>!!p&&p.d>0&&p.t/p.d>=.92;
+const isPart=u=>{const p=prog(u);return !!p&&p.t>10&&!fin(p)};
+const isDone=u=>{const p=prog(u);return !!p&&(!!p.done||fin(p))};
+const epn=e=>{const m=e.n.match(/[ST]\d{1,2}\s?E(\d{1,3})/i)||e.n.match(/\d{1,2}x(\d{2,3})/);return m?+m[1]:0};
+const seas=e=>+((e.n.match(/[ST](\d{1,2})\s?E/i)||e.n.match(/(\d{1,2})x\d/)||[])[1]||1);
+function resume(it,list){const p=prog(it.u);if(!isPart(it.u))return play(it,list,0);
+ sh(`<b>${esc(it.n)}</b><button class="btn p" id="r1">Continuar de ${fmt(p.t)}</button><button class="btn" id="r2">Assistir do começo</button>`);
+ $('#r1').onclick=()=>{$('#sheet').hidden=true;play(it,list,p.t)};$('#r2').onclick=()=>{$('#sheet').hidden=true;play(it,list,0)}}
+function info(it){const p=prog(it.u),rs=isPart(it.u),k=favK(it);
+ sh(hdr(it)+(rs?`<button class="btn p" id="i1">Continuar de ${fmt(p.t)}</button><button class="btn" id="i3">Assistir do começo</button>`:`<button class="btn p" id="i1">Assistir</button>`)+`<button class="btn" id="i2">${S.fav.includes(k)?'Remover dos favoritos':'Adicionar aos favoritos'}</button>`);
+ $('#i1').onclick=()=>{$('#sheet').hidden=true;play(it,[it],rs?p.t:0)};
+ if(rs)$('#i3').onclick=()=>{$('#sheet').hidden=true;play(it,[it],0)};
+ $('#i2').onclick=()=>{fav(k);$('#sheet').hidden=true;refresh()};fillMeta(it,0)}
+function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
+ const ks=Object.keys(m).map(Number).sort((a,b)=>a-b);ks.forEach(k=>m[k].sort((a,b)=>epn(a)-epn(b)));
+ const flat=ks.flatMap(k=>m[k]),L=jg('asc_last',{})[s.n];let t=L&&flat.find(e=>e.u==L),nx=null;
+ if(t&&isDone(t.u)&&!isPart(t.u)){const j=flat.indexOf(t)+1;if(flat[j]){t=flat[j];nx=t}}
+ let cs=t?seas(t):ks[0];const fk=favK(s);
+ sh(hdr(s)+`<div class="sbar"><button class="btn" id="sb"><span id="sbt"></span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button><button class="btn fv${S.fav.includes(fk)?' on':''}" id="sf"><svg class="i"><use href="#star"/></svg></button></div><div class="sg" id="sl" hidden>${ks.map(k=>`<button class="btn" data-s="${k}">Temporada ${k}</button>`).join('')}</div><div class="eg" id="eg"></div><div class="lg"><span><i style="background:#f5c518"></i>Assistido</span><span><i style="background:#22c55e"></i>Parei aqui</span></div>`);
+ const draw=()=>{$('#sbt').textContent='Temporada '+cs;$('#sl').hidden=true;$('#eg').innerHTML=m[cs].map((e,i)=>{const c=isPart(e.u)?'pg':isDone(e.u)?'dn':nx&&e===nx?'nx':'';return`<button class="ep ${c}" data-u="${esc(e.u)}" title="${esc(e.n)}">${epn(e)||i+1}</button>`}).join('')};draw();
+ $('#sh').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.id=='sb')$('#sl').hidden=!$('#sl').hidden;
+  else if(b.id=='sf'){b.classList.toggle('on',fav(fk));refresh()}
+  else if(b.dataset.s){cs=+b.dataset.s;draw()}
+  else if(b.dataset.u){$('#sheet').hidden=true;resume(flat.find(x=>x.u==b.dataset.u),flat)}};fillMeta(s,1)}
 $('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}
  sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
  $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
 $('#cfg').onclick=()=>{sh(`<b>Ajustes</b><button class="btn" id="a1">Trocar lista M3U</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a4">Limpar favoritos e progresso</button>`);
  $('#a1').onclick=()=>{$('#sheet').hidden=true;show('add')};$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
  $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=LS.asc_epg;e?loadEPG(e):toast('Informe o link do EPG ao carregar a lista.')};
- $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');$('#sheet').hidden=true;render()}};
+ $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];LS.removeItem('asc_fav');LS.removeItem('asc_pos');LS.removeItem('asc_last');$('#sheet').hidden=true;render()}};
 
 /* ---------- Orientação / tela cheia ---------- */
 const CP=(window.Capacitor&&Capacitor.Plugins)||{};
@@ -291,35 +333,39 @@ const fmt=t=>{if(!isFinite(t))return'0:00';t=Math.floor(t);const h=Math.floor(t/
 const ic=(id,n)=>$(id).querySelector('use').setAttribute('href','#'+n);
 const live=()=>cur&&cur.t=='tv',spin=on=>$('#sp').hidden=!on,posAll=()=>jg('asc_pos',{});
 function ui(){P.classList.remove('h');clearTimeout(ht);ht=setTimeout(()=>!V.paused&&!dr&&P.classList.add('h'),3500)}
-function epgBar(){const x=epgOf(cur);$('#pe').textContent=x?`${x.p.t} • ${hm(x.p.s)}–${hm(x.p.e)}`+(x.nx?`  |  A seguir: ${x.nx.t}`:''):cur.g||''}
+function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').textContent=cur.g||'';E.hidden=!lv;if(!lv)return;
+ E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
+function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=jg('asc_pos',{}),o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done))};LS.asc_pos=JSON.stringify(p)}
 function src(u){if(hls){hls.destroy();hls=null}
  const go=()=>{if(window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){hls=new Hls({maxBufferLength:20,enableWorker:true});hls.loadSource(u);hls.attachMedia(V);
    hls.on(Hls.Events.ERROR,(_,d)=>{if(d.fatal){hls.destroy();hls=null;V.src=u;V.play().catch(()=>{})}})}else V.src=u;V.play().catch(()=>{})};
  if(window.Hls)go();else{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js';s.onload=go;s.onerror=go;document.head.append(s)}}
-function play(it,list){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
+function play(it,list,from){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
  $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;$('#sk').hidden=tv;$('#tm').hidden=tv;
  $('#pr').style.width=$('#bf').style.width='0';$('#th').style.left='0';$('#t1').textContent=$('#t2').textContent='0:00';
- $('#pf').classList.toggle('on',S.fav.includes(it.u));spin(true);src(it.u);epgBar();ui();
- const p=posAll()[it.u];if(p&&!tv)V.addEventListener('loadedmetadata',()=>V.currentTime=p,{once:true});
+ $('#pf').classList.toggle('on',S.fav.includes(favK(it)));spin(true);src(it.u);epgBar();ui();
+ if(it.t=='series'){const L=jg('asc_last',{});L[title(it.n)]=it.u;LS.asc_last=JSON.stringify(L)}
+ if(from>0&&!tv)V.addEventListener('loadedmetadata',()=>V.currentTime=from,{once:true});
  if(document.activeElement)document.activeElement.blur()}
 const step=d=>{if(live()){const i=(zap.indexOf(cur)+d+zap.length)%zap.length;play(zap[i],zap)}else V.currentTime=Math.max(0,Math.min(V.duration||1e9,V.currentTime+10*d))};
 const tog=()=>V.paused?V.play().catch(()=>{}):V.pause();
 $('#pv').onclick=()=>step(-1);$('#nx').onclick=()=>step(1);$('#pp').onclick=tog;
-$('#pf').onclick=()=>$('#pf').classList.toggle('on',fav(cur.u));
+$('#pf').onclick=()=>$('#pf').classList.toggle('on',fav(favK(cur)));
 V.onplay=()=>ic('#pp','pause');V.onpause=()=>{ic('#pp','play');ui()};
 V.onloadstart=V.onwaiting=()=>spin(true);V.onplaying=V.oncanplay=()=>spin(false);
-V.onended=()=>{if(!live()){const i=zap.indexOf(cur);if(zap[i+1])play(zap[i+1],zap)}};
+V.onended=()=>{if(!live()){saveP(1);const i=zap.indexOf(cur);if(zap[i+1])play(zap[i+1],zap)}};
 V.onerror=()=>{spin(false);toast('Falha ao reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.')};
 V.onprogress=()=>{if(V.duration&&V.buffered.length)$('#bf').style.width=V.buffered.end(V.buffered.length-1)/V.duration*100+'%'};
 let sv=0;V.ontimeupdate=()=>{if(!cur||live())return;const d=V.duration||0,t=V.currentTime;
  if(!dr){$('#pr').style.width=$('#th').style.left=d?t/d*100+'%':'0';$('#t1').textContent=fmt(t)}$('#t2').textContent=fmt(d);
- if(Date.now()-sv>5e3){sv=Date.now();const p=posAll();p[cur.u]=t;LS.asc_pos=JSON.stringify(p)}};
+ if(Date.now()-sv>5e3){sv=Date.now();saveP()}};
 const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));$('#pr').style.width=$('#th').style.left=f*100+'%';$('#t1').textContent=fmt(f*(V.duration||0));return f};
 sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
 sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};
 sk.onpointerup=e=>{if(dr){const f=seekTo(e);dr=0;if(V.duration)V.currentTime=f*V.duration;ui()}};
-const close=pop=>{ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav')render();if(pop!==1&&history.state&&history.state.p)history.back()};
+const close=pop=>{saveP();ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav'||S.tab=='home')render();if(pop!==1&&history.state&&history.state.p)history.back()};
 $('#bk').onclick=()=>close();
+setInterval(()=>{if(!P.hidden&&cur&&live())epgBar()},3e4);
 addEventListener('popstate',()=>{if(!P.hidden)close(1)});
 const fitSet=m=>{V.style.objectFit=m;$('#fit').classList.toggle('on',m=='cover');LS.asc_fit=m};
 $('#fit').onclick=()=>fitSet(V.style.objectFit=='cover'?'contain':'cover');fitSet(LS.asc_fit=='cover'?'cover':'contain');
