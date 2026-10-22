@@ -78,16 +78,16 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 #home{flex:1;min-height:0;display:flex;flex-direction:column;gap:.5em}
 main.hm{overflow:hidden;display:flex;flex-direction:column}main.hm #more{display:none}
 body.tv main.hm{padding-bottom:1em}
-.sec{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
-.sub{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+.sec{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
+.sub{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
 .sub small{color:var(--m);font-size:.7em;padding:0 .3em}
 .sx{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:0 .2em .2em}.sx h2{font-size:1em;font-weight:800}
 .sx .chip{padding:.15em .8em;font-size:.8em}
-.rail{flex:1;min-height:0;display:flex;align-items:stretch;gap:.7em;overflow-x:auto;overflow-y:hidden;margin:0 -1em;padding:.1em 1em .2em;scrollbar-width:none;overscroll-behavior-x:contain}
+.rail{flex:0 1 min(9.5em,20dvh);min-height:4.5em;display:flex;align-items:stretch;gap:.7em;overflow-x:auto;overflow-y:hidden;margin:0 -1em;padding:.1em 1em .2em;scrollbar-width:none;overscroll-behavior-x:contain}
 .rail::-webkit-scrollbar{display:none}
-.rail .card{flex:none;aspect-ratio:.62}.rail .card.tv{aspect-ratio:1.5}
+.rail .card{flex:none;aspect-ratio:.62}.rail .card.tv{aspect-ratio:1.35}
 .rail .card .im{flex:1;min-height:0;aspect-ratio:auto}
-.rail .card b{font-size:.75em;padding:.3em .5em .15em;-webkit-line-clamp:1}
+.rail .card b{font-size:.75em;padding:.3em .5em .15em;display:block;flex:none;white-space:nowrap;text-overflow:ellipsis}
 .rail .card:not(.tv) b{padding-bottom:.4em}
 .rail .card .now{padding:0 .5em .3em;min-height:0}
 .rail .card.vm{background:linear-gradient(160deg,#3b0b11,#1a1618);align-items:center;justify-content:center;gap:.3em;font-weight:700;font-size:.8em;text-align:center;border:1px dashed rgba(255,255,255,.25)}
@@ -114,7 +114,7 @@ body.tv main.hm{padding-bottom:1em}
 <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
 <symbol id="phone" viewBox="0 0 24 24"><path d="M7 2h10v20H7zM11 19h2"/></symbol>
 <symbol id="fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
-<symbol id="home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
+<symbol id="ihome" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
 <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
 <symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
 <symbol id="play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
@@ -149,7 +149,7 @@ body.tv main.hm{padding-bottom:1em}
  <button class="chip catb" id="catb" hidden><span id="cl">Todas as categorias</span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button>
  <main id="main"><div id="home" hidden></div><div id="grid"></div><div id="more" style="height:1px"></div></main>
  <nav>
-  <button data-t="home"><svg class="i"><use href="#home"/></svg>Início</button>
+  <button data-t="home"><svg class="i"><use href="#ihome"/></svg>Início</button>
   <button data-t="tv"><svg class="i"><use href="#tv"/></svg>Canais</button>
   <button data-t="movie"><svg class="i"><use href="#film"/></svg>Filmes</button>
   <button data-t="series"><svg class="i"><use href="#series"/></svg>Séries</button>
@@ -242,7 +242,7 @@ function home(){const t=S.items.filter(i=>i.t=='tv'),c=clientCh().slice(0,10),lv
  mv=S.items.filter(i=>i.t=='movie'),sg=sgrp(),F=favItems(),
  ft=[['tv','Canais'],['movie','Filmes'],['series','Séries']].filter(([k])=>F[k].length);
  S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10)};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
- let h=ft.length?`<section class="sec" style="flex:${ft.length} 1 0"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
+ let h=ft.length?`<section class="sec"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
   :'<section><div class="sx"><h2>Favoritos</h2></div></section>';
  h+=[['tv','Ao vivo',lv,t.length],['movie','Filmes',S.rails.movie,mv.length],['series','Séries',S.rails.series,sg.length]]
   .map(([k,n,l,tot])=>l.length?`<section class="sec"><div class="sx"><h2>${n}</h2><button class="chip" data-go="${k}">Ver mais ›</button></div>${rail(k,l,tot>l.length?k:'')}</section>`:'').join('');
