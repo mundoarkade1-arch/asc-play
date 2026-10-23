@@ -19,7 +19,24 @@ jobs:
         with: {distribution: temurin, java-version: 17}
       - name: Informar o repositorio ao app (para checar atualizacoes)
         run: sed -i "s#__REPO__#${{ github.repository }}#g" www/index.html
-      - run: npm install
+      - name: Instalar dependencias (versoes travadas pelo package-lock.json)
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            echo "::warning::package-lock.json nao existe ainda: gerando agora."
+            npm install
+          fi
+      - name: Salvar package-lock.json no repositorio (so na primeira vez)
+        if: github.ref_name == 'main'
+        run: |
+          if ! git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "Adiciona package-lock.json"
+            git push || echo "::warning::Nao consegui salvar o package-lock.json (tente rodar o workflow de novo)."
+          fi
       - run: npx cap add android
       - run: bash scripts/setup.sh
       - run: npx cap sync android
