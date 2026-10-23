@@ -266,11 +266,11 @@ const HC=lv=>({enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,cap
  levelLoadingTimeOut:8000,levelLoadingMaxRetry:4,levelLoadingRetryDelay:500,
  fragLoadingTimeOut:15000,fragLoadingMaxRetry:6,fragLoadingRetryDelay:400,fragLoadingMaxRetryTimeout:6000,
  abrEwmaDefaultEstimate:3e6,abrBandWidthFactor:.8,abrBandWidthUpFactor:.6});
-let hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
+let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 const lvU=u=>/\/live\/[^/]+\/[^/]+\/\d+\.ts(\?|$)/i.test(u)?u.replace(/\.ts(\?|$)/i,'.m3u8$1'):u;
-function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;
- const nativ=()=>{V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
+function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;viaNat=!!forceNat;
+ const nativ=()=>{viaNat=true;V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
  if(hls&&!fresh&&!forceNat&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
  if(hls){hls.destroy();hls=null}
  HL().then(()=>{if(g!=gen)return;
@@ -297,16 +297,16 @@ function tick(){if(P.hidden||!cur)return;if(UP&&V.paused)return;
  if(live()&&!started&&stuck==15)toast('Este canal está demorando para abrir…');
  if(stuck>=(started?(live()?4:6):(live()?8:12)))recover()}
 function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
- if(live()&&!started){spin(true);src(cur.u,0,1,n%2==1);return}
+ if(live()&&!started){spin(true);src(cur.u,0,1,!viaNat);return}
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
  if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
- src(cur.u,live()?0:V.currentTime,1)}
+ src(cur.u,live()?0:V.currentTime,1,viaNat&&live())}
 addEventListener('online',()=>{if(!P.hidden&&cur){rc=0;recover()}});
 function play(it,list,from){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
  $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;UP=false;$('#sk').hidden=tv;$('#tm').hidden=tv;
  $('#pr').style.width=$('#bf').style.width='0';$('#th').style.left='0';$('#t1').textContent=$('#t2').textContent='0:00';
- $('#pf').classList.toggle('on',S.fav.includes(favK(it)));spin(true);src(it.u);wdOn();epgBar();ui();
+ $('#pf').classList.toggle('on',S.fav.includes(favK(it)));spin(true);src(it.u,0,0,tv&&nat());wdOn();epgBar();ui();
  if(it.t=='series'){ST.last[title(it.n)]=it.u;saveState()}
  if(from>0&&!tv)V.addEventListener('loadedmetadata',()=>V.currentTime=from,{once:true});
  if(document.activeElement)document.activeElement.blur()}
