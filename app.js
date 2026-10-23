@@ -253,6 +253,7 @@ let hls,cur,zap=[],ht,dr=0,lt=0;const P=$('#player'),sk=$('#sk');
 const fmt=t=>{if(!isFinite(t))return'0:00';t=Math.floor(t);const h=Math.floor(t/3600),m=Math.floor(t%3600/60),q=String(t%60).padStart(2,'0');return h?`${h}:${String(m).padStart(2,'0')}:${q}`:`${m}:${q}`};
 const ic=(id,n)=>$(id).querySelector('use').setAttribute('href','#'+n);
 const live=()=>cur&&cur.t=='tv',spin=on=>$('#sp').hidden=!on;
+let dgT=0;const dbg=m=>{if(Date.now()-dgT<2500)return;dgT=Date.now();toast(m)};
 function ui(){P.classList.remove('h');clearTimeout(ht);ht=setTimeout(()=>!V.paused&&!dr&&P.classList.add('h'),3500)}
 function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').textContent=cur.g||'';E.hidden=!lv;if(!lv)return;
  E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
@@ -268,15 +269,16 @@ const HC=lv=>({enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,cap
 let hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 const lvU=u=>/\/live\/[^/]+\/[^/]+\/\d+\.ts(\?|$)/i.test(u)?u.replace(/\.ts(\?|$)/i,'.m3u8$1'):u;
-function src(u,at,fresh){const g=++gen;if(live())u=lvU(u);UP=false;
+function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;
  const nativ=()=>{V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
- if(hls&&!fresh&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
+ if(hls&&!fresh&&!forceNat&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
  if(hls){hls.destroy();hls=null}
  HL().then(()=>{if(g!=gen)return;
-  if(window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){
+  if(!window.Hls)dbg('hls.js não carregou');
+  if(!forceNat&&window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){
    hlsLv=live();const h=hls=new Hls(Object.assign(HC(hlsLv),at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
    h.on(Hls.Events.MANIFEST_PARSED,()=>V.play().catch(()=>{}));
-   h.on(Hls.Events.ERROR,(_,d)=>{if(!d.fatal||h!=hls)return;
+   h.on(Hls.Events.ERROR,(_,d)=>{if(h!=hls)return;if(d.fatal||d.details=='manifestLoadError'||d.details=='manifestLoadTimeOut')dbg('Canal: '+d.details+(d.response&&d.response.code?' (HTTP '+d.response.code+')':''));if(!d.fatal)return;
     if(d.details=='manifestParsingError'){h.destroy();hls=null;nativ();return}
     spin(true);
     if(d.type=='mediaError')h.recoverMediaError();
@@ -293,8 +295,9 @@ function tick(){if(P.hidden||!cur)return;if(UP&&V.paused)return;
  stuck++;if(stuck>=2)spin(true);
  for(let i=0;i<V.buffered.length;i++){const s=V.buffered.start(i);if(s>t&&s-t<3){try{V.currentTime=s+.05}catch{}break}}
  if(live()&&!started&&stuck==15)toast('Este canal está demorando para abrir…');
- if(stuck>=(started?(live()?4:6):12))recover()}
+ if(stuck>=(started?(live()?4:6):(live()?8:12)))recover()}
 function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
+ if(live()&&!started){spin(true);src(cur.u,0,1,n%2==1);return}
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
  if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
@@ -314,7 +317,7 @@ $('#pf').onclick=()=>$('#pf').classList.toggle('on',fav(favK(cur)));
 V.onplay=()=>{UP=false;ic('#pp','pause')};V.onpause=()=>{UP=true;ic('#pp','play');ui()};
 V.onloadstart=V.onwaiting=()=>spin(true);V.onplaying=V.oncanplay=()=>spin(false);
 V.onended=()=>{if(!live()){saveP(1);const i=zap.indexOf(cur);if(zap[i+1])play(zap[i+1],zap)}};
-V.onerror=()=>{if(P.hidden||!cur)return;spin(true);setTimeout(()=>{if(!P.hidden&&cur)recover()},1500)};
+V.onerror=()=>{if(P.hidden||!cur)return;dbg('Erro do vídeo (código '+(V.error&&V.error.code)+')');spin(true);setTimeout(()=>{if(!P.hidden&&cur)recover()},1500)};
 V.onprogress=()=>{if(V.duration&&V.buffered.length)$('#bf').style.width=V.buffered.end(V.buffered.length-1)/V.duration*100+'%'};
 let sv=0;V.ontimeupdate=()=>{if(!cur||live())return;const d=V.duration||0,t=V.currentTime;
  if(!dr){$('#pr').style.width=$('#th').style.left=d?t/d*100+'%':'0';$('#t1').textContent=fmt(t)}$('#t2').textContent=fmt(d);
