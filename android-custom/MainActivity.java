@@ -82,7 +82,7 @@ public class MainActivity extends BridgeActivity {
 
     // Proxy de rede do app: a pagina pede http://localhost/__p?u=<endereco> e o Android busca o conteudo
     // direto (streaming, sem a ponte do plugin e sem bloqueio de CORS). Serve para lista, guia e video HLS.
-    // Travas: so http/https, so GET, nunca loopback/localhost do aparelho.
+    // Travas: so http/https, so GET, nunca o proprio aparelho nem a rede local.
     static class ProxyClient extends BridgeWebViewClient {
         ProxyClient(Bridge b) { super(b); }
 
@@ -106,13 +106,22 @@ public class MainActivity extends BridgeActivity {
             return null;
         }
 
+        // Bloqueia o proprio aparelho e a rede local (192.168.x.x, 10.x.x.x, 172.16-31.x.x, IPv6 local).
+        // Se o endereco nao puder ser verificado, tambem bloqueia.
         private static boolean blocked(String host) {
             try {
-                if (host == null) return true;
-                InetAddress a = InetAddress.getByName(host);
-                return a.isLoopbackAddress() || a.isAnyLocalAddress() || a.isLinkLocalAddress() || a.isMulticastAddress();
-            } catch (Throwable e) {
+                if (host == null || host.isEmpty()) return true;
+                InetAddress[] all = InetAddress.getAllByName(host);
+                if (all == null || all.length == 0) return true;
+                for (InetAddress a : all) {
+                    if (a.isLoopbackAddress() || a.isAnyLocalAddress() || a.isLinkLocalAddress()
+                            || a.isSiteLocalAddress() || a.isMulticastAddress()) return true;
+                    byte[] b = a.getAddress();
+                    if (b.length == 16 && (b[0] & 0xFE) == 0xFC) return true; // IPv6 local (fc00::/7)
+                }
                 return false;
+            } catch (Throwable e) {
+                return true;
             }
         }
 
