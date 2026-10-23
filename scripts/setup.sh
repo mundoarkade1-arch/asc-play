@@ -18,7 +18,7 @@ F=$(find android/app/src/main/java -name MainActivity.java | head -n1)
 [ -n "$F" ] || { echo "MainActivity.java nao encontrado"; exit 1; }
 D=$(dirname "$F")
 PK=$(sed -n 's/^package \(.*\);.*/\1/p' "$F" | head -n1)
-cp MainActivity.java ImmersivePlugin.java UpdaterPlugin.java SecurePlugin.java "$D/"
+cp android-custom/MainActivity.java android-custom/ImmersivePlugin.java android-custom/UpdaterPlugin.java android-custom/SecurePlugin.java "$D/"
 sed -i "s/^package .*;/package $PK;/" "$D/MainActivity.java" "$D/ImmersivePlugin.java" "$D/UpdaterPlugin.java" "$D/SecurePlugin.java"
 echo "Package: $PK"
 
@@ -42,14 +42,13 @@ XML
 # --- Manifest (TV + trafego http)
 grep -q usesCleartextTraffic $M || sed -i 's#<application#<uses-feature android:name="android.software.leanback" android:required="false"/><uses-feature android:name="android.hardware.touchscreen" android:required="false"/><application android:usesCleartextTraffic="true"#' $M
 sed -i 's#<category android:name="android.intent.category.LAUNCHER" />#&<category android:name="android.intent.category.LEANBACK_LAUNCHER" />#' $M
-[ -f debug.keystore ] && { mkdir -p ~/.android; cp debug.keystore ~/.android/debug.keystore; } || true
 
 # --- Icones e banner (usa Python + Pillow; nao depende do ImageMagick)
 ICON=""
-for c in icon.png icone.png "ícone.png" Icon.png Icone.png; do
+for c in assets/icon.png icon.png icone.png "ícone.png" Icon.png Icone.png; do
   [ -f "$c" ] && { ICON="$c"; break; }
 done
-[ -n "$ICON" ] || { echo "ERRO: icone nao encontrado (esperado icon.png na raiz do repositorio)"; ls -la; exit 1; }
+[ -n "$ICON" ] || { echo "ERRO: icone nao encontrado (esperado assets/icon.png)"; ls -la; exit 1; }
 echo "Icone usado: $ICON"
 cp "$ICON" /tmp/asc_icon.png
 
@@ -78,9 +77,9 @@ for d, n in (("mdpi",48),("hdpi",72),("xhdpi",96),("xxhdpi",144),("xxxhdpi",192)
 print("Icones gerados")
 PYEOF
 mkdir -p $R/drawable-xhdpi
-cp banner.png $R/drawable-xhdpi/banner.png
+cp assets/banner.png $R/drawable-xhdpi/banner.png
 grep -q 'android:banner=' $M || sed -i 's#<application#<application android:banner="@drawable/banner"#' $M
 ls -la $R/mipmap-xxxhdpi
 
 # --- Seguranca do Android: sem backup, so certificados do sistema, regras de extracao de dados
-node harden-android.js
+node android-custom/harden-android.js
