@@ -32,7 +32,7 @@ import javax.crypto.spec.GCMParameterSpec;
 // Camadas nativas de seguranca:
 //  - wrap/unwrap: protege a chave do cofre do app com uma chave que nunca sai do Android Keystore
 //  - screen: bloqueia captura de tela nas telas de login/listas e esconde o app nos "recentes"
-//  - check: detecta depurador, Frida/Xposed e APK reassinado (se EXPECTED_CERT estiver preenchido)
+//  - check: detecta depurador e APK reassinado (se EXPECTED_CERT estiver preenchido). Frida/Xposed: desativado
 @CapacitorPlugin(name = "Secure")
 public class SecurePlugin extends Plugin {
     private static final String ALIAS = "asc_kek";
@@ -174,7 +174,7 @@ public class SecurePlugin extends Plugin {
                     sigOk = certs(pi).contains(EXPECTED_CERT.replace(":", "").toUpperCase());
                 }
             } catch (Throwable e) { sigOk = false; }
-            try { hk = hooked(); } catch (Throwable ignored) { }
+            // Deteccao de Frida/Xposed desativada de proposito (hk fica false).
             try {
                 r.put("debugger", dbg);
                 r.put("hook", hk);
