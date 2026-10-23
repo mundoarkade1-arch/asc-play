@@ -10,8 +10,8 @@ const PX=u=>{try{return nat()&&/^https?:\/\//i.test(u)?'/__p?u='+encodeURICompon
 const tf=(u,ms=20000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(PX(u),{signal:c.signal,credentials:'omit',referrerPolicy:'no-referrer'}).finally(()=>clearTimeout(t))};
 const okU=u=>{try{return /^https?:$/.test(new URL(u).protocol)}catch{return false}};
 const sl=u=>/^https?:\/\//i.test(u)?u:'';
-/* Tamanho maximo de lista (caracteres/bytes). Acima disso a criptografia em memoria pode travar aparelhos fracos (TV box). */
-const LMAX=1e8;
+/* Tamanho maximo de lista (caracteres/bytes). 250 MB cobre listas enormes (centenas de milhares de itens) e fica abaixo do limite de texto do WebView de 32 bits (~268 milhoes de caracteres). */
+const LMAX=2.5e8;
 const uid=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(16).padStart(2,'0')).join('');
 
 /* ---------- Cofre: tudo que e sensivel (listas, logins, links, favoritos, progresso) fica CRIPTOGRAFADO (AES-GCM).
@@ -82,7 +82,7 @@ async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tv
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);cur.ad=adItem(cur)?1:0;out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text,meta,cached){
- if(text.length>LMAX){$('#st').textContent='Lista grande demais (máximo de cerca de 100 MB).';return false}
+ if(text.length>LMAX){$('#st').textContent='Lista grande demais (máximo de cerca de 250 MB).';return false}
  $('#st').textContent='Processando a lista…';const{out,tvg}=await parse(text);if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
  if(meta){const i=LST.l.findIndex(x=>x.id==meta.id);if(i<0)LST.l.push(meta);else Object.assign(LST.l[i],meta);LST.act=meta.id}
  const l=CL();l.tvg=tvg||'';
@@ -510,7 +510,7 @@ $('#go').onclick=async()=>{const u=$('#u').value.trim(),e=$('#e').value.trim(),s
  if(!okU(u))return st.textContent='Cole um link válido (http:// ou https://).';if(e&&!okU(e))return st.textContent='Link do EPG inválido.';st.textContent='Carregando…';
  try{const r=await tf(u,3e5);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(u).host),m:'m',u,epg:e}))doneAdd()}
  catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
-$('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>LMAX)return $('#st').textContent='Arquivo grande demais (máximo de cerca de 100 MB).';
+$('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>LMAX)return $('#st').textContent='Arquivo grande demais (máximo de cerca de 250 MB).';
  const ep=$('#e').value.trim();if(await useList(await f.text(),{id:uid(),n:lname((f.name||'Arquivo').slice(0,40)),m:'f',u:'',epg:okU(ep)?ep:''}))doneAdd()};
 $('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
 const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
