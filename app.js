@@ -268,6 +268,8 @@ const HC=lv=>({xhrSetup:(x,u)=>{x.open('GET',PX(u),true)},enableWorker:true,lowL
  levelLoadingTimeOut:8000,levelLoadingMaxRetry:4,levelLoadingRetryDelay:500,
  fragLoadingTimeOut:15000,fragLoadingMaxRetry:6,fragLoadingRetryDelay:400,fragLoadingMaxRetryTimeout:6000,
  abrEwmaDefaultEstimate:3e6,abrBandWidthFactor:.8,abrBandWidthUpFactor:.6});
+let PLC;const pld=()=>PLC||(PLC=(()=>{const B=Hls.DefaultConfig.loader;return class extends B{load(c,g,cb){const ok=cb.onSuccess;
+  super.load(c,g,Object.assign({},cb,{onSuccess:(r,st,x,n)=>{try{if(r&&n&&n.getResponseHeader){r.url=n.getResponseHeader('X-Final-Url')||c.url}}catch{}return ok(r,st,x,n)}}))}}})());
 let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 const lvU=u=>/\/live\/[^/]+\/[^/]+\/\d+\.ts(\?|$)/i.test(u)?u.replace(/\.ts(\?|$)/i,'.m3u8$1'):u;
@@ -278,7 +280,8 @@ function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;viaN
  HL().then(()=>{if(g!=gen)return;
   if(!window.Hls)dbg('hls.js não carregou');
   if(!forceNat&&window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){
-   hlsLv=live();const h=hls=new Hls(Object.assign(HC(hlsLv),at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
+   hlsLv=live();let LD={};try{if(nat())LD={loader:pld()}}catch{}
+   const h=hls=new Hls(Object.assign(HC(hlsLv),LD,at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
    h.on(Hls.Events.MANIFEST_PARSED,()=>V.play().catch(()=>{}));
    h.on(Hls.Events.ERROR,(_,d)=>{if(h!=hls)return;if(d.fatal||d.details=='manifestLoadError'||d.details=='manifestLoadTimeOut')dbg('Canal: '+d.details+(d.response&&d.response.code?' (HTTP '+d.response.code+')':''));if(!d.fatal)return;
     if(d.details=='manifestParsingError'){h.destroy();hls=null;nativ();return}
