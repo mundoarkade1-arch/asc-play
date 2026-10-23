@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: 17}
       - name: Informar o repositorio ao app (para checar atualizacoes)
-        run: sed -i "s#__REPO__#${{ github.repository }}#g" www/index.html
+        run: sed -i "s#__REPO__#${{ github.repository }}#g" www/index.html android-custom/UpdaterPlugin.java
       - name: Instalar dependencias (versoes travadas pelo package-lock.json)
         run: |
           if [ -f package-lock.json ]; then
@@ -39,6 +39,16 @@ jobs:
           fi
       - run: npx cap add android
       - run: bash scripts/setup.sh
+      - name: APK de teste (sem chave fixa) - desligar checagem de assinatura
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KS_B64" ]; then
+            F=$(find android/app/src/main/java -name SecurePlugin.java | head -n1)
+            sed -i 's/\(EXPECTED_CERT = \)"[^"]*"/\1""/' "$F"
+            grep -n 'EXPECTED_CERT =' "$F"
+            echo "::warning::Sem chave fixa: checagem de assinatura desligada neste APK de teste."
+          fi
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
       - name: Assinar o APK
@@ -79,4 +89,12 @@ jobs:
         if: env.HAS_KEY == 'true' && github.ref_name == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "v${VERSION_CODE}" ASC-play.apk version.json --title "ASC play ${VERSION_NAME}" --notes "Versao ${VERSION_NAME}" --latest
+        run: |
+          TAG="v${VERSION_CODE}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG ja existe (re-execucao): atualizando os arquivos."
+            gh release upload "$TAG" ASC-play.apk version.json --clobber
+            gh release edit "$TAG" --latest
+          else
+            gh release create "$TAG" ASC-play.apk version.json --title "ASC play ${VERSION_NAME}" --notes "Versao ${VERSION_NAME}" --latest
+          fi
