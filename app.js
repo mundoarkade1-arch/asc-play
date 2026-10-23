@@ -71,7 +71,7 @@ function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text,meta,cached){
- if(text.length>8e7){$('#st').textContent='Lista grande demais.';return false}
+ if(text.length>4e8){$('#st').textContent='Lista grande demais.';return false}
  const{out,tvg}=parse(text);if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
  if(meta){const i=LST.l.findIndex(x=>x.id==meta.id);if(i<0)LST.l.push(meta);else Object.assign(LST.l[i],meta);LST.act=meta.id}
  const l=CL();l.tvg=tvg||'';
@@ -210,11 +210,11 @@ function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
 $('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}
  sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
  $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
-$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><small id="av" style="color:#a39a9d"></small><button class="btn" id="a1">Gerenciar listas</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a6">Vencimento</button><button class="btn" id="a8">Bloqueio por PIN (${PIN.on?'ativo':'desativado'})</button><button class="btn" id="a7">Verificar atualização</button><button class="btn" id="a4">Limpar favoritos e progresso</button><button class="btn" id="a9">Apagar todos os dados</button>`);
+$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><small id="av" style="color:#a39a9d"></small><button class="btn" id="a1">Gerenciar listas</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a6">Vencimento</button><button class="btn" id="a8">Bloqueio por PIN (${PIN.on?'ativo':'desativado'})</button><button class="btn" id="a10">Bloquear capturas de tela (${LS.asc_sc=='1'?'ativado':'desativado'})</button><button class="btn" id="a7">Verificar atualização</button><button class="btn" id="a4">Limpar favoritos e progresso</button><button class="btn" id="a9">Apagar todos os dados</button>`);
  $('#a1').onclick=lists;$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
  $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=epgUrl();e?loadEPG(e):toast('Sem guia disponível. Entre com servidor e login ou informe um link de EPG.')};
  ver().then(v=>{if(v&&$('#av'))$('#av').textContent='Versão '+v.name});
- $('#a6').onclick=expSheet;$('#a7').onclick=()=>{$('#sheet').hidden=true;checkUpd(true)};$('#a8').onclick=pinSheet;
+ $('#a6').onclick=expSheet;$('#a7').onclick=()=>{$('#sheet').hidden=true;checkUpd(true)};$('#a8').onclick=pinSheet;$('#a10').onclick=()=>{LS.asc_sc=LS.asc_sc=='1'?'0':'1';lastSc='';syncScr();$('#sheet').hidden=true;toast(LS.asc_sc=='1'?'Capturas bloqueadas nas telas de login e listas.':'Capturas liberadas.')};
  $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];ST.pos={};ST.last={};saveState();$('#sheet').hidden=true;render()};
  $('#a9').onclick=e=>{const b=e.currentTarget;if(b.dataset.c)wipeAll();else{b.dataset.c=1;b.textContent='Toque de novo para apagar tudo'}}};
 
@@ -396,7 +396,7 @@ async function sched(){const N=plug('LocalNotifications');if(!N||!nat())return;c
 /* ---------- Segurança: PIN, tela protegida, ambiente ---------- */
 const LK=$('#lock');let pinRes=null,pinBuf='';
 const SCN=()=>{const N=plug('Secure');return N&&nat()?N:null};
-let lastSc='';const syncScr=()=>{const N=SCN();if(!N)return;const s=!$('#add').hidden||SS||!LK.hidden,k=s+'|'+PIN.on;if(k==lastSc)return;lastSc=k;N.screen({secure:!!s,hideRecents:PIN.on}).catch(()=>{})};
+let lastSc='';const syncScr=()=>{const N=SCN();if(!N)return;const s=!LK.hidden||(LS.asc_sc=='1'&&(!$('#add').hidden||SS)),k=s+'|'+PIN.on;if(k==lastSc)return;lastSc=k;N.screen({secure:!!s,hideRecents:PIN.on}).catch(()=>{})};
 ['add','sheet','lock'].forEach(id=>new MutationObserver(()=>{if($('#sheet').hidden)SS=0;syncScr()}).observe($('#'+id),{attributes:true,attributeFilter:['hidden']}));
 async function pbk(pin,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);return b64e(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},k,256)))}
 function pinDraw(){$('#ld').textContent='●'.repeat(pinBuf.length)+'○'.repeat(Math.max(0,4-pinBuf.length))}
@@ -441,9 +441,9 @@ const doneAdd=()=>{['xs','xu','xp','u','e','ta','ln'].forEach(i=>$('#'+i).value=
 $('#ac').onclick=()=>S.items.length?show('app'):lists();
 $('#go').onclick=async()=>{const u=$('#u').value.trim(),e=$('#e').value.trim(),st=$('#st');
  if(!okU(u))return st.textContent='Cole um link válido (http:// ou https://).';if(e&&!okU(e))return st.textContent='Link do EPG inválido.';st.textContent='Carregando…';
- try{const r=await tf(u,6e4);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(u).host),m:'m',u,epg:e}))doneAdd()}
+ try{const r=await tf(u,3e5);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(u).host),m:'m',u,epg:e}))doneAdd()}
  catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
-$('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>8e7)return $('#st').textContent='Arquivo grande demais.';
+$('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>4e8)return $('#st').textContent='Arquivo grande demais.';
  const ep=$('#e').value.trim();if(await useList(await f.text(),{id:uid(),n:lname((f.name||'Arquivo').slice(0,40)),m:'f',u:'',epg:okU(ep)?ep:''}))doneAdd()};
 $('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
 const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
@@ -452,7 +452,7 @@ $('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').
  if(!s||!u||!p)return st.textContent='Preencha servidor, login e senha.';
  if(!/^https?:\/\//i.test(s))s='http://'+s;let o;try{o=new URL(s).origin}catch{return st.textContent='Endereço do servidor inválido.'}
  const url=`${o}/get.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&type=m3u_plus&output=m3u8`;st.textContent='Entrando…';
- try{const r=await tf(url,6e4);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(o).host),m:'x',u:url,epg:''}))doneAdd()}
+ try{const r=await tf(url,3e5);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(o).host),m:'x',u:url,epg:''}))doneAdd()}
  catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
 $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{const ep=$('#e').value.trim();useList(t.value,{id:uid(),n:lname('Lista colada'),m:'f',u:'',epg:okU(ep)?ep:''}).then(ok=>ok&&doneAdd())}};
 (async()=>{try{
