@@ -1,7 +1,7 @@
 
 const $=s=>document.querySelector(s),LS=localStorage,V=$('#v'),G=$('#grid'),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jg=(k,d)=>{try{return JSON.parse(LS[k])||d}catch{return d}};
-const S={dev:LS.asc_dev,items:[],tab:'home',rails:{},rt:null,cat:'Todos',q:'',epg:{},al:{},fav:[],view:[],pos:0};
+const S={dev:LS.asc_dev,items:[],by:{tv:[],movie:[],series:[]},hasE:0,tab:'home',rails:{},rt:null,cat:'Todos',q:'',epg:{},al:{},fav:[],view:[],pos:0};
 let DBP;const db=()=>DBP||(DBP=new Promise((res,rej)=>{const q=indexedDB.open('asc',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}));
 const kv=async(m,k,v)=>{const d=await db();return new Promise((res,rej)=>{const o=d.transaction('k',m=='get'?'readonly':'readwrite').objectStore('k'),q=m=='get'?o.get(k):m=='del'?o.delete(k):o.put(v,k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
 /* fetch com limite de tempo, sem cookies e sem referer */
@@ -65,20 +65,25 @@ const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();
  if(EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?/.test(g))return 'series';
  if(/filmes?|movies?|\bvod\b|cine|lan[cç]amentos?/.test(g))return 'movie';return 'tv'};
 const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,3}.*$|\s*[-–]?\s*\d{1,2}x\d{2,3}.*$/i,'').trim()||n;
-function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1];let cur=null;
- for(const raw of t.split(/\r?\n/)){const ln=raw.trim();
-  if(ln.startsWith('#EXTINF')){const a=k=>(ln.match(new RegExp(k+'="([^"]*)"','i'))||[])[1]||'';cur={n:ln.slice(ln.lastIndexOf(',')+1).trim()||a('tvg-name'),l:sl(a('tvg-logo')),g:a('group-title')||'Outros',id:a('tvg-id'),p:a('tvg-plot')||a('plot')||a('tvg-description')||a('description')}}
+const AT=/([\w-]+)="([^"]*)"/g,AK={'tvg-logo':'l','group-title':'g','tvg-id':'id','tvg-name':'tn','tvg-plot':'p','plot':'p2','tvg-description':'p3','description':'p4'};
+async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1],L=t.length;let cur=null,pos=0,cnt=0;
+ while(pos<L){let e=t.indexOf('\n',pos);if(e<0)e=L;const ln=t.slice(pos,e).trim();pos=e+1;
+  if((++cnt&16383)==0)await sleep(0);
+  if(!ln)continue;
+  if(ln.startsWith('#EXTINF')){const ci=ln.lastIndexOf(','),a={};let m;AT.lastIndex=0;const hd=ci>0?ln.slice(0,ci):ln;
+   while((m=AT.exec(hd))){const k=AK[m[1].toLowerCase()];if(k)a[k]=m[2]}
+   cur={n:ln.slice(ci+1).trim()||a.tn||'',l:sl(a.l||''),g:a.g||'Outros',id:a.id||'',p:a.p||a.p2||a.p3||a.p4||''}}
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text,meta,cached){
  if(text.length>4e8){$('#st').textContent='Lista grande demais.';return false}
- const{out,tvg}=parse(text);if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
+ $('#st').textContent='Processando a lista…';const{out,tvg}=await parse(text);if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
  if(meta){const i=LST.l.findIndex(x=>x.id==meta.id);if(i<0)LST.l.push(meta);else Object.assign(LST.l[i],meta);LST.act=meta.id}
  const l=CL();l.tvg=tvg||'';
  if(!cached)await kv('put','pl:'+l.id,await cEnc(text));
  await saveL();
- S.items=out;S._sg=null;S.cat='Todos';S.tab='home';S.epg={};S.al={};XS=null;show('app');nav();render();
- const e=epgUrl();if(e)loadEPG(e);acct();expSync();return true}
+ S.items=out;S.by={tv:[],movie:[],series:[]};for(const i of out)S.by[i.t].push(i);S.hasE=0;S._sg=null;S.cat='Todos';S.tab='home';S.epg={};S.al={};XS=null;show('app');nav();render();
+ const e=epgUrl();if(e)setTimeout(()=>loadEPG(e),2000);setTimeout(acct,3000);expSync();return true}
 
 /* ---------- EPG (XMLTV) ---------- */
 const dec=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'");
@@ -90,30 +95,31 @@ const epgUrl=()=>CL().epg||xepg()||CL().tvg||'';
 async function loadEPG(url){try{const r=await tf(url,6e4);if(!r.ok)throw 0;let t;
   if(/\.gz(\?|$)/i.test(url)&&window.DecompressionStream)t=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();else t=await r.text();
   const now=Date.now(),lim=now+12*36e5,E={},A={};
-  for(const m of t.matchAll(/<channel\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/channel>/g)){const id=dec(m[1]).toLowerCase();A[id]=id;
+  let nn=0;for(const m of t.matchAll(/<channel\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/channel>/g)){if(++nn%1500==0)await sleep(0);const id=dec(m[1]).toLowerCase();A[id]=id;
    for(const n of m[2].matchAll(/<display-name[^>]*>([^<]+)/g)){const d=dec(n[1]).trim();A[d.toLowerCase()]=id;A[nk(d)]=id}}
-  for(const m of t.matchAll(/<programme\s([^>]*)>([\s\S]*?)<\/programme>/g)){const a=m[1],
+  for(const m of t.matchAll(/<programme\s([^>]*)>([\s\S]*?)<\/programme>/g)){if(++nn%2500==0)await sleep(0);const a=m[1],
    st=a.match(/start="(\d{14})\s?([+-]\d{4})?"/),sp=a.match(/stop="(\d{14})\s?([+-]\d{4})?"/),ch=a.match(/channel="([^"]*)"/),
    ti=m[2].match(/<title[^>]*>\s*(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))/);
    if(!st||!sp||!ch||!ti)continue;const s=ms(st[1],st[2]),e=ms(sp[1],sp[2]);if(e<now||s>lim)continue;
    (E[dec(ch[1]).toLowerCase()]||=[]).push({s,e,t:dec(ti[1]!=null?ti[1]:ti[2]||'').trim()})}
   for(const k in E)E[k].sort((a,b)=>a.s-b.s);
-  S.epg=E;S.al=A;fillNow();if(!P.hidden&&cur&&live())epgBar();
+  S.epg=E;S.al=A;S.hasE=Object.keys(E).length?1:0;fillNow();if(!P.hidden&&cur&&live())epgBar();
   toast(Object.keys(E).length?'Guia de programação carregado':'O guia veio vazio ou fora do horário.')}
  catch{toast('Não foi possível carregar o guia de programação (bloqueio do servidor ou link inválido).')}}
 function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]]||S.epg[S.al[nk(it.n)]];if(!l)return null;const n=Date.now();
  const i=l.findIndex(p=>p.s<=n&&n<p.e);return i<0?null:{p:l[i],nx:l[i+1]}}
 const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-function fillNow(){document.querySelectorAll('.card.tv .now').forEach(el=>{const it=itemOf(el.parentNode),x=it&&epgOf(it);el.textContent=x?x.p.t:''})}
+function fillNow(from){if(!S.hasE)return;const one=c=>{if(!c.classList.contains('tv'))return;const el=c.querySelector('.now');if(!el)return;const it=itemOf(c),x=it&&epgOf(it);el.textContent=x?x.p.t:''};
+ if(from==null)document.querySelectorAll('.card.tv').forEach(one);else for(let k=from;k<G.children.length;k++)one(G.children[k])}
 
 /* ---------- Lista ---------- */
 function grp(a){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}return[...m.values()]}
 function view(){const q=nz(S.q.trim());
  if(S.tab=='home'){if(!q)return[];const r=S.items.filter(i=>i.k.includes(q));return[...r.filter(i=>i.t!='series'),...grp(r.filter(i=>i.t=='series'))]}
- if(S.tab=='fav'){let f=[...S.items.filter(i=>i.t!='series'&&S.fav.includes(i.u)),...sgrp().filter(g=>S.fav.includes('S:'+g.n))];if(q)f=f.filter(i=>nz(i.n).includes(q));return f}
- let a=S.items.filter(i=>i.t==S.tab);
+ if(S.tab=='fav'){const FS=new Set(S.fav);let f=[...S.by.tv.filter(i=>FS.has(i.u)),...S.by.movie.filter(i=>FS.has(i.u)),...sgrp().filter(g=>S.fav.includes('S:'+g.n))];if(q)f=f.filter(i=>nz(i.n).includes(q));return f}
+ let a=S.by[S.tab]||[];
  if(q)a=a.filter(i=>i.k.includes(q));else if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);
- if(S.tab=='series')a=grp(a);return a}
+ if(S.tab=='series')a=(q||S.cat!='Todos')?grp(a):sgrp();return a}
 const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
 const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dataset.i];
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
@@ -121,20 +127,20 @@ function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.
 function render(){S.view=view();S.pos=0;G.innerHTML='';$('#main').scrollTop=0;
  const ih=S.tab=='home'&&!S.q.trim();G.hidden=ih;$('#main').classList.toggle('hm',ih);$('#home').hidden=!ih;if(ih)return home();
  if(!S.view.length)G.innerHTML='<div class="empty">Nada por aqui ainda.</div>';else more()}
-function more(){if(S.pos>=S.view.length)return;const e=Math.min(S.pos+60,S.view.length);let h='';for(let k=S.pos;k<e;k++)h+=card(S.view[k],k);S.pos=e;G.insertAdjacentHTML('beforeend',h);fillNow()}
+function more(){if(S.pos>=S.view.length)return;const e=Math.min(S.pos+60,S.view.length);let h='';for(let k=S.pos;k<e;k++)h+=card(S.view[k],k);S.pos=e;const n0=G.children.length;G.insertAdjacentHTML('beforeend',h);fillNow(n0)}
 new IntersectionObserver(e=>e[0].isIntersecting&&more(),{rootMargin:'600px'}).observe($('#more'));
 
 /* ---------- Início: favoritos, ao vivo, filmes e séries ---------- */
-const sgrp=()=>S._sg||(S._sg=grp(S.items.filter(i=>i.t=='series')));
-function ccNames(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))],sel=LS.asc_cc;
+const sgrp=()=>S._sg||(S._sg=grp(S.by.series));
+function ccNames(){const g=[...new Set(S.by.tv.map(i=>i.g))],sel=LS.asc_cc;
  if(sel&&sel!='auto'&&g.includes(sel))return[sel];
  let m=g.filter(x=>/cliente/i.test(x));if(!m.length)m=g.filter(x=>/jogos?\b|jogo do dia|eventos?|ppv|futebol/i.test(x));return m}
-const clientCh=()=>{const n=ccNames();return S.items.filter(i=>i.t=='tv'&&n.includes(i.g)).slice(0,80)};
-const favItems=()=>({tv:S.items.filter(i=>i.t=='tv'&&S.fav.includes(i.u)),movie:S.items.filter(i=>i.t=='movie'&&S.fav.includes(i.u)),series:sgrp().filter(g=>S.fav.includes('S:'+g.n))});
+const clientCh=()=>{const n=ccNames(),o=[];for(const i of S.by.tv){if(n.includes(i.g)){o.push(i);if(o.length>=80)break}}return o};
+const favItems=()=>{const FS=new Set(S.fav);return{tv:S.by.tv.filter(i=>FS.has(i.u)),movie:S.by.movie.filter(i=>FS.has(i.u)),series:sgrp().filter(g=>FS.has('S:'+g.n))}};
 const vmCard=go=>`<div class="card vm" tabindex="0" data-go="${go}"><svg class="i" style="transform:rotate(-90deg)"><use href="#chev"/></svg>Ver mais</div>`;
 const rail=(id,l,go)=>`<div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}${go?vmCard(go):''}</div>`;
-function home(){const t=S.items.filter(i=>i.t=='tv'),c=clientCh().slice(0,10),lv=[...c,...t.filter(x=>!c.includes(x))].slice(0,10),
- mv=S.items.filter(i=>i.t=='movie'),sg=sgrp(),F=favItems(),
+function home(){const t=S.by.tv,c=clientCh().slice(0,10),cs=new Set(c),lv=[...c];for(let k=0;k<t.length&&lv.length<10;k++)if(!cs.has(t[k]))lv.push(t[k]);
+ const mv=S.by.movie,sg=sgrp(),F=favItems(),
  ft=[['tv','Canais'],['movie','Filmes'],['series','Séries']].filter(([k])=>F[k].length);
  S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10)};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
  let h=ft.length?`<section class="sec"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
@@ -142,7 +148,7 @@ function home(){const t=S.items.filter(i=>i.t=='tv'),c=clientCh().slice(0,10),lv
  h+=[['tv','Ao vivo',lv,t.length],['movie','Filmes',S.rails.movie,mv.length],['series','Séries',S.rails.series,sg.length]]
   .map(([k,n,l,tot])=>l.length?`<section class="sec"><div class="sx"><h2>${n}</h2><button class="chip" data-go="${k}">Ver mais ›</button></div>${rail(k,l,tot>l.length?k:'')}</section>`:'').join('');
  $('#home').innerHTML=h;fillNow()}
-function pickCC(){const g=[...new Set(S.items.filter(i=>i.t=='tv').map(i=>i.g))];
+function pickCC(){const g=[...new Set(S.by.tv.map(i=>i.g))];
  sh('<b>Categoria do Canal do cliente</b><button class="btn" data-g="auto">Automático</button>'+g.map(x=>`<button class="btn" data-g="${esc(x)}">${esc(x)}</button>`).join(''));
  $('#sh').onclick=e=>{const b=e.target.closest('[data-g]');if(b){LS.asc_cc=b.dataset.g;$('#sheet').hidden=true;refresh()}}}
 const refresh=()=>{if(S.tab=='home'&&!S.q.trim())home();else if(S.tab=='fav')render()};
@@ -207,7 +213,7 @@ function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
   else if(b.id=='sf'){b.classList.toggle('on',fav(fk));refresh()}
   else if(b.dataset.s){cs=+b.dataset.s;draw()}
   else if(b.dataset.u){$('#sheet').hidden=true;resume(flat.find(x=>x.u==b.dataset.u),flat)}};fillMeta(s,1)}
-$('#catb').onclick=()=>{const m=new Map();for(const i of S.items)if(i.t==S.tab){let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}
+$('#catb').onclick=()=>{const m=new Map();for(const i of (S.by[S.tab]||[])){{let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}}
  sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
  $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
 $('#cfg').onclick=()=>{sh(`<b>Ajustes</b><small id="av" style="color:#a39a9d"></small><button class="btn" id="a1">Gerenciar listas</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a6">Vencimento</button><button class="btn" id="a8">Bloqueio por PIN (${PIN.on?'ativo':'desativado'})</button><button class="btn" id="a10">Bloquear capturas de tela (${LS.asc_sc=='1'?'ativado':'desativado'})</button><button class="btn" id="a7">Verificar atualização</button><button class="btn" id="a4">Limpar favoritos e progresso</button><button class="btn" id="a9">Apagar todos os dados</button>`);
@@ -252,19 +258,23 @@ function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').text
  E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
 function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=ST.pos,o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done))};saveState()}
 /* Buffer sob medida: abre rápido (começa no 1º trecho) e guarda ~20-30s à frente para não travar */
-const HC=lv=>({enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,
- maxBufferLength:lv?20:30,maxMaxBufferLength:lv?40:60,maxBufferSize:60e6,backBufferLength:lv?10:30,
- liveSyncDurationCount:lv?4:3,liveMaxLatencyDurationCount:lv?12:Infinity,maxBufferHole:.6,nudgeMaxRetry:8,
- manifestLoadingMaxRetry:6,manifestLoadingRetryDelay:700,levelLoadingMaxRetry:6,levelLoadingRetryDelay:700,
- fragLoadingMaxRetry:8,fragLoadingRetryDelay:500,fragLoadingMaxRetryTimeout:8000,
- abrEwmaDefaultEstimate:2e6,abrBandWidthFactor:.8,abrBandWidthUpFactor:.6});
-let HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
+const HC=lv=>({enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,capLevelToPlayerSize:true,testBandwidth:false,progressive:false,
+ maxBufferLength:lv?15:30,maxMaxBufferLength:lv?30:60,maxBufferSize:lv?30e6:60e6,backBufferLength:lv?5:20,
+ liveSyncDurationCount:lv?3:3,liveMaxLatencyDurationCount:lv?10:Infinity,maxBufferHole:.6,nudgeMaxRetry:8,
+ manifestLoadingTimeOut:10000,manifestLoadingMaxRetry:4,manifestLoadingRetryDelay:500,
+ levelLoadingTimeOut:8000,levelLoadingMaxRetry:4,levelLoadingRetryDelay:500,
+ fragLoadingTimeOut:15000,fragLoadingMaxRetry:6,fragLoadingRetryDelay:400,fragLoadingMaxRetryTimeout:6000,
+ abrEwmaDefaultEstimate:3e6,abrBandWidthFactor:.8,abrBandWidthUpFactor:.6});
+let hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
-function src(u,at){const g=++gen;if(hls){hls.destroy();hls=null}UP=false;
+const lvU=u=>/\/live\/[^/]+\/[^/]+\/\d+\.ts(\?|$)/i.test(u)?u.replace(/\.ts(\?|$)/i,'.m3u8$1'):u;
+function src(u,at,fresh){const g=++gen;if(live())u=lvU(u);UP=false;
  const nativ=()=>{V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
+ if(hls&&!fresh&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
+ if(hls){hls.destroy();hls=null}
  HL().then(()=>{if(g!=gen)return;
   if(window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){
-   const h=hls=new Hls(Object.assign(HC(live()),at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
+   hlsLv=live();const h=hls=new Hls(Object.assign(HC(hlsLv),at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
    h.on(Hls.Events.MANIFEST_PARSED,()=>V.play().catch(()=>{}));
    h.on(Hls.Events.ERROR,(_,d)=>{if(!d.fatal||h!=hls)return;
     if(d.details=='manifestParsingError'){h.destroy();hls=null;nativ();return}
@@ -282,12 +292,13 @@ function tick(){if(P.hidden||!cur)return;if(UP&&V.paused)return;
  if(adv&&V.readyState>=2){started=true;stuck=0;rc=0;spin(false);return}
  stuck++;if(stuck>=2)spin(true);
  for(let i=0;i<V.buffered.length;i++){const s=V.buffered.start(i);if(s>t&&s-t<3){try{V.currentTime=s+.05}catch{}break}}
+ if(live()&&!started&&stuck==15)toast('Este canal está demorando para abrir…');
  if(stuck>=(started?(live()?4:6):12))recover()}
 function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
  if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
- src(cur.u,live()?0:V.currentTime)}
+ src(cur.u,live()?0:V.currentTime,1)}
 addEventListener('online',()=>{if(!P.hidden&&cur){rc=0;recover()}});
 function play(it,list,from){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
  $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;UP=false;$('#sk').hidden=tv;$('#tm').hidden=tv;
@@ -462,7 +473,7 @@ $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('
  syncScr();
  if(PIN.on)await unlockLoop();
  if(!S.dev)show('setup');else{setDev(S.dev);await boot()}
- setTimeout(()=>checkUpd(),2500)
+ setTimeout(()=>{try{HL()}catch{}},1500);setTimeout(()=>checkUpd(),4000)
 }catch(e){bootErr((e&&e.message)||e)}})();
 addEventListener('error',e=>{const t=e.target;if(t&&t.tagName=='IMG')t.remove()},true);
 try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!LK.hidden)A.exitApp();else if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}

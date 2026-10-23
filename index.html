@@ -12,11 +12,11 @@ html{font-size:16px;-webkit-text-size-adjust:100%}body.tv{font-size:22px}
 body{background:radial-gradient(120% 60% at 0 0,#3a0509,var(--bg) 60%);color:var(--t);font:400 var(--u)/1.35 "Trebuchet MS","Segoe UI",system-ui,sans-serif;height:100dvh;overflow:hidden}
 button,input,textarea{font:inherit;color:inherit}
 [hidden]{display:none!important}
-.logo{font-weight:900;letter-spacing:-.03em;font-size:1.5em;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 6px rgba(255,40,60,.4))}
-svg.i{width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.8;filter:drop-shadow(0 3px 4px rgba(255,30,50,.55))}
-.btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:.7em 1.1em;cursor:pointer;display:inline-flex;gap:.5em;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.logo{font-weight:900;letter-spacing:-.03em;font-size:1.5em;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent;}
+svg.i{width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.8;}
+.btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:.7em 1.1em;cursor:pointer;display:inline-flex;gap:.5em;align-items:center;justify-content:center;}
 .btn.p,.chip.on,nav .on{background:var(--g);color:#2a0006;border-color:transparent;font-weight:700}
-.btn.p svg,.on svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.btn.p svg,.on svg{}
 :focus-visible,.card:focus{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 22px rgba(255,42,61,.8)}
 .scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1em;padding:1.5em;text-align:center}
 .scr h1{font-size:2.6em}.scr p{color:var(--m);max-width:34em}
@@ -31,7 +31,7 @@ header{display:flex;gap:.8em;align-items:center;padding:calc(env(safe-area-inset
 header input{flex:1;width:auto}
 #chips{display:flex;gap:.5em;overflow-x:auto;padding:.3em 1em;scrollbar-width:none}
 .chip{flex:none;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);border-radius:99px;padding:.4em 1em;cursor:pointer;white-space:nowrap}
-main{flex:1;overflow-y:auto;padding:.6em 1em 5.5em;overscroll-behavior:contain}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.6em 1em 5.5em;overscroll-behavior:contain}
 #grid{display:grid;gap:.9em;grid-template-columns:repeat(auto-fill,minmax(9.5em,1fr))}
 .card{background:var(--c);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;contain:content;box-shadow:0 6px 16px rgba(0,0,0,.4)}
 .im{aspect-ratio:2/3;background:linear-gradient(160deg,#3b0b11,#1a1618);position:relative;display:grid;place-items:center}
@@ -42,7 +42,7 @@ main{flex:1;overflow-y:auto;padding:.6em 1em 5.5em;overscroll-behavior:contain}
 .card b{padding:.5em .6em .1em;font-size:.85em;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .now{padding:0 .6em .6em;color:var(--m);font-size:.75em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.6em}
 .card:not(.tv) b{padding-bottom:.6em}
-nav{position:fixed;z-index:5;display:flex;background:rgba(20,14,16,.85);backdrop-filter:blur(16px);left:0;right:0;bottom:0;padding:.4em .4em calc(env(safe-area-inset-bottom) + .4em);justify-content:space-around;border-top:1px solid rgba(255,255,255,.1)}
+nav{position:fixed;z-index:5;display:flex;background:rgba(20,14,16,.97);left:0;right:0;bottom:0;padding:.4em .4em calc(env(safe-area-inset-bottom) + .4em);justify-content:space-around;border-top:1px solid rgba(255,255,255,.1)}
 nav button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:.1em;font-size:.72em;padding:.4em .2em;flex:1;min-width:0;border-radius:12px;cursor:pointer;color:var(--m)}
 nav .on{color:#2a0006}
 body.tv #app{padding-left:6.5em}body.tv nav button{flex:none;padding:.4em .9em}
@@ -63,12 +63,12 @@ video{width:100%;height:100%;background:#000;object-fit:contain}
 #ot{top:0;padding-top:calc(max(env(safe-area-inset-top),var(--ct,0px)) + .8em);background:linear-gradient(rgba(0,0,0,.75),transparent)}
 #ob{bottom:0;flex-direction:column;align-items:stretch;gap:.2em;padding-bottom:calc(max(env(safe-area-inset-bottom),var(--cb,0px)) + .8em);background:linear-gradient(transparent,rgba(0,0,0,.8))}
 #om{top:50%;transform:translateY(-50%);justify-content:center;gap:2.4em;pointer-events:none}#om>*{pointer-events:auto}
-.gb{width:3em;height:3em;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.14);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;place-items:center;cursor:pointer;padding:0;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.gb{width:3em;height:3em;border-radius:50%;border:1px solid rgba(255,255,255,.22);background:rgba(30,30,34,.62);display:grid;place-items:center;cursor:pointer;padding:0;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 .gb svg.i{width:1.5em;height:1.5em;opacity:1;stroke-width:2}.gb.big{width:4.4em;height:4.4em}.gb.big svg.i{width:2.2em;height:2.2em}
 #pf.on,#fit.on{color:#ff4d5e}#pf.on svg{fill:currentColor}
 #player.h .ov{opacity:0;pointer-events:none}#player.h{cursor:none}
 #sp{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:1}
-#sp svg{width:4.2em;height:4.2em;animation:rot .9s linear infinite;filter:drop-shadow(0 2px 8px rgba(255,40,60,.6))}@keyframes rot{to{transform:rotate(360deg)}}
+#sp svg{width:4.2em;height:4.2em;animation:rot .9s linear infinite;}@keyframes rot{to{transform:rotate(360deg)}}
 #sk{position:relative;height:1.8em;display:flex;align-items:center;cursor:pointer;touch-action:none}
 #tr{position:relative;width:100%;height:4px;border-radius:9px;background:rgba(255,255,255,.28);transition:height .15s}
 #sk:active #tr{height:7px}#tr i{position:absolute;left:0;top:0;height:100%;border-radius:9px;width:0}
@@ -107,12 +107,13 @@ body.tv main.hm{padding-bottom:1em}
 .ep.nx{outline:2px solid #fff}
 .lg{font-size:.72em;color:var(--m);display:flex;gap:1em}.lg i{display:inline-block;width:.8em;height:.8em;border-radius:3px;margin-right:.3em;vertical-align:-.1em}
 .btn.fv.on svg{fill:currentColor;color:#ff4d5e}
-#epg{align-self:flex-start;max-width:min(34em,100%);background:rgba(0,0,0,.38);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:.6em .9em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+#epg{align-self:flex-start;max-width:min(34em,100%);background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:.6em .9em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 #epg div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #epg .n{font-weight:700}#epg .x{font-size:.85em;color:#e4e0e1}#epg .bar{margin:.35em 0}
 #lock,#blk,#cover{z-index:100;background:radial-gradient(120% 60% at 0 0,#3a0509,var(--bg) 60%)}#blk{z-index:120}#cover{position:fixed;inset:0;z-index:90;background:var(--bg)}
 #kp{display:grid;grid-template-columns:repeat(3,4.2em);gap:.6em}#kp .btn{height:3.3em;padding:0;font-size:1.2em}
 #ld{letter-spacing:.35em;font-size:1.5em;min-height:1.6em}#lm{min-height:1.4em}
+video{transform:translateZ(0)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute"><defs>

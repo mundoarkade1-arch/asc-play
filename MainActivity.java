@@ -58,6 +58,9 @@ public class MainActivity extends BridgeActivity {
         st.setGeolocationEnabled(false);
         st.setSaveFormData(false);
         st.setSupportMultipleWindows(false);
+        // Video ao vivo precisa tocar sozinho depois de carregar o manifesto (sem exigir novo toque)
+        st.setMediaPlaybackRequiresUserGesture(false);
+        st.setCacheMode(WebSettings.LOAD_DEFAULT);
         if (Build.VERSION.SDK_INT >= 26) st.setSafeBrowsingEnabled(true);
         WebView.setWebContentsDebuggingEnabled(false);
     }
