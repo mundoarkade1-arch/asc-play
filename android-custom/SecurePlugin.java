@@ -38,7 +38,7 @@ public class SecurePlugin extends Plugin {
     private static final String ALIAS = "asc_kek";
     // SHA-256 (hex, sem ":") do certificado com que voce assina o APK de producao.
     // Vazio = nao verifica. Preencha SOMENTE depois de criar a keystore de producao.
-    private static final String EXPECTED_CERT = "";
+    private static final String EXPECTED_CERT = "a5cd7e941b44f6f904714ecdedd1f43c173ddc98cd39131ee48936695866c217";
 
     private SecretKey key() throws Exception {
         KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
