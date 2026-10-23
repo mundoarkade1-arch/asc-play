@@ -10,6 +10,8 @@ const PX=u=>{try{return nat()&&/^https?:\/\//i.test(u)?'/__p?u='+encodeURICompon
 const tf=(u,ms=20000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(PX(u),{signal:c.signal,credentials:'omit',referrerPolicy:'no-referrer'}).finally(()=>clearTimeout(t))};
 const okU=u=>{try{return /^https?:$/.test(new URL(u).protocol)}catch{return false}};
 const sl=u=>/^https?:\/\//i.test(u)?u:'';
+/* Tamanho maximo de lista (caracteres/bytes). Acima disso a criptografia em memoria pode travar aparelhos fracos (TV box). */
+const LMAX=1e8;
 const uid=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(16).padStart(2,'0')).join('');
 
 /* ---------- Cofre: tudo que e sensivel (listas, logins, links, favoritos, progresso) fica CRIPTOGRAFADO (AES-GCM).
@@ -80,7 +82,7 @@ async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tv
   else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);cur.ad=adItem(cur)?1:0;out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text,meta,cached){
- if(text.length>4e8){$('#st').textContent='Lista grande demais.';return false}
+ if(text.length>LMAX){$('#st').textContent='Lista grande demais (máximo de cerca de 100 MB).';return false}
  $('#st').textContent='Processando a lista…';const{out,tvg}=await parse(text);if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
  if(meta){const i=LST.l.findIndex(x=>x.id==meta.id);if(i<0)LST.l.push(meta);else Object.assign(LST.l[i],meta);LST.act=meta.id}
  const l=CL();l.tvg=tvg||'';
@@ -408,7 +410,7 @@ async function checkUpd(manual){const v=await ver();
  if(!v||!UPD){if(manual)toast(v?'Atualização não configurada.':'A atualização funciona no app instalado (APK).');return}
  try{const r=await tf(UPD);if(!r.ok)throw 0;const j=JSON.parse(await r.text());
   if(!(+j.code>+v.code)){if(manual)toast('Você já está na versão mais recente ('+v.name+').');return}
-  if(typeof j.url!='string'||!j.url.startsWith(`https://github.com/${REPO}/releases/`)){if(manual)toast('Atualização inválida.');return}
+  if(typeof j.url!='string'||!j.url.startsWith(`https://github.com/${REPO}/releases/download/`)){if(manual)toast('Atualização inválida.');return}
   sh(`<b>Nova versão ${esc(j.name||'')}</b>${j.notes?`<p class="sy" style="max-height:8em">${esc(j.notes)}</p>`:''}<small id="up" style="color:#a39a9d">Você está na versão ${esc(v.name)}. Seu login e seus dados são mantidos.</small><button class="btn p" id="u1">Atualizar agora</button><button class="btn" id="u2">Depois</button>`);
   $('#u2').onclick=()=>$('#sheet').hidden=true;
   $('#u1').onclick=async()=>{const U=plug('Updater'),up=$('#up'),b=$('#u1');b.disabled=true;let h;
@@ -451,7 +453,7 @@ let lastSc='';const syncScr=()=>{const N=SCN();if(!N)return;const s=!LK.hidden||
 ['add','sheet','lock'].forEach(id=>new MutationObserver(()=>{if($('#sheet').hidden)SS=0;syncScr()}).observe($('#'+id),{attributes:true,attributeFilter:['hidden']}));
 async function pbk(pin,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);return b64e(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},k,256)))}
 function pinDraw(){$('#ld').textContent='●'.repeat(pinBuf.length)+'○'.repeat(Math.max(0,4-pinBuf.length))}
-function askPin(t,o={}){return new Promise(r=>{pinBuf='';pinRes=r;pinLen=o.len||0;pinCan=!!o.cancel;$('#lt').textContent=t;$('#lm').textContent=o.msg||'';$('#lc').hidden=!o.cancel;$('#lf').hidden=!o.forgot;pinDraw();LK.hidden=false;const f=LK.querySelector('[data-k="1"]');f&&f.focus()})}
+function askPin(t,o={}){return new Promise(r=>{pinBuf='';pinRes=r;pinLen=o.len||0;pinCan=!!o.cancel;$('#lt').textContent=t;$('#lm').textContent=o.msg||'';$('#lc').hidden=!o.cancel;window.__ascBooted=1;pinDraw();LK.hidden=false;const f=LK.querySelector('[data-k="1"]');f&&f.focus()})}
 const pinEnd=()=>{LK.hidden=true;pinRes=null;pinBuf=''};
 function pinKey(k){if(!pinRes)return;
  if(k=='x')pinBuf=pinBuf.slice(0,-1);
@@ -459,20 +461,19 @@ function pinKey(k){if(!pinRes)return;
  else if(pinBuf.length<(pinLen||6)){pinBuf+=k;if(pinLen&&pinBuf.length==pinLen){const r=pinRes;pinRes=null;r(pinBuf);return}}
  pinDraw()}
 LK.onclick=e=>{const b=e.target.closest('[data-k]');if(b)return pinKey(b.dataset.k);
- if(e.target.closest('#lc'))pinCancel();
- if(e.target.closest('#lf')&&confirm('Apagar TODOS os dados do app (listas, logins, favoritos) e remover o PIN?'))wipeAll()};
+ if(e.target.closest('#lc'))pinCancel();};
 async function verify(p,O=PIN,key='pin'){if(Date.now()<O.u)return false;const ok=await pbk(p,b64d(O.s))==O.h;
  if(ok){if(O.f||O.u){O.f=0;O.u=0;await vs(key,O)}}
  else{O.f++;if(O.f>=5)O.u=Date.now()+Math.min(36e5,3e4*2**(O.f-5));await vs(key,O)}return ok}
 const wait=(O=PIN)=>`Muitas tentativas. Aguarde ${Math.ceil((O.u-Date.now())/1e3)}s.`;
-async function unlockLoop(){let m='';for(;;){const p=await askPin('Digite o PIN',{msg:m,forgot:1});
+async function unlockLoop(){let m='';for(;;){const p=await askPin('Digite o PIN',{msg:m});
  if(Date.now()<PIN.u){m=wait();continue}
  if(await verify(p)){pinEnd();return}m=Date.now()<PIN.u?wait():'PIN incorreto.'}}
-async function chkPin(O=PIN,key='pin',title='Digite o PIN atual',len=0){try{let m='';for(;;){const p=await askPin(title,{cancel:1,len,forgot:len?1:0,msg:m});if(!p)return false;if(await verify(p,O,key))return true;m=Date.now()<O.u?wait(O):(len?'Senha incorreta.':'PIN incorreto.')}}finally{pinEnd()}}
+async function chkPin(O=PIN,key='pin',title='Digite o PIN atual',len=0){try{let m='';for(;;){const p=await askPin(title,{cancel:1,len,msg:m});if(!p)return false;if(await verify(p,O,key))return true;m=Date.now()<O.u?wait(O):(len?'Senha incorreta.':'PIN incorreto.')}}finally{pinEnd()}}
 async function setPin(){try{const a=await askPin('Crie um PIN (4 a 6 dígitos)',{cancel:1});if(!a)return;const b=await askPin('Repita o PIN',{cancel:1});if(!b)return;
  if(a!=b)return toast('Os PINs não conferem.');const s=crypto.getRandomValues(new Uint8Array(16));
  Object.assign(PIN,{on:true,s:b64e(s),h:await pbk(a,s),f:0,u:0});await vs('pin',PIN);lastSc='';syncScr();toast('PIN ativado.')}finally{pinEnd()}}
-function pinSheet(){sh(`<b>Bloqueio por PIN</b><small style="color:#a39a9d">${PIN.on?'Ativo: o app pede o PIN ao abrir e ao voltar depois de 30 segundos fora. Também esconde o app na lista de recentes.':'Desativado. Proteja suas listas e logins com um PIN de 4 a 6 dígitos.'}</small>`+(PIN.on?'<button class="btn" id="p2">Trocar PIN</button><button class="btn" id="p3">Desativar PIN</button>':'<button class="btn p" id="p1">Ativar PIN</button>'));
+function pinSheet(){sh(`<b>Bloqueio por PIN</b><small style="color:#a39a9d">${PIN.on?'Ativo: o app pede o PIN ao abrir e ao voltar depois de 30 segundos fora. Também esconde o app na lista de recentes. O PIN bloqueia o acesso ao app; a criptografia dos dados é feita pelo cofre do aparelho.':'Desativado. Bloqueie o acesso ao app com um PIN de 4 a 6 dígitos.'}</small>`+(PIN.on?'<button class="btn" id="p2">Trocar PIN</button><button class="btn" id="p3">Desativar PIN</button>':'<button class="btn p" id="p1">Ativar PIN</button>'));
  const go=(id,f)=>{const b=$(id);b&&(b.onclick=()=>{$('#sheet').hidden=true;f()})};
  go('#p1',setPin);go('#p2',async()=>{if(await chkPin())setPin()});
  go('#p3',async()=>{if(await chkPin()){Object.assign(PIN,{on:false,h:'',s:'',f:0,u:0});await vs('pin',PIN);lastSc='';syncScr();toast('PIN desativado.')}})}
@@ -495,8 +496,8 @@ document.addEventListener('visibilitychange',()=>{
  if(document.hidden)S.adOk='';else if(PAR.on)parBack();
  if(document.hidden){stNow().catch(()=>{});if(PIN.on){hideAt=Date.now();$('#cover').hidden=false}}
  else if(PIN.on){$('#cover').hidden=true;if(Date.now()-hideAt>3e4&&!pinRes){if(!P.hidden)close();$('#sheet').hidden=true;unlockLoop()}}});
-/* Bloqueia o app se houver depurador ou ferramenta de interceptação (Frida/Xposed) ou se o APK foi alterado */
-async function envOk(){const N=SCN();if(!N)return true;try{const r=await tmo(N.check(),3000);return !(r.debugger||r.hook||r.sig===false)}catch{return true}}
+/* Bloqueia o app se houver depurador conectado ('env') ou se o APK nao esta assinado com o certificado oficial ('sig'). Vazio = tudo certo. */
+async function envOk(){const N=SCN();if(!N)return '';try{const r=await tmo(N.check(),3000);return r.debugger?'env':r.sig===false?'sig':''}catch{return ''}}
 
 /* ---------- Início ---------- */
 function setDev(d){S.dev=d;LS.asc_dev=d;document.body.className=d=='tv'?'tv':'mob';ori(d=='tv'?'landscape':'portrait')}
@@ -509,7 +510,7 @@ $('#go').onclick=async()=>{const u=$('#u').value.trim(),e=$('#e').value.trim(),s
  if(!okU(u))return st.textContent='Cole um link válido (http:// ou https://).';if(e&&!okU(e))return st.textContent='Link do EPG inválido.';st.textContent='Carregando…';
  try{const r=await tf(u,3e5);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(u).host),m:'m',u,epg:e}))doneAdd()}
  catch{st.textContent='Não consegui baixar o link (bloqueio CORS do servidor). Use “Abrir arquivo” ou “Colar texto”, ou rode o app empacotado em APK.'}};
-$('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>4e8)return $('#st').textContent='Arquivo grande demais.';
+$('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>LMAX)return $('#st').textContent='Arquivo grande demais (máximo de cerca de 100 MB).';
  const ep=$('#e').value.trim();if(await useList(await f.text(),{id:uid(),n:lname((f.name||'Arquivo').slice(0,40)),m:'f',u:'',epg:okU(ep)?ep:''}))doneAdd()};
 $('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
 const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
@@ -522,7 +523,10 @@ $('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').
  catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
 $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{const ep=$('#e').value.trim();useList(t.value,{id:uid(),n:lname('Lista colada'),m:'f',u:'',epg:okU(ep)?ep:''}).then(ok=>ok&&doneAdd())}};
 (async()=>{try{
- if(!await Promise.race([envOk(),sleep(4000).then(()=>true)])){window.__ascBooted=1;$('#boot').hidden=true;$('#blk').hidden=false;return}
+ const bad=await Promise.race([envOk(),sleep(4000).then(()=>'')]);
+ if(bad){window.__ascBooted=1;$('#boot').hidden=true;
+  if(bad=='sig'){$('#bt').textContent='App não reconhecido';$('#bp').textContent='Esta cópia do app não está assinada pelo desenvolvedor original. Baixe a versão oficial e instale de novo.'}
+  $('#blk').hidden=false;return}
  try{await tmo(dek(),9000)}catch(e){window.__ascRecovery&&window.__ascRecovery('Não consegui abrir o cofre seguro deste aparelho.');return}
  try{await loadVault();await migrate()}catch(e){console.warn(e)}
  syncScr();
