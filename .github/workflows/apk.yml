@@ -43,7 +43,7 @@ jobs:
           IN=$(ls android/app/build/outputs/apk/release/*.apk | head -n1)
           "$BT/zipalign" -p 4 "$IN" aligned.apk
           "$BT/apksigner" sign --ks release.keystore --ks-key-alias "$KS_ALIAS" --ks-pass "pass:$KS_PASS" --key-pass "pass:$KEY_PASS" --out ASC-play.apk aligned.apk
-          "$BT/apksigner" verify ASC-play.apk
+          "$BT/apksigner" verify --print-certs ASC-play.apk
           rm -f release.keystore aligned.apk
       - name: Criar version.json
         env:
