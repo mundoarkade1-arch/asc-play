@@ -1,7 +1,7 @@
 
 const $=s=>document.querySelector(s),LS=localStorage,V=$('#v'),G=$('#grid'),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const jg=(k,d)=>{try{return JSON.parse(LS[k])||d}catch{return d}};
-const S={dev:LS.asc_dev,items:[],by:{tv:[],movie:[],series:[]},hasE:0,tab:'home',rails:{},rt:null,cat:'Todos',q:'',epg:{},al:{},fav:[],view:[],pos:0};
+const S={dev:LS.asc_dev,items:[],by:{tv:[],movie:[],series:[]},hasE:0,tab:'home',rails:{},rt:null,cat:'Todos',q:'',epg:{},al:{},fav:[],view:[],pos:0,adOk:''};
 let DBP;const db=()=>DBP||(DBP=new Promise((res,rej)=>{const q=indexedDB.open('asc',1);q.onupgradeneeded=()=>q.result.createObjectStore('k');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}));
 const kv=async(m,k,v)=>{const d=await db();return new Promise((res,rej)=>{const o=d.transaction('k',m=='get'?'readonly':'readwrite').objectStore('k'),q=m=='get'?o.get(k):m=='del'?o.delete(k):o.put(v,k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
 /* fetch com limite de tempo, sem cookies e sem referer */
@@ -33,11 +33,11 @@ async function cDec(buf){try{const k=await dek(),u=new Uint8Array(buf);return ne
 const vs=async(k,v)=>kv('put','v:'+k,await cEnc(JSON.stringify(v)));
 const vg=async k=>{try{const b=await kv('get','v:'+k);if(!b)return null;const t=await cDec(b);return t==null?null:JSON.parse(t)}catch{return null}};
 const plGet=async id=>{try{const b=await kv('get','pl:'+id);return b?await cDec(b):null}catch{return null}};
-let LST={act:'',l:[]};const ST={pos:{},last:{}},PIN={on:false,h:'',s:'',f:0,u:0};
+let LST={act:'',l:[]};const ST={pos:{},last:{}},PIN={on:false,h:'',s:'',f:0,u:0},PAR={on:false,h:'',s:'',f:0,u:0};
 const CL=()=>LST.l.find(x=>x.id==LST.act)||{};
 const saveL=()=>vs('lists',LST);
 let sst=0;const stNow=()=>{clearTimeout(sst);return vs('state',{fav:S.fav,pos:ST.pos,last:ST.last})},saveState=()=>{clearTimeout(sst);sst=setTimeout(stNow,2000)};
-async function loadVault(){const l=await vg('lists');if(l&&Array.isArray(l.l))LST=l;const s=await vg('state');if(s){S.fav=s.fav||[];ST.pos=s.pos||{};ST.last=s.last||{}}const p=await vg('pin');if(p)Object.assign(PIN,p)}
+async function loadVault(){const l=await vg('lists');if(l&&Array.isArray(l.l))LST=l;const s=await vg('state');if(s){S.fav=s.fav||[];ST.pos=s.pos||{};ST.last=s.last||{}}const p=await vg('pin');if(p)Object.assign(PIN,p);const q2=await vg('par');if(q2)Object.assign(PAR,q2)}
 /* Dados de versoes antigas (texto puro) sao migrados para o cofre e apagados */
 async function migrate(){let old;try{old=await kv('get','pl')}catch{}
  if(!LST.l.length&&old){const id=uid();LST.l.push({id,n:'Minha lista',m:LS.asc_xu?'x':LS.asc_url?'m':'f',u:LS.asc_url||'',epg:LS.asc_epg||'',tvg:LS.asc_tvg||'',exp:+LS.asc_exp||0,expm:LS.asc_expm||''});LST.act=id;await kv('put','pl:'+id,await cEnc(old));await saveL()}
@@ -49,7 +49,7 @@ async function wipeAll(){try{const N=plug('Secure');N&&nat()&&await tmo(N.reset(
  try{await new Promise(r=>{const q=indexedDB.deleteDatabase('asc');q.onsuccess=q.onerror=q.onblocked=()=>r()})}catch{}
  try{LS.clear();sessionStorage.clear()}catch{}
  location.reload()}
-const toast=m=>{const t=document.createElement('div');t.id='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),4000)};
+const toast=(m,q)=>{document.querySelectorAll('#toast').forEach(x=>x.remove());const t=document.createElement('div');t.id='toast';if(q)t.className='q';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),q?2200:4000)};
 const show=id=>{window.__ascBooted=1;$('#boot').hidden=true;['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id)};
 const bootErr=m=>{if(window.__ascBooted)return console.warn(m);$('#boot').hidden=false;$('#bm').textContent='Erro: '+m;window.__ascRecovery&&window.__ascRecovery()};
 addEventListener('unhandledrejection',e=>bootErr((e.reason&&e.reason.message)||e.reason));
@@ -67,6 +67,8 @@ const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();
  if(EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?/.test(g))return 'series';
  if(/filmes?|movies?|\bvod\b|cine|lan[cç]amentos?/.test(g))return 'movie';return 'tv'};
 const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,3}.*$|\s*[-–]?\s*\d{1,2}x\d{2,3}.*$/i,'').trim()||n;
+const ADG=/(^|[^a-z0-9])(adult[oa]?s?|xxx|porn[oa]?|erotic[oa]s?|sex|sexy|hentai|playboy|18 ?\+|\+ ?18|18plus)($|[^a-z0-9])/,ADN=/(^|[^a-z0-9])(xxx|playboy|sextreme|penthouse|brazzers|hustler|porn[oa]?|hentai|sexy ?hot|\+ ?18|18 ?\+)($|[^a-z0-9])/;
+const adCat=g=>ADG.test(nz(g||'')),adItem=i=>adCat(i.g)||ADN.test(nz(i.n||''));
 const AT=/([\w-]+)="([^"]*)"/g,AK={'tvg-logo':'l','group-title':'g','tvg-id':'id','tvg-name':'tn','tvg-plot':'p','plot':'p2','tvg-description':'p3','description':'p4'};
 async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1],L=t.length;let cur=null,pos=0,cnt=0;
  while(pos<L){let e=t.indexOf('\n',pos);if(e<0)e=L;const ln=t.slice(pos,e).trim();pos=e+1;
@@ -75,7 +77,7 @@ async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tv
   if(ln.startsWith('#EXTINF')){const ci=ln.lastIndexOf(','),a={};let m;AT.lastIndex=0;const hd=ci>0?ln.slice(0,ci):ln;
    while((m=AT.exec(hd))){const k=AK[m[1].toLowerCase()];if(k)a[k]=m[2]}
    cur={n:ln.slice(ci+1).trim()||a.tn||'',l:sl(a.l||''),g:a.g||'Outros',id:a.id||'',p:a.p||a.p2||a.p3||a.p4||''}}
-  else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);out.push(cur);cur=null}}
+  else if(cur&&/^(https?|rtmp|rtsp):/i.test(ln)){cur.u=ln;cur.t=kind(cur);cur.k=nz(cur.n);cur.ad=adItem(cur)?1:0;out.push(cur);cur=null}}
  return{out,tvg}}
 async function useList(text,meta,cached){
  if(text.length>4e8){$('#st').textContent='Lista grande demais.';return false}
@@ -94,7 +96,7 @@ const nk=s=>nz(s).replace(/\b(fhd|uhd|hd|sd|4k|h265|hevc)\b/g,'').replace(/[^a-z
 /* Guia: link informado > xmltv.php do servidor (login/senha) > url-tvg da lista */
 const xepg=()=>{try{const b=new URL(CL().u||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/xmltv.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
 const epgUrl=()=>CL().epg||xepg()||CL().tvg||'';
-async function loadEPG(url){try{const r=await tf(url,6e4);if(!r.ok)throw 0;let t;
+async function loadEPG(url,manual){try{const r=await tf(url,6e4);if(!r.ok)throw 0;let t;
   if(/\.gz(\?|$)/i.test(url)&&window.DecompressionStream)t=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();else t=await r.text();
   const now=Date.now(),lim=now+12*36e5,E={},A={};
   let nn=0;for(const m of t.matchAll(/<channel\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/channel>/g)){if(++nn%1500==0)await sleep(0);const id=dec(m[1]).toLowerCase();A[id]=id;
@@ -106,8 +108,8 @@ async function loadEPG(url){try{const r=await tf(url,6e4);if(!r.ok)throw 0;let t
    (E[dec(ch[1]).toLowerCase()]||=[]).push({s,e,t:dec(ti[1]!=null?ti[1]:ti[2]||'').trim()})}
   for(const k in E)E[k].sort((a,b)=>a.s-b.s);
   S.epg=E;S.al=A;S.hasE=Object.keys(E).length?1:0;fillNow();if(!P.hidden&&cur&&live())epgBar();
-  toast(Object.keys(E).length?'Guia de programação carregado':'O guia veio vazio ou fora do horário.')}
- catch{toast('Não foi possível carregar o guia de programação (bloqueio do servidor ou link inválido).')}}
+  if(manual)toast(Object.keys(E).length?'Guia atualizado':'O guia veio vazio ou fora do horário.',1)}
+ catch{if(manual)toast('Não foi possível carregar o guia de programação (bloqueio do servidor ou link inválido).')}}
 function epgOf(it){const l=S.epg[(it.id||'').toLowerCase()]||S.epg[S.al[it.n.toLowerCase()]]||S.epg[S.al[nk(it.n)]];if(!l)return null;const n=Date.now();
  const i=l.findIndex(p=>p.s<=n&&n<p.e);return i<0?null:{p:l[i],nx:l[i+1]}}
 const hm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -115,13 +117,16 @@ function fillNow(from){if(!S.hasE)return;const one=c=>{if(!c.classList.contains(
  if(from==null)document.querySelectorAll('.card.tv').forEach(one);else for(let k=from;k<G.children.length;k++)one(G.children[k])}
 
 /* ---------- Lista ---------- */
-function grp(a){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[]});m.get(k).eps.push(i)}return[...m.values()]}
+function grp(a){const m=new Map();for(const i of a){const k=title(i.n);if(!m.has(k))m.set(k,{n:k,l:i.l,g:i.g,t:'series',eps:[],ad:0});const z=m.get(k);z.eps.push(i);if(i.ad)z.ad=1}return[...m.values()]}
+/* Controle parental: com ele ativo, item adulto so aparece dentro da categoria liberada com a senha; na busca nunca aparece */
+const vis=i=>!(PAR.on&&i.ad&&!(S.adOk&&i.g==S.adOk)),hidA=i=>!(PAR.on&&i.ad);
 function view(){const q=nz(S.q.trim());
- if(S.tab=='home'){if(!q)return[];const r=S.items.filter(i=>i.k.includes(q));return[...r.filter(i=>i.t!='series'),...grp(r.filter(i=>i.t=='series'))]}
- if(S.tab=='fav'){const FS=new Set(S.fav);let f=[...S.by.tv.filter(i=>FS.has(i.u)),...S.by.movie.filter(i=>FS.has(i.u)),...sgrp().filter(g=>S.fav.includes('S:'+g.n))];if(q)f=f.filter(i=>nz(i.n).includes(q));return f}
+ if(S.adOk&&(S.cat!=S.adOk||S.tab=='home'||S.tab=='fav'))S.adOk='';
+ if(S.tab=='home'){if(!q)return[];const r=S.items.filter(i=>i.k.includes(q)&&hidA(i));return[...r.filter(i=>i.t!='series'),...grp(r.filter(i=>i.t=='series'))]}
+ if(S.tab=='fav'){const FS=new Set(S.fav);let f=[...S.by.tv.filter(i=>FS.has(i.u)),...S.by.movie.filter(i=>FS.has(i.u)),...sgrp().filter(g=>S.fav.includes('S:'+g.n))].filter(vis);if(q)f=f.filter(i=>nz(i.n).includes(q));return f}
  let a=S.by[S.tab]||[];
- if(q)a=a.filter(i=>i.k.includes(q));else if(S.cat!='Todos'&&S.tab!='fav')a=a.filter(i=>i.g==S.cat);
- if(S.tab=='series')a=(q||S.cat!='Todos')?grp(a):sgrp();return a}
+ if(q)a=a.filter(i=>i.k.includes(q)&&hidA(i));else{if(S.cat!='Todos')a=a.filter(i=>i.g==S.cat);a=a.filter(vis)}
+ if(S.tab=='series')a=(q||S.cat!='Todos')?grp(a):sgrp().filter(vis);return a}
 const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
 const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dataset.i];
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
@@ -137,12 +142,12 @@ const sgrp=()=>S._sg||(S._sg=grp(S.by.series));
 function ccNames(){const g=[...new Set(S.by.tv.map(i=>i.g))],sel=LS.asc_cc;
  if(sel&&sel!='auto'&&g.includes(sel))return[sel];
  let m=g.filter(x=>/cliente/i.test(x));if(!m.length)m=g.filter(x=>/jogos?\b|jogo do dia|eventos?|ppv|futebol/i.test(x));return m}
-const clientCh=()=>{const n=ccNames(),o=[];for(const i of S.by.tv){if(n.includes(i.g)){o.push(i);if(o.length>=80)break}}return o};
-const favItems=()=>{const FS=new Set(S.fav);return{tv:S.by.tv.filter(i=>FS.has(i.u)),movie:S.by.movie.filter(i=>FS.has(i.u)),series:sgrp().filter(g=>FS.has('S:'+g.n))}};
+const clientCh=()=>{const n=ccNames(),o=[];for(const i of S.by.tv){if(n.includes(i.g)&&vis(i)){o.push(i);if(o.length>=80)break}}return o};
+const favItems=()=>{const FS=new Set(S.fav);return{tv:S.by.tv.filter(i=>FS.has(i.u)&&vis(i)),movie:S.by.movie.filter(i=>FS.has(i.u)&&vis(i)),series:sgrp().filter(g=>FS.has('S:'+g.n)&&vis(g))}};
 const vmCard=go=>`<div class="card vm" tabindex="0" data-go="${go}"><svg class="i" style="transform:rotate(-90deg)"><use href="#chev"/></svg>Ver mais</div>`;
 const rail=(id,l,go)=>`<div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}${go?vmCard(go):''}</div>`;
-function home(){const t=S.by.tv,c=clientCh().slice(0,10),cs=new Set(c),lv=[...c];for(let k=0;k<t.length&&lv.length<10;k++)if(!cs.has(t[k]))lv.push(t[k]);
- const mv=S.by.movie,sg=sgrp(),F=favItems(),
+function home(){const t=S.by.tv.filter(vis),c=clientCh().slice(0,10),cs=new Set(c),lv=[...c];for(let k=0;k<t.length&&lv.length<10;k++)if(!cs.has(t[k]))lv.push(t[k]);
+ const mv=S.by.movie.filter(vis),sg=sgrp().filter(vis),F=favItems(),
  ft=[['tv','Canais'],['movie','Filmes'],['series','Séries']].filter(([k])=>F[k].length);
  S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10)};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
  let h=ft.length?`<section class="sec"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
@@ -216,15 +221,42 @@ function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
   else if(b.dataset.s){cs=+b.dataset.s;draw()}
   else if(b.dataset.u){$('#sheet').hidden=true;resume(flat.find(x=>x.u==b.dataset.u),flat)}};fillMeta(s,1)}
 $('#catb').onclick=()=>{const m=new Map();for(const i of (S.by[S.tab]||[])){{let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}}
- sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}"><span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
- $('#sh').onclick=e=>{const b=e.target.closest('[data-c]');if(b){S.cat=b.dataset.c;$('#sheet').hidden=true;nav();render()}}};
-$('#cfg').onclick=()=>{sh(`<b>Ajustes</b><small id="av" style="color:#a39a9d"></small><button class="btn" id="a1">Gerenciar listas</button><button class="btn" id="a2">Trocar dispositivo (${S.dev=='tv'?'TV':'Celular'})</button><button class="btn" id="a3">Atualizar EPG</button><button class="btn" id="a5">Categoria do Canal do cliente</button><button class="btn" id="a6">Vencimento</button><button class="btn" id="a8">Bloqueio por PIN (${PIN.on?'ativo':'desativado'})</button><button class="btn" id="a10">Bloquear capturas de tela (${LS.asc_sc=='1'?'ativado':'desativado'})</button><button class="btn" id="a7">Verificar atualização</button><button class="btn" id="a4">Limpar favoritos e progresso</button><button class="btn" id="a9">Apagar todos os dados</button>`);
- $('#a1').onclick=lists;$('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
- $('#a3').onclick=()=>{$('#sheet').hidden=true;const e=epgUrl();e?loadEPG(e):toast('Sem guia disponível. Entre com servidor e login ou informe um link de EPG.')};
- ver().then(v=>{if(v&&$('#av'))$('#av').textContent='Versão '+v.name});
- $('#a6').onclick=expSheet;$('#a7').onclick=()=>{$('#sheet').hidden=true;checkUpd(true)};$('#a8').onclick=pinSheet;$('#a10').onclick=()=>{LS.asc_sc=LS.asc_sc=='1'?'0':'1';lastSc='';syncScr();$('#sheet').hidden=true;toast(LS.asc_sc=='1'?'Capturas bloqueadas nas telas de login e listas.':'Capturas liberadas.')};
- $('#a5').onclick=pickCC;$('#a4').onclick=()=>{S.fav=[];ST.pos={};ST.last={};saveState();$('#sheet').hidden=true;render()};
- $('#a9').onclick=e=>{const b=e.currentTarget;if(b.dataset.c)wipeAll();else{b.dataset.c=1;b.textContent='Toque de novo para apagar tudo'}}};
+ const lk=g=>PAR.on&&adCat(g)?'<svg class="i" style="width:1.1em;height:1.1em;margin-right:.4em"><use href="#ilock"/></svg>':'';
+ sh('<b>Categorias</b><button class="btn" data-c="Todos">Todas as categorias</button>'+[...m].map(([g,z])=>`<button class="btn" data-c="${esc(g)}">${lk(g)}<span>${esc(g)}</span><small style="margin-left:auto;color:#a39a9d">${z.size}</small></button>`).join(''));
+ $('#sh').onclick=async e=>{const b=e.target.closest('[data-c]');if(!b)return;const c=b.dataset.c;$('#sheet').hidden=true;
+  if(PAR.on&&adCat(c)){if(S.adOk!=c){if(!await parAsk())return;S.adOk=c}}else S.adOk='';
+  S.cat=c;nav();render()}};
+/* ---------- Ajustes (grade de 3 por linha) ---------- */
+const arm=(id,fn)=>{const b=$(id),sp=b.querySelector('span'),t0=sp.textContent;let on=0,tm;b.onclick=()=>{if(on){clearTimeout(tm);fn();return}on=1;b.classList.add('arm');sp.textContent='Toque de novo para confirmar';tm=setTimeout(()=>{on=0;b.classList.remove('arm');sp.textContent=t0},4000)}};
+async function aboutSheet(){const v=await ver();
+ sh(`<b>ASC play</b><small style="color:#a39a9d">${v?'Versão '+esc(v.name)+' (código '+esc(v.code)+')':'A versão aparece no app instalado (APK).'}</small><p class="sy" style="max-height:none">Player de listas IPTV (M3U e servidor com login). Você cadastra a sua lista: o app não inclui nem fornece canais, filmes ou séries.</p><p class="sy" style="max-height:none">Seus logins e listas ficam criptografados neste aparelho.</p>${REPO&&!REPO.startsWith('__')?`<small style="color:#a39a9d">Projeto: ${esc(REPO)}</small>`:''}`)}
+$('#cfg').onclick=()=>{const e=expAt(),d=e?daysTo(e):0,
+ T=(id,ic,l,s,c)=>`<button class="tile${c?' '+c:''}" id="${id}"><svg class="i"><use href="#${ic}"/></svg><span>${l}</span>${s!=null?`<small>${s}</small>`:''}</button>`;
+ sh('<b>Ajustes</b><button class="btn p ep2" id="a3"><svg class="i"><use href="#iepg"/></svg>Atualizar guia de programação (EPG)</button><div class="tg">'
+  +T('a1','ilist','Gerenciar listas',LST.l.length+(LST.l.length==1?' lista':' listas'))
+  +T('a11','ishield','Controle parental',PAR.on?'Ativo':'Desativado')
+  +T('a6','ical','Vencimento',e?(d<0?'Vencida':d==0?'Vence hoje':d+(d==1?' dia':' dias')):'Não definido')
+  +T('a8','ilock','Bloqueio por PIN',PIN.on?'Ativo':'Desativado')
+  +T('a7','iupd','Verificar atualização',null)
+  +T('a4','iclr','Limpar favoritos e progresso',null,'dg')
+  +T('a9','itrash','Apagar todos os dados',null,'dg')
+  +T('a12','iinfo','Sobre o app',null)
+  +T('a13','iver','Versão','…')
+  +T('a2','iswap','Trocar dispositivo',S.dev=='tv'?'TV':'Celular')
+  +T('a5','ifolder','Canal do cliente',null)
+  +T('a10','iscreen','Bloquear capturas',LS.asc_sc=='1'?'Ativado':'Desativado')
+  +'</div>');
+ $('#a3').onclick=()=>{$('#sheet').hidden=true;const u=epgUrl();u?loadEPG(u,1):toast('Sem guia disponível. Entre com servidor e login ou informe um link de EPG.')};
+ $('#a1').onclick=lists;$('#a11').onclick=parSheet;$('#a6').onclick=expSheet;$('#a8').onclick=pinSheet;
+ $('#a7').onclick=()=>{$('#sheet').hidden=true;checkUpd(true)};
+ arm('#a4',()=>{S.fav=[];ST.pos={};ST.last={};saveState();$('#sheet').hidden=true;render();toast('Favoritos e progresso apagados.',1)});
+ arm('#a9',wipeAll);
+ $('#a12').onclick=aboutSheet;
+ ver().then(v=>{const x=$('#a13 small');if(x)x.textContent=v?v.name:'—'});
+ $('#a13').onclick=async()=>{const v=await ver();toast(v?'ASC play '+v.name+' (código '+v.code+')':'A versão aparece no app instalado (APK).',1)};
+ $('#a2').onclick=()=>{$('#sheet').hidden=true;show('setup')};
+ $('#a5').onclick=pickCC;
+ $('#a10').onclick=()=>{LS.asc_sc=LS.asc_sc=='1'?'0':'1';lastSc='';syncScr();$('#sheet').hidden=true;toast(LS.asc_sc=='1'?'Capturas bloqueadas nas telas de login e listas.':'Capturas liberadas.',1)}};
 
 /* ---------- Gerenciar listas ---------- */
 let SS=0;const KN={x:'Servidor e login',m:'Link M3U',f:'Arquivo / texto'};
@@ -343,7 +375,7 @@ P.addEventListener('pointerdown',e=>{if(e.target.closest('button,#sk'))return ui
 /* ---------- Controle remoto (D-pad) ---------- */
 const BACK=['Escape','Backspace','GoBack','BrowserBack'];
 addEventListener('keydown',e=>{const k=e.key;
- if(!LK.hidden){if(/^\d$/.test(k)){e.preventDefault();pinKey(k)}else if(k=='Backspace'){e.preventDefault();pinKey('x')}else if(S.dev=='tv'&&k.startsWith('Arrow'))nvg(e,LK);return}
+ if(!LK.hidden){if(/^\d$/.test(k)){e.preventDefault();pinKey(k)}else if(k=='Backspace'){e.preventDefault();pinKey('x')}else if((k=='Escape'||k=='GoBack'||k=='BrowserBack'||e.keyCode==4)&&pinCan){e.preventDefault();pinCancel()}else if(S.dev=='tv'&&k.startsWith('Arrow'))nvg(e,LK);return}
  if(!P.hidden){const hid=P.classList.contains('h'),onb=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#player button');ui();
   if(BACK.includes(k)||e.keyCode==4){e.preventDefault();return close()}
   if(k==' '||k=='MediaPlayPause'){e.preventDefault();return tog()}
@@ -413,30 +445,30 @@ async function sched(){const N=plug('LocalNotifications');if(!N||!nat())return;c
   if(out.length)await N.schedule({notifications:out})}catch{}}
 
 /* ---------- Segurança: PIN, tela protegida, ambiente ---------- */
-const LK=$('#lock');let pinRes=null,pinBuf='';
+const LK=$('#lock');let pinRes=null,pinBuf='',pinLen=0,pinCan=false;const pinCancel=()=>{const r=pinRes;pinRes=null;r&&r(null)};
 const SCN=()=>{const N=plug('Secure');return N&&nat()?N:null};
 let lastSc='';const syncScr=()=>{const N=SCN();if(!N)return;const s=!LK.hidden||(LS.asc_sc=='1'&&(!$('#add').hidden||SS)),k=s+'|'+PIN.on;if(k==lastSc)return;lastSc=k;N.screen({secure:!!s,hideRecents:PIN.on}).catch(()=>{})};
 ['add','sheet','lock'].forEach(id=>new MutationObserver(()=>{if($('#sheet').hidden)SS=0;syncScr()}).observe($('#'+id),{attributes:true,attributeFilter:['hidden']}));
 async function pbk(pin,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);return b64e(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},k,256)))}
 function pinDraw(){$('#ld').textContent='●'.repeat(pinBuf.length)+'○'.repeat(Math.max(0,4-pinBuf.length))}
-function askPin(t,o={}){return new Promise(r=>{pinBuf='';pinRes=r;$('#lt').textContent=t;$('#lm').textContent=o.msg||'';$('#lc').hidden=!o.cancel;$('#lf').hidden=!o.forgot;pinDraw();LK.hidden=false;const f=LK.querySelector('[data-k="1"]');f&&f.focus()})}
+function askPin(t,o={}){return new Promise(r=>{pinBuf='';pinRes=r;pinLen=o.len||0;pinCan=!!o.cancel;$('#lt').textContent=t;$('#lm').textContent=o.msg||'';$('#lc').hidden=!o.cancel;$('#lf').hidden=!o.forgot;pinDraw();LK.hidden=false;const f=LK.querySelector('[data-k="1"]');f&&f.focus()})}
 const pinEnd=()=>{LK.hidden=true;pinRes=null;pinBuf=''};
 function pinKey(k){if(!pinRes)return;
  if(k=='x')pinBuf=pinBuf.slice(0,-1);
- else if(k=='ok'){if(pinBuf.length>=4){const r=pinRes;pinRes=null;r(pinBuf);return}$('#lm').textContent='Use de 4 a 6 dígitos.'}
- else if(pinBuf.length<6)pinBuf+=k;
+ else if(k=='ok'){if(pinBuf.length>=(pinLen||4)){const r=pinRes;pinRes=null;r(pinBuf);return}$('#lm').textContent=pinLen?'Use '+pinLen+' números.':'Use de 4 a 6 dígitos.'}
+ else if(pinBuf.length<(pinLen||6)){pinBuf+=k;if(pinLen&&pinBuf.length==pinLen){const r=pinRes;pinRes=null;r(pinBuf);return}}
  pinDraw()}
 LK.onclick=e=>{const b=e.target.closest('[data-k]');if(b)return pinKey(b.dataset.k);
- if(e.target.closest('#lc')){const r=pinRes;pinRes=null;r&&r(null)}
+ if(e.target.closest('#lc'))pinCancel();
  if(e.target.closest('#lf')&&confirm('Apagar TODOS os dados do app (listas, logins, favoritos) e remover o PIN?'))wipeAll()};
-async function verify(p){if(Date.now()<PIN.u)return false;const ok=await pbk(p,b64d(PIN.s))==PIN.h;
- if(ok){if(PIN.f||PIN.u){PIN.f=0;PIN.u=0;await vs('pin',PIN)}}
- else{PIN.f++;if(PIN.f>=5)PIN.u=Date.now()+Math.min(36e5,3e4*2**(PIN.f-5));await vs('pin',PIN)}return ok}
-const wait=()=>`Muitas tentativas. Aguarde ${Math.ceil((PIN.u-Date.now())/1e3)}s.`;
+async function verify(p,O=PIN,key='pin'){if(Date.now()<O.u)return false;const ok=await pbk(p,b64d(O.s))==O.h;
+ if(ok){if(O.f||O.u){O.f=0;O.u=0;await vs(key,O)}}
+ else{O.f++;if(O.f>=5)O.u=Date.now()+Math.min(36e5,3e4*2**(O.f-5));await vs(key,O)}return ok}
+const wait=(O=PIN)=>`Muitas tentativas. Aguarde ${Math.ceil((O.u-Date.now())/1e3)}s.`;
 async function unlockLoop(){let m='';for(;;){const p=await askPin('Digite o PIN',{msg:m,forgot:1});
  if(Date.now()<PIN.u){m=wait();continue}
  if(await verify(p)){pinEnd();return}m=Date.now()<PIN.u?wait():'PIN incorreto.'}}
-async function chkPin(){try{for(;;){const p=await askPin('Digite o PIN atual',{cancel:1});if(!p)return false;if(await verify(p))return true;toast(Date.now()<PIN.u?wait():'PIN incorreto.')}}finally{pinEnd()}}
+async function chkPin(O=PIN,key='pin',title='Digite o PIN atual',len=0){try{let m='';for(;;){const p=await askPin(title,{cancel:1,len,forgot:len?1:0,msg:m});if(!p)return false;if(await verify(p,O,key))return true;m=Date.now()<O.u?wait(O):(len?'Senha incorreta.':'PIN incorreto.')}}finally{pinEnd()}}
 async function setPin(){try{const a=await askPin('Crie um PIN (4 a 6 dígitos)',{cancel:1});if(!a)return;const b=await askPin('Repita o PIN',{cancel:1});if(!b)return;
  if(a!=b)return toast('Os PINs não conferem.');const s=crypto.getRandomValues(new Uint8Array(16));
  Object.assign(PIN,{on:true,s:b64e(s),h:await pbk(a,s),f:0,u:0});await vs('pin',PIN);lastSc='';syncScr();toast('PIN ativado.')}finally{pinEnd()}}
@@ -444,8 +476,23 @@ function pinSheet(){sh(`<b>Bloqueio por PIN</b><small style="color:#a39a9d">${PI
  const go=(id,f)=>{const b=$(id);b&&(b.onclick=()=>{$('#sheet').hidden=true;f()})};
  go('#p1',setPin);go('#p2',async()=>{if(await chkPin())setPin()});
  go('#p3',async()=>{if(await chkPin()){Object.assign(PIN,{on:false,h:'',s:'',f:0,u:0});await vs('pin',PIN);lastSc='';syncScr();toast('PIN desativado.')}})}
+/* ---------- Controle parental: senha de 4 números para liberar categorias adultas ---------- */
+const parAsk=()=>chkPin(PAR,'par','Senha do controle parental',4);
+function parRefresh(){S.adOk='';if(PAR.on&&adCat(S.cat))S.cat='Todos';nav();render()}
+function parBack(){if(!P.hidden&&cur&&!vis(cur))close();if(PAR.on&&adCat(S.cat)&&S.tab!='home'&&S.tab!='fav'){S.cat='Todos';nav();render()}}
+async function setPar(){try{const a=await askPin('Crie a senha do controle parental (4 números)',{cancel:1,len:4});if(!a)return;const b=await askPin('Repita a senha',{cancel:1,len:4});if(!b)return;
+ if(a!=b)return toast('As senhas não conferem.');const s=crypto.getRandomValues(new Uint8Array(16));
+ Object.assign(PAR,{on:true,s:b64e(s),h:await pbk(a,s),f:0,u:0});await vs('par',PAR);parRefresh();toast('Controle parental ativado.',1)}finally{pinEnd()}}
+function parSheet(){const n=new Set(S.items.filter(i=>adCat(i.g)).map(i=>i.g)).size;
+ sh(`<b>Controle parental</b><small style="color:#a39a9d">${PAR.on?'Ativo: categorias adultas pedem a senha de 4 números. Conteúdo adulto não aparece na busca, no início nem nos favoritos.':'Desativado. Ative para bloquear as categorias adultas com uma senha de 4 números.'}</small>`
+  +(S.items.length?`<small style="color:#a39a9d">${n?n+' categoria'+(n>1?'s adultas detectadas':' adulta detectada')+' nesta lista.':'Nenhuma categoria adulta detectada nesta lista.'}</small>`:'')
+  +(PAR.on?'<button class="btn" id="c2">Trocar senha</button><button class="btn" id="c3">Desativar controle parental</button>':'<button class="btn p" id="c1">Ativar controle parental</button>'));
+ const go=(id,f)=>{const b=$(id);b&&(b.onclick=()=>{$('#sheet').hidden=true;f()})};
+ go('#c1',setPar);go('#c2',async()=>{if(await parAsk())setPar()});
+ go('#c3',async()=>{if(await parAsk()){Object.assign(PAR,{on:false,h:'',s:'',f:0,u:0});await vs('par',PAR);parRefresh();toast('Controle parental desativado.',1)}})}
 let hideAt=0;
 document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)S.adOk='';else if(PAR.on)parBack();
  if(document.hidden){stNow().catch(()=>{});if(PIN.on){hideAt=Date.now();$('#cover').hidden=false}}
  else if(PIN.on){$('#cover').hidden=true;if(Date.now()-hideAt>3e4&&!pinRes){if(!P.hidden)close();$('#sheet').hidden=true;unlockLoop()}}});
 /* Bloqueia o app se houver depurador ou ferramenta de interceptação (Frida/Xposed) ou se o APK foi alterado */
@@ -484,4 +531,4 @@ $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('
  setTimeout(()=>{try{HL()}catch{}},1500);setTimeout(()=>checkUpd(),4000)
 }catch(e){bootErr((e&&e.message)||e)}})();
 addEventListener('error',e=>{const t=e.target;if(t&&t.tagName=='IMG')t.remove()},true);
-try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!LK.hidden)A.exitApp();else if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}
+try{const A=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;A&&A.addListener('backButton',()=>{if(!LK.hidden){if(pinCan)pinCancel();else A.exitApp()}else if(!P.hidden)close();else if(!$('#sheet').hidden)$('#sheet').hidden=true;else A.exitApp()})}catch{}
