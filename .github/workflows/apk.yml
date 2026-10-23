@@ -17,12 +17,11 @@ jobs:
         with: {node-version: 20}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: 17}
-      - run: mkdir -p www && cp index.html app.js hls.min.js www/
       - name: Informar o repositorio ao app (para checar atualizacoes)
         run: sed -i "s#__REPO__#${{ github.repository }}#g" www/index.html
       - run: npm install
       - run: npx cap add android
-      - run: bash setup.sh
+      - run: bash scripts/setup.sh
       - run: npx cap sync android
       - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
       - name: Assinar o APK
