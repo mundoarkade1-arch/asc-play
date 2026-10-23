@@ -21,7 +21,8 @@ import java.security.MessageDigest;
 import java.util.Set;
 
 // Atualizacao do proprio app, com varias travas:
-//  1) so baixa por HTTPS de hosts do GitHub (cada redirecionamento e conferido);
+//  1) so baixa por HTTPS de hosts do GitHub; a URL inicial precisa ser do PROPRIO repositorio
+//     (REPO e preenchido no build) e cada redirecionamento e conferido;
 //  2) limite de tamanho; confere SHA-256 quando o version.json informa;
 //  3) antes de abrir o instalador, confere que o APK e deste mesmo app, tem versao maior
 //     e esta assinado com o MESMO certificado do app instalado.
@@ -32,6 +33,19 @@ public class UpdaterPlugin extends Plugin {
             "github.com", "objects.githubusercontent.com",
             "release-assets.githubusercontent.com", "github-releases.githubusercontent.com"};
     private static final long MAX_BYTES = 400L * 1024 * 1024;
+    // Preenchido pelo workflow (sed) com "dono/repositorio". Sem isso, nenhuma atualizacao e aceita.
+    private static final String REPO = "__REPO__";
+
+    // A URL inicial tem que ser https://github.com/<REPO>/releases/download/...
+    private static boolean fromRepo(URL u) {
+        if (REPO.startsWith("__") || !allowed(u)) return false;
+        if (!"github.com".equalsIgnoreCase(u.getHost())) return false;
+        String p = u.getPath() == null ? "" : u.getPath();
+        String lp = p.toLowerCase();
+        if (lp.contains("..") || lp.contains("%2e")) return false;
+        String pre = "/" + REPO + "/releases/download/";
+        return p.regionMatches(true, 0, pre, 0, pre.length());
+    }
 
     private static boolean allowed(URL u) {
         if (!"https".equals(u.getProtocol())) return false;
@@ -93,6 +107,12 @@ public class UpdaterPlugin extends Plugin {
         final String want = call.getString("sha256", "");
         if (url == null || url.isEmpty()) {
             call.reject("url");
+            return;
+        }
+        try {
+            if (!fromRepo(new URL(url))) { call.reject("origem"); return; }
+        } catch (Exception e) {
+            call.reject("origem");
             return;
         }
         // Android 8+: o app precisa ter a permissao "instalar apps desta fonte"

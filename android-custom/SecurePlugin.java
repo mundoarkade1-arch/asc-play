@@ -16,10 +16,6 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.util.HashSet;
@@ -32,7 +28,7 @@ import javax.crypto.spec.GCMParameterSpec;
 // Camadas nativas de seguranca:
 //  - wrap/unwrap: protege a chave do cofre do app com uma chave que nunca sai do Android Keystore
 //  - screen: bloqueia captura de tela nas telas de login/listas e esconde o app nos "recentes"
-//  - check: detecta depurador e APK reassinado (se EXPECTED_CERT estiver preenchido). Frida/Xposed: desativado
+//  - check: detecta depurador e APK reassinado (se EXPECTED_CERT estiver preenchido)
 @CapacitorPlugin(name = "Secure")
 public class SecurePlugin extends Plugin {
     private static final String ALIAS = "asc_kek";
@@ -143,27 +139,11 @@ public class SecurePlugin extends Plugin {
         return out;
     }
 
-    private boolean hooked() {
-        try { Class.forName("de.robv.android.xposed.XposedBridge"); return true; } catch (Throwable ignored) { }
-        try (BufferedReader r = new BufferedReader(new FileReader("/proc/self/maps"))) {
-            String l;
-            while ((l = r.readLine()) != null) {
-                String s = l.toLowerCase();
-                if (s.contains("frida") || s.contains("gum-js-loop") || s.contains("xposed")) return true;
-            }
-        } catch (Exception ignored) { }
-        try (Socket s = new Socket()) {
-            s.connect(new InetSocketAddress("127.0.0.1", 27042), 150);
-            return true;
-        } catch (Exception ignored) { }
-        return false;
-    }
-
     @PluginMethod
     public void check(final PluginCall call) {
         new Thread(() -> {
             JSObject r = new JSObject();
-            boolean dbg = false, hk = false, sigOk = true;
+            boolean dbg = false, sigOk = true;
             try {
                 boolean debuggable = (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
                 dbg = !debuggable && (Debug.isDebuggerConnected() || Debug.waitingForDebugger());
@@ -174,10 +154,8 @@ public class SecurePlugin extends Plugin {
                     sigOk = certs(pi).contains(EXPECTED_CERT.replace(":", "").toUpperCase());
                 }
             } catch (Throwable e) { sigOk = false; }
-            // Deteccao de Frida/Xposed desativada de proposito (hk fica false).
             try {
                 r.put("debugger", dbg);
-                r.put("hook", hk);
                 r.put("sig", sigOk);
                 call.resolve(r);
             } catch (Throwable e) {
