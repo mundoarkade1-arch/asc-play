@@ -34,7 +34,7 @@ public class MainActivity extends BridgeActivity {
         }
         if (getBridge() != null) {
             ImmersivePlugin.installInsets(getBridge().getWebView());
-            hardenWebView(getBridge().getWebView());
+            try { hardenWebView(getBridge().getWebView()); } catch (Throwable ignored) { }
         }
     }
 

@@ -70,7 +70,7 @@ public class SecurePlugin extends Plugin {
             JSObject r = new JSObject();
             r.put("data", Base64.encodeToString(o, Base64.NO_WRAP));
             call.resolve(r);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             call.reject("wrap");
         }
     }
@@ -88,7 +88,7 @@ public class SecurePlugin extends Plugin {
             JSObject r = new JSObject();
             r.put("data", Base64.encodeToString(pt, Base64.NO_WRAP));
             call.resolve(r);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             call.reject("unwrap");
         }
     }
@@ -163,22 +163,26 @@ public class SecurePlugin extends Plugin {
     public void check(final PluginCall call) {
         new Thread(() -> {
             JSObject r = new JSObject();
-            boolean dbg = false;
+            boolean dbg = false, hk = false, sigOk = true;
             try {
                 boolean debuggable = (getContext().getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
                 dbg = !debuggable && (Debug.isDebuggerConnected() || Debug.waitingForDebugger());
-            } catch (Exception ignored) { }
-            boolean sigOk = true;
-            if (!EXPECTED_CERT.isEmpty()) {
-                try {
+            } catch (Throwable ignored) { }
+            try {
+                if (!EXPECTED_CERT.isEmpty()) {
                     PackageInfo pi = getContext().getPackageManager().getPackageInfo(getContext().getPackageName(), sigFlags());
                     sigOk = certs(pi).contains(EXPECTED_CERT.replace(":", "").toUpperCase());
-                } catch (Exception e) { sigOk = false; }
+                }
+            } catch (Throwable e) { sigOk = false; }
+            try { hk = hooked(); } catch (Throwable ignored) { }
+            try {
+                r.put("debugger", dbg);
+                r.put("hook", hk);
+                r.put("sig", sigOk);
+                call.resolve(r);
+            } catch (Throwable e) {
+                call.resolve();
             }
-            r.put("debugger", dbg);
-            r.put("hook", hooked());
-            r.put("sig", sigOk);
-            call.resolve(r);
         }).start();
     }
 }

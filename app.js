@@ -13,12 +13,19 @@ const uid=()=>[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(1
 /* ---------- Cofre: tudo que e sensivel (listas, logins, links, favoritos, progresso) fica CRIPTOGRAFADO (AES-GCM).
    A chave do cofre fica protegida pelo Android Keystore (hardware, quando o aparelho tem). ---------- */
 const b64e=u=>btoa(String.fromCharCode(...u)),b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+/* Chamada nativa com limite de tempo: se o Android nao responder, nunca deixa o app esperando para sempre */
+const tmo=(p,ms)=>Promise.race([Promise.resolve(p),new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),ms))]);
+/* Modo do cofre fica fixo: asc_dm='n' (chave protegida pelo Android Keystore) ou 'w' (chave do WebView). */
 let DKP;const dek=()=>DKP||(DKP=(async()=>{const N=plug('Secure');
- if(N&&nat()){try{let raw;try{if(LS.asc_dk)raw=b64d((await N.unwrap({data:LS.asc_dk})).data)}catch{}
-  if(!raw){raw=crypto.getRandomValues(new Uint8Array(32));LS.asc_dk=(await N.wrap({data:b64e(raw)})).data}
-  const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);raw.fill(0);return k}catch{}}
- let k=await kv('get','dek');if(!k){k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await kv('put','dek',k)}
- return k})());
+ const web=async()=>{let k=await kv('get','dek');if(!k){k=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']);await kv('put','dek',k)}return k};
+ if(!(N&&nat())||LS.asc_dm=='w')return web();
+ let raw,lost=false;
+ if(LS.asc_dk){try{raw=b64d((await tmo(N.unwrap({data:LS.asc_dk}),6000)).data)}
+  catch(e){if(e&&e.message=='timeout')throw e;lost=true}}   /* timeout: tenta de novo depois, sem apagar nada */
+ if(!raw){/* primeira vez (ou chave do Keystore perdida): cria chave nova */
+  try{const r=crypto.getRandomValues(new Uint8Array(32));LS.asc_dk=(await tmo(N.wrap({data:b64e(r)}),6000)).data;LS.asc_dm='n';raw=r}
+  catch{if(lost)throw new Error('keystore');LS.removeItem('asc_dk');LS.asc_dm='w';return web()}}   /* Keystore ruim neste aparelho: usa o modo web */
+ const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['encrypt','decrypt']);raw.fill(0);return k})().catch(e=>{DKP=null;throw e}));
 async function cEnc(str){const k=await dek(),iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(str))),o=new Uint8Array(12+ct.length);o.set(iv);o.set(ct,12);return o.buffer}
 async function cDec(buf){try{const k=await dek(),u=new Uint8Array(buf);return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},k,u.slice(12)))}catch{return null}}
 const vs=async(k,v)=>kv('put','v:'+k,await cEnc(JSON.stringify(v)));
@@ -35,14 +42,14 @@ async function migrate(){let old;try{old=await kv('get','pl')}catch{}
  if(old!==undefined)await kv('del','pl');
  if(LS.asc_fav||LS.asc_pos||LS.asc_last){S.fav=jg('asc_fav',[]);ST.pos=jg('asc_pos',{});ST.last=jg('asc_last',{});await stNow()}
  ['asc_url','asc_epg','asc_tvg','asc_exp','asc_expm','asc_renew','asc_xs','asc_xu','asc_xp','asc_fav','asc_pos','asc_last'].forEach(k=>LS.removeItem(k))}
-async function wipeAll(){try{const N=plug('Secure');N&&nat()&&await N.reset()}catch{}
+async function wipeAll(){try{const N=plug('Secure');N&&nat()&&await tmo(N.reset(),3000)}catch{}
  try{(await db()).close()}catch{}
  try{await new Promise(r=>{const q=indexedDB.deleteDatabase('asc');q.onsuccess=q.onerror=q.onblocked=()=>r()})}catch{}
  try{LS.clear();sessionStorage.clear()}catch{}
  location.reload()}
 const toast=m=>{const t=document.createElement('div');t.id='toast';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),4000)};
-const show=id=>{$('#boot').hidden=true;['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id)};
-const bootErr=m=>{$('#boot').hidden=false;$('#bm').textContent='Erro: '+m};
+const show=id=>{window.__ascBooted=1;$('#boot').hidden=true;['setup','add','app'].forEach(x=>$('#'+x).hidden=x!=id)};
+const bootErr=m=>{if(window.__ascBooted)return console.warn(m);$('#boot').hidden=false;$('#bm').textContent='Erro: '+m;window.__ascRecovery&&window.__ascRecovery()};
 addEventListener('unhandledrejection',e=>bootErr((e.reason&&e.reason.message)||e.reason));
 addEventListener('error',e=>{if(e.target===window)bootErr(e.message)});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -423,7 +430,7 @@ document.addEventListener('visibilitychange',()=>{
  if(document.hidden){stNow().catch(()=>{});if(PIN.on){hideAt=Date.now();$('#cover').hidden=false}}
  else if(PIN.on){$('#cover').hidden=true;if(Date.now()-hideAt>3e4&&!pinRes){if(!P.hidden)close();$('#sheet').hidden=true;unlockLoop()}}});
 /* Bloqueia o app se houver depurador ou ferramenta de interceptação (Frida/Xposed) ou se o APK foi alterado */
-async function envOk(){const N=SCN();if(!N)return true;try{const r=await N.check();return !(r.debugger||r.hook||r.sig===false)}catch{return true}}
+async function envOk(){const N=SCN();if(!N)return true;try{const r=await tmo(N.check(),3000);return !(r.debugger||r.hook||r.sig===false)}catch{return true}}
 
 /* ---------- Início ---------- */
 function setDev(d){S.dev=d;LS.asc_dev=d;document.body.className=d=='tv'?'tv':'mob';ori(d=='tv'?'landscape':'portrait')}
@@ -449,7 +456,8 @@ $('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').
  catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
 $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{const ep=$('#e').value.trim();useList(t.value,{id:uid(),n:lname('Lista colada'),m:'f',u:'',epg:okU(ep)?ep:''}).then(ok=>ok&&doneAdd())}};
 (async()=>{try{
- if(!await Promise.race([envOk(),sleep(4000).then(()=>true)])){$('#boot').hidden=true;$('#blk').hidden=false;return}
+ if(!await Promise.race([envOk(),sleep(4000).then(()=>true)])){window.__ascBooted=1;$('#boot').hidden=true;$('#blk').hidden=false;return}
+ try{await tmo(dek(),9000)}catch(e){window.__ascRecovery&&window.__ascRecovery('Não consegui abrir o cofre seguro deste aparelho.');return}
  try{await loadVault();await migrate()}catch(e){console.warn(e)}
  syncScr();
  if(PIN.on)await unlockLoop();

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' blob: data: http: https:; connect-src 'self' http: https: data: blob:; worker-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; media-src 'self' blob: data: http: https:; connect-src 'self' http: https: data: blob:; worker-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="asc-repo" content="__REPO__">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -134,7 +134,8 @@ body.tv main.hm{padding-bottom:1em}
 <symbol id="fw10" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5V8h-4.5"/><text x="12" y="15.4" font-size="7.5" text-anchor="middle" fill="currentColor" stroke="none" font-weight="700">10</text></symbol>
 </defs></svg>
 
-<section class="scr" id="boot"><div class="logo" style="font-size:2.4em">ASC play</div><p id="bm">Carregando…</p></section>
+<section class="scr" id="boot"><div class="logo" style="font-size:2.4em">ASC play</div><p id="bm">Carregando…</p>
+ <div class="row" id="br" hidden><button class="btn p" id="b1">Tentar de novo</button><button class="btn" id="b2">Apagar dados locais</button></div></section>
 
 <section class="scr" id="setup" hidden>
  <div class="logo" style="font-size:3em">ASC play</div>
@@ -200,4 +201,14 @@ body.tv main.hm{padding-bottom:1em}
  <div class="ov" id="ob"><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="epg" hidden></div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
 </div>
 
+<script>
+/* Rede de seguranca: se o app nao sair da tela de carregamento, oferece recuperar (funciona mesmo se o app.js falhar) */
+(function(){var d=document;function rec(m){if(window.__ascBooted)return;var b=d.getElementById('boot'),t=d.getElementById('bm'),r=d.getElementById('br');if(!b||!t||!r)return;b.hidden=false;if(m)t.textContent=m;else if(t.textContent==='Carregando…')t.textContent='O app demorou para iniciar.';r.hidden=false}
+window.__ascRecovery=rec;
+setTimeout(function(){rec()},15000);
+d.addEventListener('DOMContentLoaded',function(){
+ d.getElementById('b1').onclick=function(){location.reload()};
+ d.getElementById('b2').onclick=function(){try{localStorage.clear();sessionStorage.clear();localStorage.asc_dm='w'}catch(e){}
+  try{var q=indexedDB.deleteDatabase('asc');q.onsuccess=q.onerror=q.onblocked=function(){location.reload()};setTimeout(function(){location.reload()},1500)}catch(e){location.reload()}}})})();
+</script>
 <script src="app.js"></script></body></html>
