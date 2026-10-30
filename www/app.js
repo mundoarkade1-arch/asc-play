@@ -392,7 +392,7 @@ V.onprogress=()=>{if(V.duration&&V.buffered.length)$('#bf').style.width=V.buffer
 let sv=0;V.ontimeupdate=()=>{if(!cur||live())return;const d=V.duration||0,t=V.currentTime;
  if(!dr){$('#pr').style.width=$('#th').style.left=d?t/d*100+'%':'0';$('#t1').textContent=fmt(t)}$('#t2').textContent=fmt(d);
  if(Date.now()-sv>5e3){sv=Date.now();saveP()}
- const neb=$('#next-ep-btn');if(cur.t=='series'&&!live()&&d>0&&(d-t)<=120&&(d-t)>0){neb.hidden=false}else{neb.hidden=true}};
+ const neb=$('#next-ep-btn');if(cur.t=='series'&&!live()&&d>0&&(d-t)<=120&&(d-t)>=0){neb.hidden=false}else{neb.hidden=true}};
 const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));$('#pr').style.width=$('#th').style.left=f*100+'%';$('#t1').textContent=fmt(f*(V.duration||0));return f};
 sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
 sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};
