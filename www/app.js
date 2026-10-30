@@ -115,7 +115,7 @@ async function loadEPG(url,manual){try{const t=await tfText(url,12e4);if(!t)thro
    st=a.match(/start="(\d{14})\s?([+-]\d{4})?"/),sp=a.match(/stop="(\d{14})\s?([+-]\d{4})?"/),ch=a.match(/channel="([^"]*)"/),
    ti=m[2].match(/<title[^>]*>\s*(?:<!\[CDATA\[([\s\S]*?)\]\]>|([^<]*))/);
    if(!st||!sp||!ch||!ti)continue;const s=ms(st[1],st[2]),e=ms(sp[1],sp[2]);if(e<now||s>lim)continue;
-   (E[dec(ch[1]).toLowerCase()]||=[]).push({s,e,t:dec(ti[1]!=null?ti[1]:ti[2]||'').trim()})}
+   const k=dec(ch[1]).toLowerCase();(E[k]=E[k]||[]).push({s,e,t:dec(ti[1]!=null?ti[1]:ti[2]||'').trim()})}
   for(const k in E)E[k].sort((a,b)=>a.s-b.s);
   S.epg=E;S.al=A;S.hasE=Object.keys(E).length?1:0;fillNow();if(!P.hidden&&cur&&live())epgBar();
   if(manual)toast(Object.keys(E).length?'Guia atualizado':'O guia veio vazio ou fora do horário.',1)}
@@ -231,7 +231,7 @@ function info(it){const p=prog(it.u),rs=isPart(it.u),k=favK(it);
  $('#i1').onclick=()=>{$('#sheet').hidden=true;play(it,[it],rs?p.t:0)};
  if(rs)$('#i3').onclick=()=>{$('#sheet').hidden=true;play(it,[it],0)};
  $('#i2').onclick=()=>{fav(k);$('#sheet').hidden=true;refresh()};fillMeta(it,0)}
-function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
+function eps(s){const m={};for(const e of s.eps){const k=seas(e);(m[k]=m[k]||[]).push(e)}
  const ks=Object.keys(m).map(Number).sort((a,b)=>a-b);ks.forEach(k=>m[k].sort((a,b)=>epn(a)-epn(b)));
  const flat=ks.flatMap(k=>m[k]),L=ST.last[s.n];let t=L&&flat.find(e=>e.u==L);
  if(!t)t=flat.filter(e=>isPart(e.u)).sort((a,b)=>(prog(b.u).at||0)-(prog(a.u).at||0))[0];
