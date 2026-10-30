@@ -107,8 +107,7 @@ const nk=s=>nz(s).replace(/\b(fhd|uhd|hd|sd|4k|h265|hevc)\b/g,'').replace(/[^a-z
 /* Guia: link informado > xmltv.php do servidor (login/senha) > url-tvg da lista */
 const xepg=()=>{try{const b=new URL(CL().u||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/xmltv.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
 const epgUrl=()=>CL().epg||xepg()||CL().tvg||'';
-async function loadEPG(url,manual){try{const r=await tf(url,6e4);if(!r.ok)throw 0;let t;
-  if(/\.gz(\?|$)/i.test(url)&&window.DecompressionStream)t=await new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).text();else t=await r.text();
+async function loadEPG(url,manual){try{const t=await tfText(url,12e4);if(!t)throw 0;
   const now=Date.now(),lim=now+12*36e5,E={},A={};
   let nn=0;for(const m of t.matchAll(/<channel\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/channel>/g)){if(++nn%1500==0)await sleep(0);const id=dec(m[1]).toLowerCase();A[id]=id;
    for(const n of m[2].matchAll(/<display-name[^>]*>([^<]+)/g)){const d=dec(n[1]).trim();A[d.toLowerCase()]=id;A[nk(d)]=id}}
@@ -411,7 +410,8 @@ $('#bk').onclick=()=>close();
 setInterval(()=>{if(!P.hidden&&cur&&live())epgBar()},3e4);
 addEventListener('popstate',()=>{if(!P.hidden)close(1)});
 const fitSet=m=>{V.style.objectFit=m;$('#fit').classList.toggle('on',m=='cover');LS.asc_fit=m};
-$('#fit').onclick=()=>fitSet(V.style.objectFit=='cover'?'contain':'cover');fitSet('cover');
+$('#fit').onclick=()=>fitSet(V.style.objectFit=='cover'?'contain':'cover');
+fitSet(LS.asc_fit||(S.dev==='tv'?'contain':'cover'));
 P.addEventListener('pointerdown',e=>{if(e.target.closest('button,#sk,#next-ep-btn'))return ui();const n=Date.now(),x=e.clientX/innerWidth;
  if(!live()&&n-lt<300&&(x<.35||x>.65)){step(x<.5?-1:1);ui();lt=0;return}lt=n;P.classList.contains('h')?ui():P.classList.add('h')});
 
