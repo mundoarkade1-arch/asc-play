@@ -172,6 +172,7 @@ H.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains(
 
 document.querySelectorAll('nav [data-t]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;S.cat='Todos';nav();render()});
 let qt;$('#q').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value;render()},250)};
+$('#q').onkeydown=e=>{if(e.key!='Enter')return;e.preventDefault();clearTimeout(qt);S.q=e.currentTarget.value;render();e.currentTarget.blur()};
 const openIt=(it,l)=>it&&(it.eps?eps(it):it.t=='tv'?play(it,l.filter(x=>x.t=='tv')):info(it));
 G.onclick=e=>{const b=e.target.closest('[data-continue]');if(b){const x=continueEntries(b.dataset.continue)[0];if(x)continueIt(x);return}
  const c=e.target.closest('.card');if(c)openIt(S.view[c.dataset.i],S.view)};
