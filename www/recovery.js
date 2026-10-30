@@ -6,7 +6,7 @@ d.addEventListener('DOMContentLoaded',function(){
  try{
   var match=navigator.userAgent.match(/Chrome\/(\d+)/);
   if(match&&parseInt(match[1],10)<84)old=true;
-  (function(){return {}?.a})();
+  var x={}; if(typeof x.a !== 'undefined') {}
  }catch(e){old=true;}
  if(old){
   rec('O navegador interno deste aparelho (WebView antigo) é antigo demais para o ASC play. Atualize o Android System WebView ou use o ASC TV Box, versão nativa para aparelhos antigos.');
