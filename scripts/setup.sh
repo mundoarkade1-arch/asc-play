@@ -43,43 +43,58 @@ XML
 grep -q usesCleartextTraffic $M || sed -i 's#<application#<uses-feature android:name="android.software.leanback" android:required="false"/><uses-feature android:name="android.hardware.touchscreen" android:required="false"/><application android:usesCleartextTraffic="true"#' $M
 sed -i 's#<category android:name="android.intent.category.LAUNCHER" />#&<category android:name="android.intent.category.LEANBACK_LAUNCHER" />#' $M
 
-# --- Icones e banner (usa Python + Pillow; nao depende do ImageMagick)
-ICON=""
-for c in assets/icon.png icon.png icone.png "ícone.png" Icon.png Icone.png; do
-  [ -f "$c" ] && { ICON="$c"; break; }
+# --- Icones e banner (fontes oficiais em assets/; usa Python + Pillow)
+for F in assets/icon.png assets/icon-foreground.png assets/banner.png; do
+  [ -f "$F" ] || { echo "ERRO: arquivo oficial nao encontrado: $F"; exit 1; }
 done
-[ -n "$ICON" ] || { echo "ERRO: icone nao encontrado (esperado assets/icon.png)"; ls -la; exit 1; }
-echo "Icone usado: $ICON"
-cp "$ICON" /tmp/asc_icon.png
+echo "Identidade visual: assets/icon.png, assets/icon-foreground.png, assets/banner.png"
 
 PY=$(command -v python3 || command -v python || true)
 [ -n "$PY" ] || { echo "ERRO: python nao encontrado"; exit 1; }
 $PY -c "import PIL" 2>/dev/null || $PY -m pip install --quiet pillow || { echo "ERRO: nao consegui instalar o Pillow"; exit 1; }
 
-rm -rf $R/mipmap-anydpi-v26
+# Remove todos os icones padrao do Capacitor (inclusive os adaptativos) para nada antigo sobrar
+rm -rf $R/mipmap-anydpi-v26 $R/mipmap-anydpi $R/drawable-v24/ic_launcher_foreground.xml $R/drawable/ic_launcher_background.xml $R/values/ic_launcher_background.xml
 rm -f $R/mipmap-*/ic_launcher*.webp $R/mipmap-*/ic_launcher*.png
 $PY - "$R" <<'PYEOF'
 import sys, os
 from PIL import Image, ImageDraw
 R = sys.argv[1]
-src = Image.open('/tmp/asc_icon.png').convert('RGBA')
+src = Image.open('assets/icon.png').convert('RGBA')
+fg = Image.open('assets/icon-foreground.png').convert('RGBA')
 for d, n in (("mdpi",48),("hdpi",72),("xhdpi",96),("xxhdpi",144),("xxxhdpi",192)):
     p = f"{R}/mipmap-{d}"; os.makedirs(p, exist_ok=True)
     im = src.resize((n, n), Image.LANCZOS)
-    im.save(f"{p}/ic_launcher.png")
-    im.save(f"{p}/ic_launcher_foreground.png")
+    im.save(f"{p}/ic_launcher.png", optimize=True)
     big = 4
     mask = Image.new("L", (n*big, n*big), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, n*big-1, n*big-1), fill=255)
     mask = mask.resize((n, n), Image.LANCZOS)
     rd = Image.new("RGBA", (n, n), (0,0,0,0)); rd.paste(im, (0,0), mask)
-    rd.save(f"{p}/ic_launcher_round.png")
-print("Icones gerados")
+    rd.save(f"{p}/ic_launcher_round.png", optimize=True)
+# Camada frontal do icone adaptativo (108dp)
+for d, n in (("mdpi",108),("hdpi",162),("xhdpi",216),("xxhdpi",324),("xxxhdpi",432)):
+    fg.resize((n, n), Image.LANCZOS).save(f"{R}/mipmap-{d}/ic_launcher_foreground.png", optimize=True)
+os.makedirs(f"{R}/mipmap-anydpi-v26", exist_ok=True)
+xml = """<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/asc_icon_bg"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+"""
+for n in ("ic_launcher", "ic_launcher_round"):
+    open(f"{R}/mipmap-anydpi-v26/{n}.xml", "w").write(xml)
+os.makedirs(f"{R}/values", exist_ok=True)
+open(f"{R}/values/asc_colors.xml", "w").write('<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="asc_icon_bg">#000000</color></resources>\n')
+# Banner da Android TV (320x180dp -> 640x360 em xhdpi)
+os.makedirs(f"{R}/drawable-xhdpi", exist_ok=True)
+Image.open('assets/banner.png').convert('RGB').resize((640, 360), Image.LANCZOS).save(f"{R}/drawable-xhdpi/banner.png", optimize=True)
+print("Icones e banner gerados")
 PYEOF
-mkdir -p $R/drawable-xhdpi
-cp assets/banner.png $R/drawable-xhdpi/banner.png
 grep -q 'android:banner=' $M || sed -i 's#<application#<application android:banner="@drawable/banner"#' $M
-ls -la $R/mipmap-xxxhdpi
+grep -q 'android:icon=' $M || sed -i 's#<application#<application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"#' $M
+echo "Manifest:"; grep -o '<application[^>]*>' $M | head -c 600; echo
+ls -la $R/mipmap-xxxhdpi $R/mipmap-anydpi-v26
 
 # --- Seguranca do Android: sem backup, so certificados do sistema, regras de extracao de dados
 node android-custom/harden-android.js

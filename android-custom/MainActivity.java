@@ -27,6 +27,9 @@ import java.util.Map;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Mais conexoes simultaneas por servidor: os trechos de video (HLS) chegam em paralelo e o canal abre mais rapido
+        System.setProperty("http.maxConnections", "16");
+        System.setProperty("http.keepAlive", "true");
         registerPlugin(ImmersivePlugin.class);
         registerPlugin(UpdaterPlugin.class);
         registerPlugin(SecurePlugin.class);
@@ -73,6 +76,8 @@ public class MainActivity extends BridgeActivity {
         st.setGeolocationEnabled(false);
         st.setSaveFormData(false);
         st.setSupportMultipleWindows(false);
+        st.setJavaScriptCanOpenWindowsAutomatically(false);
+        st.setAllowContentAccess(false);
         // Video ao vivo precisa tocar sozinho depois de carregar o manifesto (sem exigir novo toque)
         st.setMediaPlaybackRequiresUserGesture(false);
         st.setCacheMode(WebSettings.LOAD_DEFAULT);
@@ -144,7 +149,7 @@ public class MainActivity extends BridgeActivity {
                     c.setConnectTimeout(15000);
                     c.setReadTimeout(30000);
                     String ua = hv(in, "User-Agent");
-                    if (ua != null) c.setRequestProperty("User-Agent", ua);
+                    c.setRequestProperty("User-Agent", ua != null ? ua : "Mozilla/5.0 (Linux; Android) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
                     String rg = hv(in, "Range");
                     if (rg != null) c.setRequestProperty("Range", rg);
                     String ac = hv(in, "Accept");
@@ -170,7 +175,7 @@ public class MainActivity extends BridgeActivity {
         private static WebResourceResponse build(final HttpURLConnection c, int rc, String finalUrl) throws Exception {
             InputStream raw = rc >= 400 ? c.getErrorStream() : c.getInputStream();
             if (raw == null) raw = new ByteArrayInputStream(new byte[0]);
-            InputStream body = new FilterInputStream(raw) {
+            InputStream body = new FilterInputStream(new java.io.BufferedInputStream(raw, 65536)) {
                 @Override
                 public void close() throws IOException {
                     try { super.close(); } finally { c.disconnect(); }

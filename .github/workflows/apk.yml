@@ -5,18 +5,41 @@ on:
     branches: [main, master]
 permissions:
   contents: write
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       VERSION_CODE: ${{ github.run_number }}
       VERSION_NAME: 1.0.${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 20}
+        with: {node-version: 20, cache: npm}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: 17}
+      - name: Validar secrets de assinatura
+        env:
+          KS_B64: ${{ secrets.KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ] && { [ -z "$KS_PASS" ] || [ -z "$KS_ALIAS" ] || [ -z "$KEY_PASS" ]; }; then
+            echo "::error::KEYSTORE_B64 existe, mas faltam KEYSTORE_PASSWORD, KEY_ALIAS ou KEY_PASSWORD."
+            exit 1
+          fi
+      - name: Cache do Gradle (builds seguintes bem mais rapidos)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: gradle-${{ runner.os }}-
       - name: Informar o repositorio ao app (para checar atualizacoes)
         run: sed -i "s#__REPO__#${{ github.repository }}#g" www/index.html android-custom/UpdaterPlugin.java
       - name: Instalar dependencias (versoes travadas pelo package-lock.json)
@@ -50,7 +73,7 @@ jobs:
             echo "::warning::Sem chave fixa: checagem de assinatura desligada neste APK de teste."
           fi
       - run: npx cap sync android
-      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease
+      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon --build-cache
       - name: Assinar o APK
         env:
           KS_B64: ${{ secrets.KEYSTORE_B64 }}

@@ -23,7 +23,7 @@ import java.util.Set;
 // Atualizacao do proprio app, com varias travas:
 //  1) so baixa por HTTPS de hosts do GitHub; a URL inicial precisa ser do PROPRIO repositorio
 //     (REPO e preenchido no build) e cada redirecionamento e conferido;
-//  2) limite de tamanho; confere SHA-256 quando o version.json informa;
+//  2) limite de tamanho; exige e confere SHA-256 publicado em version.json;
 //  3) antes de abrir o instalador, confere que o APK e deste mesmo app, tem versao maior
 //     e esta assinado com o MESMO certificado do app instalado.
 // Se qualquer conferencia falhar, o arquivo e apagado e nada e instalado.
@@ -109,6 +109,11 @@ public class UpdaterPlugin extends Plugin {
             call.reject("url");
             return;
         }
+        // O hash e obrigatorio: nao aceite atualizacoes sem uma verificacao de integridade.
+        if (want == null || !want.matches("(?i)^[0-9a-f]{64}$")) {
+            call.reject("hash_ausente_ou_invalido");
+            return;
+        }
         try {
             if (!fromRepo(new URL(url))) { call.reject("origem"); return; }
         } catch (Exception e) {
@@ -135,9 +140,17 @@ public class UpdaterPlugin extends Plugin {
                 f = new File(dir, "ASC-play.apk");
                 if (f.exists()) f.delete();
                 c = open(url);
-                if (c == null) { call.reject("origem"); return; }
+                if (c == null) {
+                    if (f.exists()) f.delete();
+                    call.reject("origem");
+                    return;
+                }
                 long total = c.getContentLengthLong();
-                if (total > MAX_BYTES) { call.reject("tamanho"); return; }
+                if (total > MAX_BYTES) {
+                    if (f.exists()) f.delete();
+                    call.reject("tamanho");
+                    return;
+                }
                 MessageDigest md = MessageDigest.getInstance("SHA-256");
                 try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(f)) {
                     byte[] buf = new byte[32768];
@@ -160,7 +173,10 @@ public class UpdaterPlugin extends Plugin {
                         }
                     }
                 }
-                if (want != null && !want.isEmpty() && !hex(md.digest()).equalsIgnoreCase(want.trim())) {
+                String actualHash = hex(md.digest());
+                if (!MessageDigest.isEqual(
+                        actualHash.toLowerCase().getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+                        want.trim().toLowerCase().getBytes(java.nio.charset.StandardCharsets.US_ASCII))) {
                     f.delete();
                     call.reject("hash");
                     return;

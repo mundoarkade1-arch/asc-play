@@ -1,49 +1,56 @@
 # ASC Play
 
-Aplicativo Android baseado em Capacitor. O APK e gerado pelo GitHub Actions.
+Player IPTV para Android e Android TV (M3U e servidor com login), feito com Capacitor. O APK é gerado pelo GitHub Actions.
 
-## Estrutura do projeto
+## Estrutura
 
-- `www/` — interface e logica web do aplicativo.
-- `android-custom/` — plugins Java e ajustes de seguranca copiados durante o build.
-- `assets/` — icone e banner.
-- `scripts/setup.sh` — prepara o projeto Android gerado.
-- `.github/workflows/apk.yml` — compila e, quando configurada a assinatura de producao, publica o APK.
-- `capacitor.config.json`, `package.json` e `package-lock.json` — configuracao e dependencias.
+```
+.github/workflows/apk.yml   compila, assina e publica o APK
+android-custom/             plugins Java e ajustes de segurança copiados no build
+assets/                     identidade visual oficial (icon, icon-foreground, banner)
+scripts/setup.sh            prepara o projeto Android (ícones, banner, manifest, segurança)
+www/                        o app (index.html, style.css, app.js, hls.min.js, recovery.js, icon.png, banner.jpg)
+capacitor.config.json  package.json  package-lock.json
+```
 
-A pasta `android/` e gerada pelo workflow. Nao precisa ser enviada ao repositorio.
+A pasta `android/` é gerada no build e não vai para o repositório.
 
-## Build
+## Trocar ícone ou banner
 
-O workflow pode ser iniciado pela aba **Actions** do GitHub, selecionando **Gerar APK** e **Run workflow**. Tambem roda ao enviar alteracoes para `main` ou `master`.
+Substitua os arquivos em `assets/` mantendo nome e tamanho e faça o commit. O build recria todos os recursos do Android a partir deles.
 
-O APK e disponibilizado como artefato da execucao. Uma Release oficial so deve ser publicada quando os secrets de assinatura estiverem configurados.
+| Arquivo | Uso | Tamanho |
+|---|---|---|
+| `assets/icon.png` | ícone (Android antigo e redondo) | 512×512 |
+| `assets/icon-foreground.png` | camada frontal do ícone adaptativo (fundo preto) | 432×432, logo dentro dos 66% centrais |
+| `assets/banner.png` | banner da Android TV | 640×360 |
+| `www/icon.png`, `www/banner.jpg` | usados dentro do app (telas de entrada e cabeçalho) | 192×192 e 960×540 |
 
-## Secrets de assinatura
+Se o ícone antigo continuar aparecendo depois de instalar, é cache do launcher: reinicie o aparelho ou desinstale e instale de novo.
 
-Configure em **Settings → Secrets and variables → Actions**:
+## Gerar o APK
 
-- `KEYSTORE_B64` — arquivo keystore codificado em Base64.
-- `KEYSTORE_PASSWORD` — senha da keystore.
-- `KEY_ALIAS` — alias da chave de assinatura.
-- `KEY_PASSWORD` — senha da chave.
+**Actions → Gerar APK → Run workflow** (também roda a cada push em `main`/`master`). O APK fica como artefato da execução. Os builds seguintes usam cache e ficam bem mais rápidos.
 
-Nao envie a keystore nem as senhas ao repositorio ou a conversas. Preserve a mesma chave de assinatura utilizada nas versoes instaladas anteriormente. Se perder a chave, nao sera possivel atualizar normalmente uma instalacao assinada com ela.
+### Secrets de assinatura (Settings → Secrets and variables → Actions)
 
-Sem uma keystore fixa, o workflow gera apenas um APK de teste e nao publica uma Release oficial.
+`KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`.
 
-## Atualizacoes
+Mantenha a mesma chave das versões já instaladas, senão o Android não atualiza por cima. Nunca envie a keystore ao repositório. Sem os secrets o workflow gera só um APK de teste e não publica Release.
 
-O workflow publica `version.json` com numero da versao, URL do APK e SHA-256. O aplicativo valida o formato do hash antes de oferecer a atualizacao, e o plugin nativo exige o hash e verifica a assinatura e o pacote antes de abrir o instalador.
+## Canais e login
 
-O hash protege a integridade do arquivo em relacao ao manifesto recebido; a autenticidade tambem depende da origem confiavel do manifesto e da verificacao da assinatura do APK.
+- Canais Xtream ao vivo: o app tenta `.m3u8` e `.ts` e passa para o outro formato se o servidor responder 404/403.
+- Login com servidor: tenta `get.php` em vários formatos (`output=m3u8`, `ts`, sem `output`). Se o painel não tiver `get.php`, monta a lista pela `player_api.php` (canais e filmes).
 
-## Compatibilidade e seguranca
+## Segurança
 
-O projeto permite conexoes HTTP para manter compatibilidade com servidores antigos. HTTP nao criptografa credenciais nem o conteudo da conexao; prefira HTTPS sempre que o servidor oferecer suporte.
+- Listas, logins, favoritos e PIN ficam criptografados (AES-GCM) com chave protegida pelo Android Keystore.
+- Proxy de rede nativo só aceita GET http/https e bloqueia o próprio aparelho e a rede local.
+- Atualização só de Releases do próprio repositório, com SHA-256 obrigatório e conferência de assinatura e pacote.
+- Sem backup do Android, sem depuração, WebView sem acesso a arquivos, CSP restritiva.
+- HTTP puro continua liberado porque muitos servidores IPTV só funcionam assim. Use HTTPS quando o servidor tiver.
 
-## Testes locais
+## Teste local rápido
 
-- Verifique a sintaxe JavaScript com `node --check www/app.js`.
-- O build Android completo precisa das dependencias do projeto e do Android SDK, normalmente fornecidos pelo GitHub Actions.
-- Teste atualizacao sobre uma instalacao anterior em aparelho de teste antes de publicar uma nova versao.
+`node --check www/app.js` e abra `www/index.html` por um servidor estático. O build completo do Android roda no GitHub Actions.

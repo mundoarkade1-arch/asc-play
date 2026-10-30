@@ -129,7 +129,7 @@ function view(){const q=nz(S.q.trim());
  let a=S.by[S.tab]||[];
  if(q)a=a.filter(i=>i.k.includes(q)&&hidA(i));else{if(S.cat!='Todos')a=a.filter(i=>i.g==S.cat);a=a.filter(vis)}
  if(S.tab=='series')a=(q||S.cat!='Todos')?grp(a):sgrp().filter(vis);return a}
-const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" src="${esc(i.l)}">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
+const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" referrerpolicy="no-referrer" alt="" src="${esc(i.l)}">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
 const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dataset.i];
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
  const dd=S.tab=='tv'||S.tab=='movie'||S.tab=='series';$('#catb').hidden=!dd;$('#cl').textContent=S.cat=='Todos'?'Todas as categorias':S.cat}
@@ -269,7 +269,7 @@ function listOpts(id){const x=LST.l.find(y=>y.id==id);if(!x)return;SS=1;
  sh(`<b>${esc(x.n)}</b><small style="color:#a39a9d">${esc(KN[x.m]||'')}</small>`+(x.id==LST.act?'':'<button class="btn p" id="o1">Usar esta lista</button>')+(x.u?'<button class="btn" id="o2">Atualizar lista</button>':'')+`<input id="rn" value="${esc(x.n)}" maxlength="40" aria-label="Nome da lista"><button class="btn" id="o4">Salvar nome</button><button class="btn" id="o3">Excluir</button><button class="btn" id="o5">Voltar</button>`);
  $('#sh').onclick=async e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id=='o1'){$('#sheet').hidden=true;useSaved(id)}
-  else if(b.id=='o2'){$('#sheet').hidden=true;toast('Atualizando…');try{const r=await tf(x.u,6e4);if(!r.ok)throw 0;if(await useList(await r.text(),{id}))toast('Lista atualizada.')}catch{toast('Não consegui atualizar a lista.')}}
+  else if(b.id=='o2'){$('#sheet').hidden=true;toast('Atualizando…');try{const c=x.m=='x'&&xcred(x.u);let t;if(c){const z=await xLogin(c.o,c.u,c.p);t=z.text;x.u=z.url}else{const r=await tf(x.u,3e5);if(!r.ok)throw 0;t=await r.text()}if(await useList(t,{id}))toast('Lista atualizada.')}catch{toast('Não consegui atualizar a lista.')}}
   else if(b.id=='o4'){x.n=$('#rn').value.trim().slice(0,40)||x.n;await saveL();lists()}
   else if(b.id=='o3'){if(b.dataset.c)delList(id);else{b.dataset.c=1;b.textContent='Toque de novo para excluir'}}
   else if(b.id=='o5')lists()}}
@@ -298,7 +298,7 @@ function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTim
 const HC=lv=>({xhrSetup:(x,u)=>{x.open('GET',PX(u),true)},enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,capLevelToPlayerSize:true,testBandwidth:false,progressive:false,
  maxBufferLength:lv?15:30,maxMaxBufferLength:lv?30:60,maxBufferSize:lv?30e6:60e6,backBufferLength:lv?5:20,
  liveSyncDurationCount:lv?3:3,liveMaxLatencyDurationCount:lv?10:Infinity,maxBufferHole:.6,nudgeMaxRetry:8,
- manifestLoadingTimeOut:10000,manifestLoadingMaxRetry:4,manifestLoadingRetryDelay:500,
+ manifestLoadingTimeOut:10000,manifestLoadingMaxRetry:2,manifestLoadingRetryDelay:300,
  levelLoadingTimeOut:8000,levelLoadingMaxRetry:4,levelLoadingRetryDelay:500,
  fragLoadingTimeOut:15000,fragLoadingMaxRetry:6,fragLoadingRetryDelay:400,fragLoadingMaxRetryTimeout:6000,
  abrEwmaDefaultEstimate:3e6,abrBandWidthFactor:.8,abrBandWidthUpFactor:.6});
@@ -306,8 +306,12 @@ let PLC;const pld=()=>PLC||(PLC=(()=>{const B=Hls.DefaultConfig.loader;return cl
   super.load(c,g,Object.assign({},cb,{onSuccess:(r,st,x,n)=>{try{if(r&&n&&n.getResponseHeader){r.url=n.getResponseHeader('X-Final-Url')||c.url}}catch{}return ok(r,st,x,n)}}))}}})());
 let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
-const lvU=u=>/\/live\/[^/]+\/[^/]+\/\d+\.ts(\?|$)/i.test(u)?u.replace(/\.ts(\?|$)/i,'.m3u8$1'):u;
-function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;viaNat=!!forceNat;
+/* Canais Xtream: o mesmo canal pode existir como .m3u8 e/ou .ts. Guardamos as variantes e passamos para a próxima se o servidor responder 404/403 */
+const XL=/^(https?:\/\/[^/]+\/(?:live\/)?[^/]+\/[^/]+\/\d+)(\.m3u8|\.ts)?(\?.*)?$/i;
+let CAND=[],ci=0,PREFX=0;
+const cands=u=>{const m=u.match(XL);if(!m)return[u];const b=m[1],q=m[3]||'',a=[b+'.m3u8'+q,b+'.ts'+q];return PREFX?a.reverse():a};
+const nextCand=()=>{if(ci+1>=CAND.length)return false;ci++;spin(true);src(cur.u,0,1,false);return true};
+function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;if(live()&&/\.ts(\?|$)/i.test(u))forceNat=true;UP=false;viaNat=!!forceNat;
  const nativ=()=>{viaNat=true;V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
  if(hls&&!fresh&&!forceNat&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
  if(hls){hls.destroy();hls=null}
@@ -317,7 +321,9 @@ function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;viaN
    hlsLv=live();let LD={};try{if(nat())LD={loader:pld()}}catch{}
    const h=hls=new Hls(Object.assign(HC(hlsLv),LD,at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
    h.on(Hls.Events.MANIFEST_PARSED,()=>V.play().catch(()=>{}));
-   h.on(Hls.Events.ERROR,(_,d)=>{if(h!=hls)return;if(d.fatal||d.details=='manifestLoadError'||d.details=='manifestLoadTimeOut')dbg('Canal: '+d.details+(d.response&&d.response.code?' (HTTP '+d.response.code+')':''));if(!d.fatal)return;
+   h.on(Hls.Events.ERROR,(_,d)=>{if(h!=hls)return;const cd=d.response&&d.response.code,bad=d.fatal||d.details=='manifestLoadError'||d.details=='manifestLoadTimeOut';
+    if(live()&&!started&&d.details!='manifestParsingError'&&(d.fatal||[401,403,404,410].includes(cd))&&nextCand())return;
+    if(bad)dbg('Canal indisponível: '+d.details+(cd?' (HTTP '+cd+')':''));if(!d.fatal)return;
     if(d.details=='manifestParsingError'){h.destroy();hls=null;nativ();return}
     spin(true);
     if(d.type=='mediaError')h.recoverMediaError();
@@ -330,19 +336,19 @@ function tick(){if(P.hidden||!cur)return;if(UP&&V.paused)return;
  if(V.paused)V.play().catch(()=>{});
  const t=V.currentTime,adv=Math.abs(t-lastT)>.25;lastT=t;
  if(V.seeking||dr){stuck=0;return}
- if(adv&&V.readyState>=2){started=true;stuck=0;rc=0;spin(false);return}
+ if(adv&&V.readyState>=2){started=true;if(live()&&CAND.length>1)PREFX=/\.ts(\?|$)/i.test(CAND[ci]||'')?1:0;stuck=0;rc=0;spin(false);return}
  stuck++;if(stuck>=2)spin(true);
  for(let i=0;i<V.buffered.length;i++){const s=V.buffered.start(i);if(s>t&&s-t<3){try{V.currentTime=s+.05}catch{}break}}
  if(live()&&!started&&stuck==15)toast('Este canal está demorando para abrir…');
  if(stuck>=(started?(live()?4:6):(live()?8:12)))recover()}
 function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
- if(live()&&!started){spin(true);src(cur.u,0,1,!viaNat);return}
+ if(live()&&!started){spin(true);if(viaNat&&CAND.length>1)ci=(ci+1)%CAND.length;src(cur.u,0,1,!viaNat);return}
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
  if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
  src(cur.u,live()?0:V.currentTime,1,viaNat&&live())}
 addEventListener('online',()=>{if(!P.hidden&&cur){rc=0;recover()}});
-function play(it,list,from){cur=it;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
+function play(it,list,from){cur=it;CAND=it.t=='tv'?cands(it.u):[it.u];ci=0;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
  $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;UP=false;$('#sk').hidden=tv;$('#tm').hidden=tv;
  $('#pr').style.width=$('#bf').style.width='0';$('#th').style.left='0';$('#t1').textContent=$('#t2').textContent='0:00';
  $('#pf').classList.toggle('on',S.fav.includes(favK(it)));spin(true);src(it.u);wdOn();epgBar();ui();
@@ -410,12 +416,15 @@ async function checkUpd(manual){const v=await ver();
  if(!v||!UPD){if(manual)toast(v?'Atualização não configurada.':'A atualização funciona no app instalado (APK).');return}
  try{const r=await tf(UPD);if(!r.ok)throw 0;const j=JSON.parse(await r.text());
   if(!(+j.code>+v.code)){if(manual)toast('Você já está na versão mais recente ('+v.name+').');return}
-  if(typeof j.url!='string'||!j.url.startsWith(`https://github.com/${REPO}/releases/download/`)){if(manual)toast('Atualização inválida.');return}
+  if(typeof j.url!='string'||!j.url.startsWith(`https://github.com/${REPO}/releases/download/`)||
+     typeof j.sha256!='string'||!/^[a-f0-9]{64}$/i.test(j.sha256)){
+   if(manual)toast('Atualização inválida ou sem verificação de integridade.');return
+  }
   sh(`<b>Nova versão ${esc(j.name||'')}</b>${j.notes?`<p class="sy" style="max-height:8em">${esc(j.notes)}</p>`:''}<small id="up" style="color:#a39a9d">Você está na versão ${esc(v.name)}. Seu login e seus dados são mantidos.</small><button class="btn p" id="u1">Atualizar agora</button><button class="btn" id="u2">Depois</button>`);
   $('#u2').onclick=()=>$('#sheet').hidden=true;
   $('#u1').onclick=async()=>{const U=plug('Updater'),up=$('#up'),b=$('#u1');b.disabled=true;let h;
    try{h=await U.addListener('progress',e=>{up.textContent='Baixando… '+e.percent+'%'})}catch{}
-   try{up.textContent='Baixando…';const x=await U.install({url:j.url,sha256:typeof j.sha256=='string'?j.sha256:''});
+   try{up.textContent='Baixando…';const x=await U.install({url:j.url,sha256:j.sha256});
     up.textContent=x&&x.needPermission?'Permita "instalar apps desta fonte" para o ASC play e toque em Atualizar de novo.':'Pronto! Confirme a instalação na tela do Android.'}
    catch{up.textContent='Falha ao baixar ou validar a atualização. Tente de novo mais tarde.'}
    h&&h.remove&&h.remove();b.disabled=false}
@@ -515,11 +524,28 @@ $('#f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)ret
 $('#fl').onkeydown=e=>e.key=='Enter'&&$('#f').click();
 const mode=m=>{$('#xt').hidden=m!='x';$('#ml').hidden=m!='m';$('#m1').classList.toggle('p',m=='x');$('#m2').classList.toggle('p',m=='m');$('#st').textContent='';LS.asc_mode=m};
 $('#m1').onclick=()=>mode('x');$('#m2').onclick=()=>mode('m');mode(LS.asc_mode=='m'?'m':'x');
+const xcred=u=>{try{const b=new URL(u),n=b.searchParams.get('username'),p=b.searchParams.get('password');return n&&p?{o:b.origin,u:n,p}:null}catch{return null}};
+const clean=t=>String(t==null?'':t).replace(/[\r\n"]+/g,' ').trim();
+/* Último recurso (painel sem get.php / 404): monta a lista de canais e filmes pela API do servidor */
+async function apiList(o,u,p){const A=`${o}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`,
+  j=async a=>{const r=await tf(A+a,6e4);if(!r.ok)throw 0;return r.json()},
+  nm=async a=>{try{const l=await j(a),m={};for(const c of l||[])m[c.category_id]=c.category_name;return m}catch{return{}}};
+ const au=await j('');if(!au||!au.user_info||au.user_info.auth==0)throw 0;
+ const[cl,cv]=await Promise.all([nm('&action=get_live_categories'),nm('&action=get_vod_categories')]);
+ const[lv,vd]=await Promise.all([j('&action=get_live_streams').catch(()=>[]),j('&action=get_vod_streams').catch(()=>[])]);
+ const out=['#EXTM3U'],ln=(x,g,url)=>out.push(`#EXTINF:-1 tvg-id="${clean(x.epg_channel_id)}" tvg-logo="${clean(x.stream_icon)}" group-title="${clean(g)}",${clean(x.name)}`,url);
+ for(const x of lv||[])ln(x,cl[x.category_id]||'Canais',`${o}/live/${encodeURIComponent(u)}/${encodeURIComponent(p)}/${x.stream_id}.m3u8`);
+ for(const x of vd||[])ln(x,cv[x.category_id]||'Filmes',`${o}/movie/${encodeURIComponent(u)}/${encodeURIComponent(p)}/${x.stream_id}.${clean(x.container_extension)||'mp4'}`);
+ if(out.length<2)throw 0;return out.join('\n')}
+/* Tenta os formatos mais comuns de get.php; cada servidor aceita um */
+async function xLogin(o,u,p){const b=`${o}/get.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&type=m3u_plus`;
+ for(const q of ['&output=m3u8','&output=ts','']){try{const r=await tf(b+q,3e5);if(r.ok){const t=await r.text();if(/#EXTINF/i.test(t.slice(0,2e5)))return{url:b+q,text:t}}}catch{}}
+ return{url:b+'&output=m3u8',text:await apiList(o,u,p)}}
 $('#xg').onclick=async()=>{const st=$('#st'),u=$('#xu').value.trim(),p=$('#xp').value.trim();let s=$('#xs').value.trim();
  if(!s||!u||!p)return st.textContent='Preencha servidor, login e senha.';
  if(!/^https?:\/\//i.test(s))s='http://'+s;let o;try{o=new URL(s).origin}catch{return st.textContent='Endereço do servidor inválido.'}
- const url=`${o}/get.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}&type=m3u_plus&output=m3u8`;st.textContent='Entrando…';
- try{const r=await tf(url,3e5);if(!r.ok)throw 0;if(await useList(await r.text(),{id:uid(),n:lname(new URL(o).host),m:'x',u:url,epg:''}))doneAdd()}
+ st.textContent='Entrando…';
+ try{const x=await xLogin(o,u,p);if(await useList(x.text,{id:uid(),n:lname(new URL(o).host),m:'x',u:x.url,epg:''}))doneAdd()}
  catch{st.textContent='Não consegui entrar. Confira servidor, login e senha (ou a conexão).'}};
 $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('#pa').textContent='Carregar texto colado'}else{const ep=$('#e').value.trim();useList(t.value,{id:uid(),n:lname('Lista colada'),m:'f',u:'',epg:okU(ep)?ep:''}).then(ok=>ok&&doneAdd())}};
 (async()=>{try{
