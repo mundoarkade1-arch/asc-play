@@ -1,6 +1,10 @@
 package com.ascplay.app;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.pm.PackageManager;
+
 import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.view.ViewGroup;
@@ -116,6 +120,55 @@ public class ImmersivePlugin extends Plugin {
             }
             getActivity().setRequestedOrientation(o);
             call.resolve();
+        });
+    }
+
+    @PluginMethod
+    public void deviceInfo(final PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            Activity a = getActivity();
+            PackageManager pm = a.getPackageManager();
+            ActivityManager am = (ActivityManager) a.getSystemService(Context.ACTIVITY_SERVICE);
+            
+            boolean isTv = false;
+            if (am != null) {
+                int uiMode = am.getCurrentModeType();
+                if (uiMode == ActivityManager.UI_MODE_TYPE_TELEVISION) {
+                    isTv = true;
+                }
+            }
+            if (!isTv) {
+                isTv = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || 
+                       pm.hasSystemFeature("android.hardware.type.television");
+            }
+            
+            boolean hasTouch = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN);
+            
+            boolean lowRam = false;
+            if (am != null) {
+                if (Build.VERSION.SDK_INT >= 19) {
+                    lowRam = am.isLowRamDevice();
+                }
+                if (!lowRam && Build.VERSION.SDK_INT >= 16) {
+                    ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+                    am.getMemoryInfo(mi);
+                    lowRam = mi.totalMem <= 2L * 1024 * 1024 * 1024; // 2 GB
+                }
+            }
+            
+            android.util.DisplayMetrics dm = a.getResources().getDisplayMetrics();
+            int w = dm.widthPixels;
+            int h = dm.heightPixels;
+            float dpr = dm.density;
+            
+            call.resolve(new com.getcapacitor.JSObject()
+                .put("tv", isTv)
+                .put("touch", hasTouch)
+                .put("lowRam", lowRam)
+                .put("w", w)
+                .put("h", h)
+                .put("dpr", dpr)
+                .put("sdk", Build.VERSION.SDK_INT));
         });
     }
 }

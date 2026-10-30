@@ -96,5 +96,9 @@ grep -q 'android:icon=' $M || sed -i 's#<application#<application android:icon="
 echo "Manifest:"; grep -o '<application[^>]*>' $M | head -c 600; echo
 ls -la $R/mipmap-xxxhdpi $R/mipmap-anydpi-v26
 
+# --- Verificacoes obrigatorias para TV
+grep -q 'android.intent.category.LEANBACK_LAUNCHER' $M || { echo "ERRO: LEANBACK_LAUNCHER nao encontrado no manifest"; exit 1; }
+grep -q 'android:banner=' $M || { echo "ERRO: android:banner nao encontrado no manifest"; exit 1; }
+
 # --- Seguranca do Android: sem backup, so certificados do sistema, regras de extracao de dados
 node android-custom/harden-android.js

@@ -8,6 +8,8 @@ const kv=async(m,k,v)=>{const d=await db();return new Promise((res,rej)=>{const 
 /* No app (APK) toda rede passa pelo proxy nativo (/__p): streaming direto, sem bloqueio de CORS e sem a ponte pesada do plugin */
 const PX=u=>{try{return nat()&&/^https?:\/\//i.test(u)?'/__p?u='+encodeURIComponent(u):u}catch{return u}};
 const tf=(u,ms=20000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(PX(u),{signal:c.signal,credentials:'omit',referrerPolicy:'no-referrer'}).finally(()=>clearTimeout(t))};
+async function tfText(u,ms=20000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(PX(u),{signal:c.signal,credentials:'omit',referrerPolicy:'no-referrer'});return r.ok?r.text():''}finally{clearTimeout(t)}}
+async function tfJson(u,ms=20000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(PX(u),{signal:c.signal,credentials:'omit',referrerPolicy:'no-referrer'});return r.ok?r.json():null}finally{clearTimeout(t)}}
 const okU=u=>{try{return /^https?:$/.test(new URL(u).protocol)}catch{return false}};
 const sl=u=>/^https?:\/\//i.test(u)?u:'';
 /* Tamanho maximo de lista (caracteres/bytes). 250 MB cobre listas enormes (centenas de milhares de itens) e fica abaixo do limite de texto do WebView de 32 bits (~268 milhoes de caracteres). */
@@ -58,7 +60,14 @@ addEventListener('unhandledrejection',e=>bootErr((e.reason&&e.reason.message)||e
 addEventListener('error',e=>{if(e.target===window)bootErr(e.message)});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-/* ---------- M3U ---------- */
+/* ---------- Detecção de dispositivo e UI TV ---------- */
+const NC=/android tv|smart[- ]?tv|smarttv|bravia|aft|googletv|crkey/i;
+async function detectDev(){if(LS.asc_dev_man==='1')return S.dev||'ph';if(S.dev)return S.dev;const I=plug('Immersive');if(I&&nat()){try{const d=await I.deviceInfo();if(d.tv||!d.touch)return 'tv';if(d.touch)return 'ph'}catch{}}return (new URLSearchParams(location.search)).get('dev')||(NC.test(navigator.userAgent)?'tv':'ph')}
+function setDev(d){S.dev=d;document.documentElement.classList.toggle('tv',d==='tv');document.documentElement.classList.toggle('ph',d==='ph');LS.asc_dev=d;fitUI()}
+function fitUI(){if(S.dev!=='tv'){document.documentElement.style.fontSize='16px';return}const u=Math.min(innerWidth,innerHeight);const base=Math.round(u*0.027);const user=parseFloat(LS.asc_ui_factor||'1');const fs=Math.min(48,Math.max(14,Math.round(base*user)));document.documentElement.style.fontSize=fs+'px'}
+let fitDebounce=null;addEventListener('resize',()=>{clearTimeout(fitDebounce);fitDebounce=setTimeout(fitUI,150)});addEventListener('orientationchange',()=>{clearTimeout(fitDebounce);fitDebounce=setTimeout(fitUI,150)})
+function applyOverscan(){const ov=parseFloat(LS.asc_ov||'3.5')/100;if(S.dev==='tv'){document.documentElement.style.setProperty('--ovx',(innerWidth*ov)+'px');document.documentElement.style.setProperty('--ovy',(innerHeight*ov)+'px')}else{document.documentElement.style.setProperty('--ovx','0px');document.documentElement.style.setProperty('--ovy','0px')}}
+addEventListener('resize',applyOverscan);addEventListener('orientationchange',applyOverscan)
 const nz=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const EP=/\bS\d{1,2}\s?E\d{1,4}\b|\bT\d{1,2}\s?E\d{1,4}\b|\b\d{1,2}x\d{2,4}\b|temporada/i;
 const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();

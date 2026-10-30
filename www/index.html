@@ -13,7 +13,8 @@
 <symbol id="star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
 <symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
 <symbol id="phone" viewBox="0 0 24 24"><path d="M7 2h10v20H7zM11 19h2"/></symbol>
-<symbol id="fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="ifit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+<symbol id="snext" viewBox="0 0 24 24"><path fill="currentColor" d="M18 5h-2.5v14H18zM5 5v14l9.5-7z"/></symbol>
 <symbol id="ihome" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
 <symbol id="back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
 <symbol id="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
@@ -80,6 +81,15 @@
 <div id="cover" hidden></div>
 <section class="scr" id="blk" hidden><div class="logo" style="font-size:2.4em">ASC play</div><h1 style="font-size:1.4em" id="bt">Ambiente inseguro</h1><p id="bp">Por segurança, o app não abre com um depurador conectado. Desconecte-o e abra o app de novo.</p></section>
 
+<!-- Teclado na tela (só modo TV) -->
+<section class="scr" id="osk" hidden>
+ <div class="logo" style="font-size:2em">ASC play</div>
+ <h1 style="font-size:1.3em" id="oskTitle"></h1>
+ <div id="oskInput" style="min-height:1.5em;margin:.5em 0;padding:.5em;background:rgba(255,255,255,.07);border:1px solid var(--ln);border-radius:9px;font-size:1.1em"></div>
+ <div id="oskRows"></div>
+ <div class="row" style="margin-top:1em"><button class="btn" id="oskCancel">Cancelar</button><button class="btn p" id="oskOk">OK</button></div>
+</section>
+
 <div id="app" hidden>
  <header><img class="brand s" src="icon.png" alt="" width="36" height="36"><span class="logo">ASC play</span><form id="search" role="search"><input id="q" type="search" placeholder="Buscar canais, filmes e séries…" aria-label="Buscar" enterkeyhint="search" autocomplete="off"></form></header>
  <div id="exp" hidden><span id="et"></span><button class="chip" id="ex" aria-label="Fechar">✕</button></div>
@@ -100,7 +110,7 @@
 <div id="player" hidden>
  <video id="v" playsinline poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
  <div id="sp"><svg viewBox="0 0 50 50"><defs><linearGradient id="sg"><stop offset="0" stop-color="#e50914"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><circle cx="25" cy="25" r="20" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="80 60"/></svg></div>
- <div class="ov" id="ot"><button class="gb" id="bk" aria-label="Voltar"><svg class="i"><use href="#back"/></svg></button><div style="flex:1;min-width:0"><b id="pt"></b><div id="pe"></div></div><button class="gb" id="fit" aria-label="Ajustar imagem"><svg class="i"><use href="#fit"/></svg></button><button class="gb" id="pf" aria-label="Favoritar"><svg class="i"><use href="#star"/></svg></button></div>
+ <div class="ov" id="ot"><button class="gb" id="bk" aria-label="Voltar"><svg class="i"><use href="#back"/></svg></button><div style="flex:1;min-width:0"><b id="pt"></b><div id="pe"></div></div><button class="gb" id="fit" aria-label="Ajustar imagem"><svg class="i"><use href="#ifit"/></svg></button><button class="gb" id="pf" aria-label="Favoritar"><svg class="i"><use href="#star"/></svg></button></div>
  <div class="ov" id="om"><button class="gb" id="pv" aria-label="Anterior / voltar 10 s"><svg class="i"><use href="#rw10"/></svg></button><button class="gb big" id="pp" aria-label="Pausar ou continuar"><svg class="i"><use href="#pause"/></svg></button><button class="gb" id="nx" aria-label="Próximo / avançar 10 s"><svg class="i"><use href="#fw10"/></svg></button></div>
  <div class="ov" id="ob"><button id="next-ep-btn" class="next-ep-btn" hidden aria-label="Próximo episódio">Próximo Ep <svg class="i" style="width:1.2em;height:1.2em;vertical-align:middle;margin-left:0.2em"><use href="#next-ep"/></svg></button><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="epg" hidden></div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
 </div>

@@ -7,18 +7,18 @@ permissions:
   contents: write
 concurrency:
   group: apk-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      VERSION_CODE: ${{ github.run_number }}
+      VERSION_CODE: ${{ github.run_number + 10000 }}
       VERSION_NAME: 1.0.${{ github.run_number }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: 20, cache: npm}
+        with: {node-version: 22, cache: npm}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: 17}
       - name: Validar secrets de assinatura
@@ -50,6 +50,28 @@ jobs:
             echo "::warning::package-lock.json nao existe ainda: gerando agora."
             npm install
           fi
+      - name: Checagem estatica do codigo antes do build
+        run: |
+          node --check www/app.js
+          node --check www/recovery.js
+          npx es-check es2020 www/app.js
+          node -e '
+            const fs = require("fs");
+            const html = fs.readFileSync("www/index.html", "utf8");
+            const symbolIds = [...html.matchAll(/<symbol[^>]+id="([^"]+)"/g)].map(m => m[1]);
+            const uses = [...html.matchAll(/<use[^>]+href="#([^"]+)"/g)].map(m => m[1]);
+            const missing = uses.filter(u => !symbolIds.includes(u));
+            if (missing.length > 0) {
+              console.error("ERRO: Symbols faltando no index.html:", missing);
+              process.exit(1);
+            }
+            const duplicates = symbolIds.filter((id, i) => symbolIds.indexOf(id) !== i);
+            if (duplicates.length > 0) {
+              console.error("ERRO: Symbols duplicados no index.html:", duplicates);
+              process.exit(1);
+            }
+            console.log("Validacao de HTML/JS concluida com sucesso.");
+          '
       - name: Baixar o leitor de MPEG-TS (canais .ts) para dentro do app
         run: |
           npm install --no-save --no-package-lock mpegts.js@1.7.3

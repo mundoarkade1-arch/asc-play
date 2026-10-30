@@ -1,9 +1,29 @@
 /* ASC play — visual 2.0: preto profundo, vermelho vibrante, vidro fosco e cantos arredondados */
-:root{--g:linear-gradient(120deg,#e50914 0%,#ff6b78 55%,#fff 100%);--p:linear-gradient(135deg,#ff3b4e 0%,#d3091b 100%);
---bg:#09070a;--c:#161214;--c2:#1e181b;--t:#f7f3f4;--m:#a99fa3;--r:#ff2a3d;--ln:rgba(255,255,255,.09);--u:1rem;--rad:18px}
+:root{
+  --g:linear-gradient(120deg,#e50914 0%,#ff6b78 55%,#fff 100%);
+  --p:linear-gradient(135deg,#ff3b4e 0%,#d3091b 100%);
+  --bg:#09070a;--c:#161214;--c2:#1e181b;--t:#f7f3f4;--m:#a99fa3;--r:#ff2a3d;--ln:rgba(255,255,255,.09);
+  --u:1rem;--rad:18px;
+  /* Overscan (TV) */
+  --ovx:0;--ovy:0;
+  /* UI scale factor (user preference) */
+  --ui-scale:1;
+}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px;-webkit-text-size-adjust:100%}body.tv{font-size:22px}
-body{background:radial-gradient(110% 55% at 0 0,#33050b 0%,transparent 70%),radial-gradient(90% 50% at 100% 100%,#1f0307 0%,transparent 70%),var(--bg);color:var(--t);font:400 var(--u)/1.35 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;height:100dvh;overflow:hidden;-webkit-font-smoothing:antialiased}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{
+  background:radial-gradient(110% 55% at 0 0,#33050b 0%,transparent 70%),
+            radial-gradient(90% 50% at 100% 100%,#1f0307 0%,transparent 70%),
+            var(--bg);
+  color:var(--t);
+  font:400 var(--u)/1.35 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  height:100vh; height:100dvh;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  /* Overscan padding */
+  padding-left:var(--ovx); padding-right:var(--ovx);
+  padding-top:var(--ovy); padding-bottom:var(--ovy);
+}
 button,input,textarea{font:inherit;color:inherit}
 button{touch-action:manipulation}
 [hidden]{display:none!important}
@@ -15,8 +35,22 @@ svg.i{width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:1.8;st
 .btn:active{transform:scale(.96)}
 .btn.p,.chip.on,nav .on{background:var(--p);color:#fff;border-color:transparent;font-weight:700;box-shadow:0 6px 20px rgba(229,9,20,.35)}
 .btn:disabled{opacity:.55}
+
+/* Focus visible with fallback for older browsers */
 :focus-visible,.card:focus{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 26px rgba(255,42,61,.85)}
-.scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:1em;padding:max(1.5em,env(safe-area-inset-top)) 1.5em max(1.5em,env(safe-area-inset-bottom));text-align:center;overflow-y:auto}
+:focus{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 26px rgba(255,42,61,.85)}
+:focus:not(:focus-visible){outline:none;box-shadow:none}
+
+.scr{
+  position:fixed;top:0;right:0;bottom:0;left:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:safe center;
+  gap:1em;
+  padding:max(1.5em,env(safe-area-inset-top)) 1.5em max(1.5em,env(safe-area-inset-bottom));
+  text-align:center;overflow-y:auto;
+  /* Overscan for TV */
+  margin-left:var(--ovx); margin-right:var(--ovx);
+  margin-top:var(--ovy); margin-bottom:var(--ovy);
+}
 #boot,#setup,#add{background:linear-gradient(180deg,rgba(9,7,10,.35) 0%,rgba(9,7,10,.92) 62%,var(--bg) 100%),url(banner.jpg) center top/cover no-repeat,var(--bg)}
 .scr h1{font-size:2.3em;letter-spacing:-.02em}.scr p{color:var(--m);max-width:34em}
 .row{display:flex;gap:.8em;flex-wrap:wrap;justify-content:center}
@@ -27,7 +61,13 @@ svg.i{width:1.5em;height:1.5em;fill:none;stroke:currentColor;stroke-width:1.8;st
 input,textarea{width:min(34em,100%);background:rgba(255,255,255,.07);border:1px solid var(--ln);border-radius:14px;padding:.75em 1em;outline:none;transition:border-color .15s,background .15s}
 input:focus,textarea:focus{border-color:rgba(255,60,75,.8);background:rgba(255,255,255,.1)}
 ::placeholder{color:#8d8387}
-#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#app{
+  position:fixed;top:0;right:0;bottom:0;left:0;
+  display:flex;flex-direction:column;
+  /* Overscan for TV */
+  margin-left:var(--ovx); margin-right:var(--ovx);
+  margin-top:var(--ovy); margin-bottom:var(--ovy);
+}
 header{display:flex;gap:.7em;align-items:center;padding:calc(env(safe-area-inset-top) + .6em) 1em .45em}
 header .logo{font-size:1.35em;white-space:nowrap}
 header form{flex:1;min-width:0}
