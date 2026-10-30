@@ -320,7 +320,7 @@ function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;UP=false
  /* Canal .ts (fluxo MPEG-TS puro): o Android não toca direto, então usamos o leitor mpegts.js */
  if(live()&&TSU.test(u)){viaNat=true;ML().then(()=>{if(g!=gen)return;
    if(window.mpegts&&mpegts.isSupported()){const p=mp=mpegts.createPlayer({type:'mpegts',isLive:true,url:/^https?:\/\//i.test(u)&&nat()?location.origin+PX(u):u},{enableWorker:false,liveBufferLatencyChasing:true,liveBufferLatencyMaxLatency:6,liveBufferLatencyMinRemain:1.5,autoCleanupSourceBuffer:true});
-    p.attachMediaElement(V);p.on(mpegts.Events.ERROR,(t,d)=>{if(p!=mp)return;dbg('Canal: erro de leitura ('+t+')');setTimeout(()=>{if(p==mp&&!P.hidden&&cur)recover()},800)});
+    p.attachMediaElement(V);p.on(mpegts.Events.ERROR,(t,d,i)=>{if(p!=mp)return;const cd=i&&i.code;if(!started&&[401,403,404,410].includes(cd)&&nextCand())return;dbg('Canal .ts: '+d+(cd?' (HTTP '+cd+')':'')+(i&&i.msg?' '+String(i.msg).slice(0,70):''));setTimeout(()=>{if(p==mp&&!P.hidden&&cur)recover()},800)});
     p.load();Promise.resolve(p.play()).catch(()=>{})}
    else dbg('Este canal só existe em .ts e o leitor não carregou.')});return}
  HL().then(()=>{if(g!=gen)return;
@@ -331,7 +331,7 @@ function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;UP=false
    h.on(Hls.Events.MANIFEST_PARSED,()=>V.play().catch(()=>{}));
    h.on(Hls.Events.ERROR,(_,d)=>{if(h!=hls)return;const cd=d.response&&d.response.code,bad=d.fatal||d.details=='manifestLoadError'||d.details=='manifestLoadTimeOut';
     if(live()&&!started&&d.details!='manifestParsingError'&&(d.fatal||[401,403,404,410].includes(cd))&&nextCand())return;
-    if(bad)dbg('Canal indisponível: '+d.details+(cd?' (HTTP '+cd+')':''));if(!d.fatal)return;
+    if(bad)dbg('Canal '+((CAND[ci]||'').match(/\.(m3u8|ts)(\?|$)/i)||[,'?'])[1]+': '+d.details+(cd?' (HTTP '+cd+')':''));if(!d.fatal)return;
     if(d.details=='manifestParsingError'){h.destroy();hls=null;nativ();return}
     spin(true);
     if(d.type=='mediaError')h.recoverMediaError();
