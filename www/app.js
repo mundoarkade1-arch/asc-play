@@ -403,7 +403,7 @@ setInterval(()=>{if(!P.hidden&&cur&&live())epgBar()},3e4);
 addEventListener('popstate',()=>{if(!P.hidden)close(1)});
 const fitSet=m=>{V.style.objectFit=m;$('#fit').classList.toggle('on',m=='cover');LS.asc_fit=m};
 $('#fit').onclick=()=>fitSet(V.style.objectFit=='cover'?'contain':'cover');fitSet('cover');
-P.addEventListener('pointerdown',e=>{if(e.target.closest('button,#sk'))return ui();const n=Date.now(),x=e.clientX/innerWidth;
+P.addEventListener('pointerdown',e=>{if(e.target.closest('button,#sk,#next-ep-btn'))return ui();const n=Date.now(),x=e.clientX/innerWidth;
  if(!live()&&n-lt<300&&(x<.35||x>.65)){step(x<.5?-1:1);ui();lt=0;return}lt=n;P.classList.contains('h')?ui():P.classList.add('h')});
 
 /* ---------- Controle remoto (D-pad) ---------- */
