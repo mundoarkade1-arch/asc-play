@@ -383,6 +383,7 @@ const step=d=>{if(live()){const i=(zap.indexOf(cur)+d+zap.length)%zap.length;pla
 const tog=()=>V.paused?(UP=false,V.play().catch(()=>{})):(UP=true,V.pause());
 $('#pv').onclick=()=>step(-1);$('#nx').onclick=()=>step(1);$('#pp').onclick=tog;
 $('#pf').onclick=()=>$('#pf').classList.toggle('on',fav(favK(cur)));
+$('#next-ep-btn').onclick=()=>{if(!live()&&cur.t=='series'){const i=zap.indexOf(cur);if(zap[i+1])play(zap[i+1],zap)}};
 V.onplay=()=>{UP=false;ic('#pp','pause')};V.onpause=()=>{UP=true;ic('#pp','play');ui()};
 V.onloadstart=V.onwaiting=()=>spin(true);V.onplaying=V.oncanplay=()=>spin(false);
 V.onended=()=>{if(!live()){saveP(1);const i=zap.indexOf(cur);if(zap[i+1])play(zap[i+1],zap)}};
@@ -390,7 +391,8 @@ V.onerror=()=>{if(P.hidden||!cur)return;dbg('Erro do vídeo (código '+(V.error&
 V.onprogress=()=>{if(V.duration&&V.buffered.length)$('#bf').style.width=V.buffered.end(V.buffered.length-1)/V.duration*100+'%'};
 let sv=0;V.ontimeupdate=()=>{if(!cur||live())return;const d=V.duration||0,t=V.currentTime;
  if(!dr){$('#pr').style.width=$('#th').style.left=d?t/d*100+'%':'0';$('#t1').textContent=fmt(t)}$('#t2').textContent=fmt(d);
- if(Date.now()-sv>5e3){sv=Date.now();saveP()}};
+ if(Date.now()-sv>5e3){sv=Date.now();saveP()}
+ const neb=$('#next-ep-btn');if(cur.t=='series'&&!live()&&d>0&&(d-t)<=120&&(d-t)>0){neb.hidden=false}else{neb.hidden=true}};
 const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));$('#pr').style.width=$('#th').style.left=f*100+'%';$('#t1').textContent=fmt(f*(V.duration||0));return f};
 sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
 sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};

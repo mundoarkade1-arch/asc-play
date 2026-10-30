@@ -20,7 +20,7 @@
 <symbol id="play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
 <symbol id="pause" viewBox="0 0 24 24"><path fill="currentColor" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></symbol>
 <symbol id="sprev" viewBox="0 0 24 24"><path fill="currentColor" d="M6 5h2.5v14H6zM19 5v14L9.5 12z"/></symbol>
-<symbol id="snext" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 5H18v14h-2.5zM5 5l9.5 7L5 19z"/></symbol>
+<symbol id="next-ep" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></symbol>
 <symbol id="rw10" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9M4 3.5V8h4.5"/><text x="12" y="15.4" font-size="7.5" text-anchor="middle" fill="currentColor" stroke="none" font-weight="700">10</text></symbol>
 <symbol id="fw10" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 3.5V8h-4.5"/><text x="12" y="15.4" font-size="7.5" text-anchor="middle" fill="currentColor" stroke="none" font-weight="700">10</text></symbol>
 <symbol id="ilist" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
@@ -102,6 +102,7 @@
  <div id="sp"><svg viewBox="0 0 50 50"><defs><linearGradient id="sg"><stop offset="0" stop-color="#e50914"/><stop offset="1" stop-color="#fff"/></linearGradient></defs><circle cx="25" cy="25" r="20" fill="none" stroke="url(#sg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="80 60"/></svg></div>
  <div class="ov" id="ot"><button class="gb" id="bk" aria-label="Voltar"><svg class="i"><use href="#back"/></svg></button><div style="flex:1;min-width:0"><b id="pt"></b><div id="pe"></div></div><button class="gb" id="fit" aria-label="Ajustar imagem"><svg class="i"><use href="#fit"/></svg></button><button class="gb" id="pf" aria-label="Favoritar"><svg class="i"><use href="#star"/></svg></button></div>
  <div class="ov" id="om"><button class="gb" id="pv" aria-label="Anterior / voltar 10 s"><svg class="i"><use href="#rw10"/></svg></button><button class="gb big" id="pp" aria-label="Pausar ou continuar"><svg class="i"><use href="#pause"/></svg></button><button class="gb" id="nx" aria-label="Próximo / avançar 10 s"><svg class="i"><use href="#fw10"/></svg></button></div>
+  <button id="next-ep-btn" class="next-ep-btn" hidden aria-label="Próximo episódio">Próximo Ep <svg class="i" style="width:1.2em;height:1.2em;vertical-align:middle;margin-left:0.2em"><use href="#next-ep"/></svg></button>
  <div class="ov" id="ob"><div id="lv" hidden><span class="dot"></span>AO VIVO</div><div id="epg" hidden></div><div id="sk"><div id="tr"><i id="bf"></i><i id="pr"></i></div><b id="th"></b></div><div id="tm"><span id="t1">0:00</span><span id="t2">0:00</span></div></div>
 </div>
 
