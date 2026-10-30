@@ -40,7 +40,7 @@ Mantenha a mesma chave das versões já instaladas, senão o Android não atuali
 
 ## Canais e login
 
-- Canais Xtream ao vivo: o app tenta `.m3u8` e `.ts` e passa para o outro formato se o servidor responder 404/403.
+- Canais Xtream ao vivo: o app tenta `.m3u8` e `.ts` e passa para o outro formato se o servidor responder 404/403. Canais `.ts` puros são lidos pelo `mpegts.js`, que o workflow baixa no build (o Android não toca TS direto).
 - Login com servidor: tenta `get.php` em vários formatos (`output=m3u8`, `ts`, sem `output`). Se o painel não tiver `get.php`, monta a lista pela `player_api.php` (canais e filmes).
 
 ## Segurança

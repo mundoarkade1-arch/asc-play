@@ -50,6 +50,12 @@ jobs:
             echo "::warning::package-lock.json nao existe ainda: gerando agora."
             npm install
           fi
+      - name: Baixar o leitor de MPEG-TS (canais .ts) para dentro do app
+        run: |
+          npm install --no-save --no-package-lock mpegts.js@1.7.3
+          cp node_modules/mpegts.js/dist/mpegts.js www/mpegts.min.js
+          test -s www/mpegts.min.js
+          ls -la www/mpegts.min.js
       - name: Salvar package-lock.json no repositorio (so na primeira vez)
         if: github.ref_name == 'main'
         run: |

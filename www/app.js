@@ -304,6 +304,8 @@ const HC=lv=>({xhrSetup:(x,u)=>{x.open('GET',PX(u),true)},enableWorker:true,lowL
  abrEwmaDefaultEstimate:3e6,abrBandWidthFactor:.8,abrBandWidthUpFactor:.6});
 let PLC;const pld=()=>PLC||(PLC=(()=>{const B=Hls.DefaultConfig.loader;return class extends B{load(c,g,cb){const ok=cb.onSuccess;
   super.load(c,g,Object.assign({},cb,{onSuccess:(r,st,x,n)=>{try{if(r&&n&&n.getResponseHeader){r.url=n.getResponseHeader('X-Final-Url')||c.url}}catch{}return ok(r,st,x,n)}}))}}})());
+let mp=null,MLP;const TSU=/\.ts(\?|$)/i,mpOff=()=>{if(mp){try{mp.destroy()}catch{}mp=null}},
+ML=()=>window.mpegts?Promise.resolve():(MLP=MLP||new Promise(r=>{const s=document.createElement('script');s.src='mpegts.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 /* Canais Xtream: o mesmo canal pode existir como .m3u8 e/ou .ts. Guardamos as variantes e passamos para a próxima se o servidor responder 404/403 */
@@ -311,10 +313,16 @@ const XL=/^(https?:\/\/[^/]+\/(?:live\/)?[^/]+\/[^/]+\/\d+)(\.m3u8|\.ts)?(\?.*)?
 let CAND=[],ci=0,PREFX=0;
 const cands=u=>{const m=u.match(XL);if(!m)return[u];const b=m[1],q=m[3]||'',a=[b+'.m3u8'+q,b+'.ts'+q];return PREFX?a.reverse():a};
 const nextCand=()=>{if(ci+1>=CAND.length)return false;ci++;spin(true);src(cur.u,0,1,false);return true};
-function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;if(live()&&/\.ts(\?|$)/i.test(u))forceNat=true;UP=false;viaNat=!!forceNat;
+function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;UP=false;viaNat=!!forceNat;
  const nativ=()=>{viaNat=true;V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
  if(hls&&!fresh&&!forceNat&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
- if(hls){hls.destroy();hls=null}
+ if(hls){hls.destroy();hls=null}mpOff();
+ /* Canal .ts (fluxo MPEG-TS puro): o Android não toca direto, então usamos o leitor mpegts.js */
+ if(live()&&TSU.test(u)){viaNat=true;ML().then(()=>{if(g!=gen)return;
+   if(window.mpegts&&mpegts.isSupported()){const p=mp=mpegts.createPlayer({type:'mpegts',isLive:true,url:/^https?:\/\//i.test(u)&&nat()?location.origin+PX(u):u},{enableWorker:false,liveBufferLatencyChasing:true,liveBufferLatencyMaxLatency:6,liveBufferLatencyMinRemain:1.5,autoCleanupSourceBuffer:true});
+    p.attachMediaElement(V);p.on(mpegts.Events.ERROR,(t,d)=>{if(p!=mp)return;dbg('Canal: erro de leitura ('+t+')');setTimeout(()=>{if(p==mp&&!P.hidden&&cur)recover()},800)});
+    p.load();Promise.resolve(p.play()).catch(()=>{})}
+   else dbg('Este canal só existe em .ts e o leitor não carregou.')});return}
  HL().then(()=>{if(g!=gen)return;
   if(!window.Hls)dbg('hls.js não carregou');
   if(!forceNat&&window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){
@@ -371,7 +379,7 @@ const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.c
 sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
 sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};
 sk.onpointerup=e=>{if(dr){const f=seekTo(e);dr=0;if(V.duration)V.currentTime=f*V.duration;ui()}};
-const close=pop=>{saveP();wdOff();gen++;ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}UP=true;V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav'||S.tab=='home')render();if(pop!==1&&history.state&&history.state.p)history.back()};
+const close=pop=>{saveP();wdOff();gen++;ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}mpOff();UP=true;V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav'||S.tab=='home')render();if(pop!==1&&history.state&&history.state.p)history.back()};
 $('#bk').onclick=()=>close();
 setInterval(()=>{if(!P.hidden&&cur&&live())epgBar()},3e4);
 addEventListener('popstate',()=>{if(!P.hidden)close(1)});
