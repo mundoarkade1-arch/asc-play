@@ -78,9 +78,8 @@ video{width:100%;height:100%;background:#000;object-fit:cover;transform:translat
 .gb svg.i{width:1.5em;height:1.5em;opacity:1;stroke-width:2}.gb.big{width:4.4em;height:4.4em;background:rgba(229,9,20,.8);border-color:rgba(255,255,255,.3)}.gb.big svg.i{width:2.2em;height:2.2em}
 #pf.on,#fit.on{color:#ff4d5e}#pf.on svg{fill:currentColor}
 #player.h .ov{opacity:0;pointer-events:none}#player.h{cursor:none}
-.next-ep-btn{position:absolute;right:1.5em;bottom:4.5em;z-index:10;background:rgba(24,24,28,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.5em 1em;border-radius:20px;font-size:0.9em;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 4px 12px rgba(0,0,0,0.4);transition:opacity 0.25s,transform 0.15s,background 0.15s;display:flex;align-items:center;gap:0.3em}
+.next-ep-btn{align-self:flex-end;margin-bottom:0.5em;background:rgba(24,24,28,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:0.5em 1em;border-radius:20px;font-size:0.9em;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 4px 12px rgba(0,0,0,0.4);transition:opacity 0.25s,transform 0.15s,background 0.15s;display:flex;align-items:center;gap:0.3em}
 .next-ep-btn:focus,.next-ep-btn:hover{background:rgba(229,9,20,0.85);border-color:rgba(255,255,255,0.4);transform:scale(1.05);outline:none}
-#player.h .next-ep-btn{opacity:0;pointer-events:none}
 #sp{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:1}
 #sp svg{width:4.2em;height:4.2em;animation:rot .9s linear infinite}@keyframes rot{to{transform:rotate(360deg)}}
 #sk{position:relative;height:1.8em;display:flex;align-items:center;cursor:pointer;touch-action:none}
