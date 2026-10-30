@@ -92,8 +92,7 @@ public class MainActivity extends BridgeActivity {
                 Uri u = request.getUrl();
                 if ("localhost".equals(u.getHost()) && "/__p".equals(u.getPath()) && "GET".equalsIgnoreCase(request.getMethod())) {
                     String target = u.getQueryParameter("u");
-                    String referer = u.getQueryParameter("r");
-                    if (target != null) return fetch(target, referer, request.getRequestHeaders());
+                    if (target != null) return fetch(target, request.getRequestHeaders());
                 }
             } catch (Throwable ignored) { }
             return super.shouldInterceptRequest(view, request);
@@ -132,7 +131,7 @@ public class MainActivity extends BridgeActivity {
             return new WebResourceResponse("text/plain", "utf-8", code, "Error", h, new ByteArrayInputStream(new byte[0]));
         }
 
-        private static WebResourceResponse fetch(String target, String referer, Map<String, String> in) {
+        private static WebResourceResponse fetch(String target, Map<String, String> in) {
             HttpURLConnection c = null;
             try {
                 URL url = new URL(target);
@@ -150,19 +149,6 @@ public class MainActivity extends BridgeActivity {
                     if (rg != null) c.setRequestProperty("Range", rg);
                     String ac = hv(in, "Accept");
                     if (ac != null) c.setRequestProperty("Accept", ac);
-                    String lang = hv(in, "Accept-Language");
-                    if (lang != null) c.setRequestProperty("Accept-Language", lang);
-                    // Alguns servidores de streaming exigem Referer. Aceita apenas um URL web válido,
-                    // remove query/fragment para nunca encaminhar tokens no cabeçalho e não encaminha
-                    // cookies ou Authorization automaticamente.
-                    if (referer != null) {
-                        try {
-                            URL r = new URL(referer);
-                            if (("http".equals(r.getProtocol()) || "https".equals(r.getProtocol())) && r.getHost() != null) {
-                                c.setRequestProperty("Referer", new URL(r.getProtocol(), r.getHost(), r.getPort(), "/").toString());
-                            }
-                        } catch (Throwable ignored) { }
-                    }
                     int rc = c.getResponseCode();
                     if (rc >= 300 && rc < 400 && rc != 304) {
                         String loc = c.getHeaderField("Location");

@@ -6,7 +6,7 @@ let DBP;const db=()=>DBP||(DBP=new Promise((res,rej)=>{const q=indexedDB.open('a
 const kv=async(m,k,v)=>{const d=await db();return new Promise((res,rej)=>{const o=d.transaction('k',m=='get'?'readonly':'readwrite').objectStore('k'),q=m=='get'?o.get(k):m=='del'?o.delete(k):o.put(v,k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
 /* fetch com limite de tempo, sem cookies e sem referer */
 /* No app (APK) toda rede passa pelo proxy nativo (/__p): streaming direto, sem bloqueio de CORS e sem a ponte pesada do plugin */
-const PX=(u,r)=>{try{if(!nat()||!/^https?:\/\//i.test(u))return u;let p='/__p?u='+encodeURIComponent(u);if(r&&/^https?:\/\//i.test(r)){try{const z=new URL(r);p+='&r='+encodeURIComponent(z.origin+'/')}catch{}}return p}catch{return u}};
+const PX=u=>{try{return nat()&&/^https?:\/\//i.test(u)?'/__p?u='+encodeURIComponent(u):u}catch{return u}};
 const tf=(u,ms=20000)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(PX(u),{signal:c.signal,credentials:'omit',referrerPolicy:'no-referrer'}).finally(()=>clearTimeout(t))};
 const okU=u=>{try{return /^https?:$/.test(new URL(u).protocol)}catch{return false}};
 const sl=u=>/^https?:\/\//i.test(u)?u:'';
@@ -295,7 +295,7 @@ function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').text
  E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
 function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=ST.pos,o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done))};saveState()}
 /* Buffer sob medida: abre rápido (começa no 1º trecho) e guarda ~20-30s à frente para não travar */
-const HC=(lv,ref)=>({xhrSetup:(x,u)=>{x.open('GET',PX(u,ref),true)},enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,capLevelToPlayerSize:true,testBandwidth:false,progressive:false,
+const HC=lv=>({xhrSetup:(x,u)=>{x.open('GET',PX(u),true)},enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,capLevelToPlayerSize:true,testBandwidth:false,progressive:false,
  maxBufferLength:lv?15:30,maxMaxBufferLength:lv?30:60,maxBufferSize:lv?30e6:60e6,backBufferLength:lv?5:20,
  liveSyncDurationCount:lv?3:3,liveMaxLatencyDurationCount:lv?10:Infinity,maxBufferHole:.6,nudgeMaxRetry:8,
  manifestLoadingTimeOut:10000,manifestLoadingMaxRetry:4,manifestLoadingRetryDelay:500,
@@ -315,7 +315,7 @@ function src(u,at,fresh,forceNat){const g=++gen;if(live())u=lvU(u);UP=false;viaN
   if(!window.Hls)dbg('hls.js não carregou');
   if(!forceNat&&window.Hls&&Hls.isSupported()&&!/\.(mp4|mkv|avi|mov)(\?|$)/i.test(u)){
    hlsLv=live();let LD={};try{if(nat())LD={loader:pld()}}catch{}
-   const h=hls=new Hls(Object.assign(HC(hlsLv,u),LD,at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
+   const h=hls=new Hls(Object.assign(HC(hlsLv),LD,at>0?{startPosition:at}:{}));h.loadSource(u);h.attachMedia(V);
    h.on(Hls.Events.MANIFEST_PARSED,()=>V.play().catch(()=>{}));
    h.on(Hls.Events.ERROR,(_,d)=>{if(h!=hls)return;if(d.fatal||d.details=='manifestLoadError'||d.details=='manifestLoadTimeOut')dbg('Canal: '+d.details+(d.response&&d.response.code?' (HTTP '+d.response.code+')':''));if(!d.fatal)return;
     if(d.details=='manifestParsingError'){h.destroy();hls=null;nativ();return}
@@ -410,12 +410,15 @@ async function checkUpd(manual){const v=await ver();
  if(!v||!UPD){if(manual)toast(v?'Atualização não configurada.':'A atualização funciona no app instalado (APK).');return}
  try{const r=await tf(UPD);if(!r.ok)throw 0;const j=JSON.parse(await r.text());
   if(!(+j.code>+v.code)){if(manual)toast('Você já está na versão mais recente ('+v.name+').');return}
-  if(typeof j.url!='string'||!j.url.startsWith(`https://github.com/${REPO}/releases/download/`)){if(manual)toast('Atualização inválida.');return}
+  if(typeof j.url!='string'||!j.url.startsWith(`https://github.com/${REPO}/releases/download/`)||
+     typeof j.sha256!='string'||!/^[a-f0-9]{64}$/i.test(j.sha256)){
+   if(manual)toast('Atualização inválida ou sem verificação de integridade.');return
+  }
   sh(`<b>Nova versão ${esc(j.name||'')}</b>${j.notes?`<p class="sy" style="max-height:8em">${esc(j.notes)}</p>`:''}<small id="up" style="color:#a39a9d">Você está na versão ${esc(v.name)}. Seu login e seus dados são mantidos.</small><button class="btn p" id="u1">Atualizar agora</button><button class="btn" id="u2">Depois</button>`);
   $('#u2').onclick=()=>$('#sheet').hidden=true;
   $('#u1').onclick=async()=>{const U=plug('Updater'),up=$('#up'),b=$('#u1');b.disabled=true;let h;
    try{h=await U.addListener('progress',e=>{up.textContent='Baixando… '+e.percent+'%'})}catch{}
-   try{up.textContent='Baixando…';const x=await U.install({url:j.url,sha256:typeof j.sha256=='string'?j.sha256:''});
+   try{up.textContent='Baixando…';const x=await U.install({url:j.url,sha256:j.sha256});
     up.textContent=x&&x.needPermission?'Permita "instalar apps desta fonte" para o ASC play e toque em Atualizar de novo.':'Pronto! Confirme a instalação na tela do Android.'}
    catch{up.textContent='Falha ao baixar ou validar a atualização. Tente de novo mais tarde.'}
    h&&h.remove&&h.remove();b.disabled=false}

@@ -44,12 +44,13 @@ grep -q usesCleartextTraffic $M || sed -i 's#<application#<uses-feature android:
 sed -i 's#<category android:name="android.intent.category.LAUNCHER" />#&<category android:name="android.intent.category.LEANBACK_LAUNCHER" />#' $M
 
 # --- Icones e banner (usa Python + Pillow; nao depende do ImageMagick)
-ICON=""
-for c in assets/icon.png icon.png icone.png "ícone.png" Icon.png Icone.png; do
-  [ -f "$c" ] && { ICON="$c"; break; }
-done
-[ -n "$ICON" ] || { echo "ERRO: icone nao encontrado (esperado assets/icon.png)"; ls -la; exit 1; }
-echo "Icone usado: $ICON"
+# Use SEMPRE os arquivos oficiais do projeto. Não procurar icon.png na raiz,
+# pois isso pode selecionar um ícone antigo e ignorar assets/icon.png.
+ICON="assets/icon.png"
+[ -f "$ICON" ] || { echo "ERRO: ícone oficial não encontrado em assets/icon.png"; exit 1; }
+[ -f "assets/banner.png" ] || { echo "ERRO: banner oficial não encontrado em assets/banner.png"; exit 1; }
+echo "Ícone oficial usado: $ICON"
+echo "Banner oficial usado: assets/banner.png"
 cp "$ICON" /tmp/asc_icon.png
 
 PY=$(command -v python3 || command -v python || true)
