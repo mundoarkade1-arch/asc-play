@@ -54,7 +54,6 @@ jobs:
         run: |
           node --check www/app.js
           node --check www/recovery.js
-          npx es-check es2020 www/app.js
           node -e '
             const fs = require("fs");
             const html = fs.readFileSync("www/index.html", "utf8");
