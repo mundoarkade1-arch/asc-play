@@ -30,7 +30,7 @@ input:focus,textarea:focus{border-color:rgba(255,60,75,.8);background:rgba(255,2
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
 header{display:flex;gap:.7em;align-items:center;padding:calc(env(safe-area-inset-top) + .6em) 1em .45em}
 header .logo{font-size:1.35em;white-space:nowrap}
-header input{flex:1;width:auto;border-radius:99px;padding:.6em 1em .6em 2.7em;background:rgba(255,255,255,.07) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a99fa3' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") .85em center/1.2em no-repeat}
+header input{flex:1;min-width:0;width:auto;border-radius:99px;padding:.6em 1em .6em 2.7em;background:rgba(255,255,255,.07) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a99fa3' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") .85em center/1.2em no-repeat}
 #chips{display:flex;gap:.5em;overflow-x:auto;padding:.3em 1em;scrollbar-width:none}
 .chip{flex:none;border:1px solid var(--ln);background:rgba(255,255,255,.06);border-radius:99px;padding:.4em 1em;cursor:pointer;white-space:nowrap}
 main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.6em 1em 6.4em;overscroll-behavior:contain;scrollbar-width:none}
