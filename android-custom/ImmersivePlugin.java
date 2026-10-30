@@ -131,9 +131,9 @@ public class ImmersivePlugin extends Plugin {
             ActivityManager am = (ActivityManager) a.getSystemService(Context.ACTIVITY_SERVICE);
             
             boolean isTv = false;
-            if (am != null) {
-                int uiMode = am.getCurrentModeType();
-                if (uiMode == ActivityManager.UI_MODE_TYPE_TELEVISION) {
+            UiModeManager uiModeManager = (UiModeManager) a.getSystemService(Context.UI_MODE_SERVICE);
+            if (uiModeManager != null) {
+                if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
                     isTv = true;
                 }
             }
