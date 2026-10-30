@@ -60,7 +60,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
 /* ---------- M3U ---------- */
 const nz=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const EP=/\bS\d{1,2}\s?E\d{1,3}\b|\bT\d{1,2}\s?E\d{1,3}\b|\b\d{1,2}x\d{2,3}\b|temporada/i;
+const EP=/\bS\d{1,2}\s?E\d{1,4}\b|\bT\d{1,2}\s?E\d{1,4}\b|\b\d{1,2}x\d{2,4}\b|temporada/i;
 const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();
  if(/\/series\//.test(u))return 'series';if(/\/movie\//.test(u))return 'movie';if(/\/live\//.test(u))return 'tv';
  if(/\.(mp4|mkv|avi|mov|wmv|flv|mpg|mpeg|webm)$/.test(u))return EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?|temporada/.test(g)?'series':'movie';
@@ -68,7 +68,7 @@ const kind=i=>{const u=i.u.split('?')[0].toLowerCase(),g=i.g.toLowerCase();
  if(/canais|canal|24\s?h|ao vivo|live|\btv\b|esporte|abertos|not[ií]cias/.test(g))return 'tv';
  if(EP.test(i.n)||/s[eé]ries?|novelas?|animes?|doramas?/.test(g))return 'series';
  if(/filmes?|movies?|\bvod\b|cine|lan[cç]amentos?/.test(g))return 'movie';return 'tv'};
-const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,3}.*$|\s*[-–]?\s*\d{1,2}x\d{2,3}.*$/i,'').trim()||n;
+const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,4}.*$|\s*[-–]?\s*\d{1,2}x\d{2,4}.*$/i,'').trim()||n;
 const ADG=/(^|[^a-z0-9])(adult[oa]?s?|xxx|porn[oa]?|erotic[oa]s?|sex|sexy|hentai|playboy|18 ?\+|\+ ?18|18plus)($|[^a-z0-9])/,ADN=/(^|[^a-z0-9])(xxx|playboy|sextreme|penthouse|brazzers|hustler|porn[oa]?|hentai|sexy ?hot|\+ ?18|18 ?\+)($|[^a-z0-9])/;
 const adCat=g=>ADG.test(nz(g||'')),adItem=i=>adCat(i.g)||ADN.test(nz(i.n||''));
 const AT=/([\w-]+)="([^"]*)"/g,AK={'tvg-logo':'l','group-title':'g','tvg-id':'id','tvg-name':'tn','tvg-plot':'p','plot':'p2','tvg-description':'p3','description':'p4'};
@@ -129,13 +129,15 @@ function view(){const q=nz(S.q.trim());
  let a=S.by[S.tab]||[];
  if(q)a=a.filter(i=>i.k.includes(q)&&hidA(i));else{if(S.cat!='Todos')a=a.filter(i=>i.g==S.cat);a=a.filter(vis)}
  if(S.tab=='series')a=(q||S.cat!='Todos')?grp(a):sgrp().filter(vis);return a}
-const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" referrerpolicy="no-referrer" alt="" src="${esc(i.l)}">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':''}</div>`;
+const card=(i,k,r)=>`<div class="card ${i.t=='tv'?'tv':''}" tabindex="0" data-i="${k}"${r?` data-r="${r}"`:''}><div class="im"><span class="pi">${esc(i.n[0]||'?')}</span>${i.l?`<img loading="lazy" decoding="async" referrerpolicy="no-referrer" alt="" src="${esc(i.l)}">`:''}</div><b>${esc(i.n)}</b>${i.t=='tv'?'<small class="now"></small>':i.cont?`<small class="now">${esc(i.cont.detail)}</small>`:''}</div>`;
 const itemOf=c=>c.dataset.r?(S.rails[c.dataset.r]||[])[c.dataset.i]:S.view[c.dataset.i];
 function nav(){document.querySelectorAll('nav [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==S.tab));
  const dd=S.tab=='tv'||S.tab=='movie'||S.tab=='series';$('#catb').hidden=!dd;$('#cl').textContent=S.cat=='Todos'?'Todas as categorias':S.cat}
 function render(){S.view=view();S.pos=0;G.innerHTML='';$('#main').scrollTop=0;
  const ih=S.tab=='home'&&!S.q.trim();G.hidden=ih;$('#main').classList.toggle('hm',ih);$('#home').hidden=!ih;if(ih)return home();
- if(!S.view.length)G.innerHTML='<div class="empty">Nada por aqui ainda.</div>';else more()}
+ const canContinue=!S.q.trim()&&['movie','series'].includes(S.tab)&&continueEntries(S.tab).length;
+ if(canContinue)G.insertAdjacentHTML('beforeend','<button class="btn p continue-action" data-continue="'+S.tab+'">Continuar de onde parei</button>');
+ if(!S.view.length){if(!canContinue)G.insertAdjacentHTML('beforeend','<div class="empty">Nada por aqui ainda.</div>')}else more()}
 function more(){if(S.pos>=S.view.length)return;const e=Math.min(S.pos+60,S.view.length);let h='';for(let k=S.pos;k<e;k++)h+=card(S.view[k],k);S.pos=e;const n0=G.children.length;G.insertAdjacentHTML('beforeend',h);fillNow(n0)}
 new IntersectionObserver(e=>e[0].isIntersecting&&more(),{rootMargin:'600px'}).observe($('#more'));
 
@@ -149,10 +151,11 @@ const favItems=()=>{const FS=new Set(S.fav);return{tv:S.by.tv.filter(i=>FS.has(i
 const vmCard=go=>`<div class="card vm" tabindex="0" data-go="${go}"><svg class="i" style="transform:rotate(-90deg)"><use href="#chev"/></svg>Ver mais</div>`;
 const rail=(id,l,go)=>`<div class="rail">${l.map((x,k)=>card(x,k,id)).join('')}${go?vmCard(go):''}</div>`;
 function home(){const t=S.by.tv.filter(vis),c=clientCh().slice(0,10),cs=new Set(c),lv=[...c];for(let k=0;k<t.length&&lv.length<10;k++)if(!cs.has(t[k]))lv.push(t[k]);
- const mv=S.by.movie.filter(vis),sg=sgrp().filter(vis),F=favItems(),
+ const mv=S.by.movie.filter(vis),sg=sgrp().filter(vis),F=favItems(),continued=continueEntries().slice(0,10);
  ft=[['tv','Canais'],['movie','Filmes'],['series','Séries']].filter(([k])=>F[k].length);
- S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10)};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
- let h=ft.length?`<section class="sec"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
+ S.rails={tv:lv,movie:mv.slice(0,10),series:sg.slice(0,10),cont:continued.map(x=>({...x.item,n:x.label,cont:x}))};ft.forEach(([k])=>S.rails['f'+k]=F[k]);
+ let h=continued.length?`<section class="sec"><div class="sx"><h2>Continuar assistindo</h2></div>${rail('cont',S.rails.cont)}</section>`:'';
+ h+=ft.length?`<section class="sec"><div class="sx"><h2>Favoritos</h2><button class="chip" data-go="fav">Ver tudo ›</button></div>`+ft.map(([k,n])=>`<div class="sub"><small>${n}</small>${rail('f'+k,F[k])}</div>`).join('')+'</section>'
   :'<section><div class="sx"><h2>Favoritos</h2></div></section>';
  h+=[['tv','Ao vivo',lv,t.length],['movie','Filmes',S.rails.movie,mv.length],['series','Séries',S.rails.series,sg.length]]
   .map(([k,n,l,tot])=>l.length?`<section class="sec"><div class="sx"><h2>${n}</h2><button class="chip" data-go="${k}">Ver mais ›</button></div>${rail(k,l,tot>l.length?k:'')}</section>`:'').join('');
@@ -164,13 +167,14 @@ const refresh=()=>{if(S.tab=='home'&&!S.q.trim())home();else if(S.tab=='fav')ren
 const H=$('#home');
 H.onclick=e=>{const g=e.target.closest('[data-go]');if(g){S.tab=g.dataset.go;S.cat=g.dataset.cat||'Todos';nav();render();return}
  if(e.target.closest('#pickcc'))return pickCC();
- const c=e.target.closest('.card');if(c){const l=S.rails[c.dataset.r]||[];openIt(l[c.dataset.i],l)}};
+ const c=e.target.closest('.card');if(c){const l=S.rails[c.dataset.r]||[],i=l[c.dataset.i];if(i&&i.cont)continueIt(i.cont);else openIt(i,l)}};
 H.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('card'))e.target.click()});
 
 document.querySelectorAll('nav [data-t]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;S.cat='Todos';nav();render()});
 let qt;$('#q').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{S.q=e.target.value;render()},250)};
 const openIt=(it,l)=>it&&(it.eps?eps(it):it.t=='tv'?play(it,l.filter(x=>x.t=='tv')):info(it));
-G.onclick=e=>{const c=e.target.closest('.card');if(c)openIt(S.view[c.dataset.i],S.view)};
+G.onclick=e=>{const b=e.target.closest('[data-continue]');if(b){const x=continueEntries(b.dataset.continue)[0];if(x)continueIt(x);return}
+ const c=e.target.closest('.card');if(c)openIt(S.view[c.dataset.i],S.view)};
 G.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('card'))e.target.click()});
 
 /* EPG ao passar o mouse / focar (TV) */
@@ -200,8 +204,14 @@ const prog=u=>{const p=ST.pos[u];return typeof p=='number'?{t:p,d:0}:p||null};
 const fin=p=>!!p&&p.d>0&&p.t/p.d>=.92;
 const isPart=u=>{const p=prog(u);return !!p&&p.t>10&&!fin(p)};
 const isDone=u=>{const p=prog(u);return !!p&&(!!p.done||fin(p))};
-const epn=e=>{const m=e.n.match(/[ST]\d{1,2}\s?E(\d{1,3})/i)||e.n.match(/\d{1,2}x(\d{2,3})/);return m?+m[1]:0};
+const epn=e=>{const m=e.n.match(/[ST]\d{1,2}\s?E(\d{1,4})/i)||e.n.match(/\d{1,2}x(\d{2,4})/);return m?+m[1]:0};
 const seas=e=>+((e.n.match(/[ST](\d{1,2})\s?E/i)||e.n.match(/(\d{1,2})x\d/)||[])[1]||1);
+const continueEntries=kind=>{const out=[];
+ if(kind!='series')for(const i of S.by.movie.filter(vis)){const p=prog(i.u);if(isPart(i.u))out.push({item:i,label:i.n,detail:fmt(p.t)+' / '+fmt(p.d),p})}
+ if(kind!='movie')for(const s of sgrp().filter(vis)){const a=s.eps.filter(vis),last=ST.last[s.n];let e=last&&a.find(x=>x.u==last&&isPart(x.u));
+  if(!e)e=a.filter(x=>isPart(x.u)).sort((x,y)=>(prog(y.u).at||0)-(prog(x.u).at||0))[0];if(e){const p=prog(e.u);out.push({item:e,label:s.n,detail:e.n,p})}}
+ return out.sort((a,b)=>(b.p.at||0)-(a.p.at||0))};
+const continueIt=x=>play(x.item,[x.item],x.p.t);
 function resume(it,list){const p=prog(it.u);if(!isPart(it.u))return play(it,list,0);
  sh(`<b>${esc(it.n)}</b><button class="btn p" id="r1">Continuar de ${fmt(p.t)}</button><button class="btn" id="r2">Assistir do começo</button>`);
  $('#r1').onclick=()=>{$('#sheet').hidden=true;play(it,list,p.t)};$('#r2').onclick=()=>{$('#sheet').hidden=true;play(it,list,0)}}
@@ -212,15 +222,18 @@ function info(it){const p=prog(it.u),rs=isPart(it.u),k=favK(it);
  $('#i2').onclick=()=>{fav(k);$('#sheet').hidden=true;refresh()};fillMeta(it,0)}
 function eps(s){const m={};for(const e of s.eps)(m[seas(e)]||=[]).push(e);
  const ks=Object.keys(m).map(Number).sort((a,b)=>a-b);ks.forEach(k=>m[k].sort((a,b)=>epn(a)-epn(b)));
- const flat=ks.flatMap(k=>m[k]),L=ST.last[s.n];let t=L&&flat.find(e=>e.u==L),nx=null;
- if(t&&isDone(t.u)&&!isPart(t.u)){const j=flat.indexOf(t)+1;if(flat[j]){t=flat[j];nx=t}}
- let cs=t?seas(t):ks[0];const fk=favK(s);
- sh(hdr(s)+`<div class="sbar"><button class="btn" id="sb"><span id="sbt"></span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button><button class="btn fv${S.fav.includes(fk)?' on':''}" id="sf"><svg class="i"><use href="#star"/></svg></button></div><div class="sg" id="sl" hidden>${ks.map(k=>`<button class="btn" data-s="${k}">Temporada ${k}</button>`).join('')}</div><div class="eg" id="eg"></div><div class="lg"><span><i style="background:#f5c518"></i>Assistido</span><span><i style="background:#22c55e"></i>Parei aqui</span></div>`);
- const draw=()=>{$('#sbt').textContent='Temporada '+cs;$('#sl').hidden=true;$('#eg').innerHTML=m[cs].map((e,i)=>{const c=isPart(e.u)?'pg':isDone(e.u)?'dn':nx&&e===nx?'nx':'';return`<button class="ep ${c}" data-u="${esc(e.u)}" title="${esc(e.n)}">${epn(e)||i+1}</button>`}).join('')};draw();
+ const flat=ks.flatMap(k=>m[k]),L=ST.last[s.n];let t=L&&flat.find(e=>e.u==L);
+ if(!t)t=flat.filter(e=>isPart(e.u)).sort((a,b)=>(prog(b.u).at||0)-(prog(a.u).at||0))[0];
+ if(t&&isDone(t.u)&&!isPart(t.u)){const j=flat.indexOf(t)+1;if(flat[j])t=flat[j]}
+ let cs=t?seas(t):ks[0],cb=t?Math.floor(m[seas(t)].indexOf(t)/50):0;const fk=favK(s);
+ sh(hdr(s)+`<div class="sbar"><button class="btn" id="sb"><span id="sbt"></span><svg class="i" style="width:1.1em;height:1.1em"><use href="#chev"/></svg></button><button class="btn fv${S.fav.includes(fk)?' on':''}" id="sf"><svg class="i"><use href="#star"/></svg></button></div><div class="sg" id="sl" hidden>${ks.map(k=>`<button class="btn" data-s="${k}">Temporada ${k}</button>`).join('')}</div><div class="sg" id="epBlocks" hidden></div><div class="eg" id="eg"></div><div class="lg"><span><i style="background:#22c55e"></i>Atual</span><span><i style="background:#ff2a3d"></i>Assistido</span></div>`);
+ const draw=()=>{$('#sbt').textContent='Temporada '+cs;$('#sl').hidden=true;const n=Math.ceil(m[cs].length/50),blocks=$('#epBlocks');blocks.hidden=n<2;blocks.innerHTML=n>1?Array.from({length:n},(_,i)=>`<button class="btn${i==cb?' p':''}" data-b="${i}">${i*50+1}-${Math.min((i+1)*50,m[cs].length)}</button>`).join(''):'';
+  $('#eg').innerHTML=m[cs].slice(cb*50,cb*50+50).map((e,i)=>{const c=e===t&&!isDone(e.u)?'pg':isDone(e.u)?'dn':'';return`<button class="ep ${c}" data-u="${esc(e.u)}" title="${esc(e.n)}">${epn(e)||cb*50+i+1}</button>`}).join('')};draw();
  $('#sh').onclick=e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id=='sb')$('#sl').hidden=!$('#sl').hidden;
   else if(b.id=='sf'){b.classList.toggle('on',fav(fk));refresh()}
-  else if(b.dataset.s){cs=+b.dataset.s;draw()}
+  else if(b.dataset.b!==undefined){cb=+b.dataset.b;draw()}
+  else if(b.dataset.s){cs=+b.dataset.s;cb=0;draw()}
   else if(b.dataset.u){$('#sheet').hidden=true;resume(flat.find(x=>x.u==b.dataset.u),flat)}};fillMeta(s,1)}
 $('#catb').onclick=()=>{const m=new Map();for(const i of (S.by[S.tab]||[])){{let z=m.get(i.g);if(!z)m.set(i.g,z=new Set());z.add(S.tab=='series'?title(i.n):i.u)}}
  const lk=g=>PAR.on&&adCat(g)?'<svg class="i" style="width:1.1em;height:1.1em;margin-right:.4em"><use href="#ilock"/></svg>':'';
@@ -293,7 +306,7 @@ let dgT=0;const dbg=m=>{if(Date.now()-dgT<2500)return;dgT=Date.now();toast(m)};
 function ui(){P.classList.remove('h');clearTimeout(ht);ht=setTimeout(()=>!V.paused&&!dr&&P.classList.add('h'),3500)}
 function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').textContent=cur.g||'';E.hidden=!lv;if(!lv)return;
  E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
-function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=ST.pos,o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done))};saveState()}
+function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=ST.pos,o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done)),at:Date.now()};saveState()}
 /* Buffer sob medida: abre rápido (começa no 1º trecho) e guarda ~20-30s à frente para não travar */
 const HC=lv=>({xhrSetup:(x,u)=>{x.open('GET',PX(u),true)},enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,capLevelToPlayerSize:true,testBandwidth:false,progressive:false,
  maxBufferLength:lv?15:30,maxMaxBufferLength:lv?30:60,maxBufferSize:lv?30e6:60e6,backBufferLength:lv?5:20,
@@ -379,7 +392,7 @@ const seekTo=e=>{const r=sk.getBoundingClientRect(),f=Math.max(0,Math.min(1,(e.c
 sk.onpointerdown=e=>{dr=1;sk.setPointerCapture(e.pointerId);seekTo(e);ui()};
 sk.onpointermove=e=>{if(dr){seekTo(e);ui()}};
 sk.onpointerup=e=>{if(dr){const f=seekTo(e);dr=0;if(V.duration)V.currentTime=f*V.duration;ui()}};
-const close=pop=>{saveP();wdOff();gen++;ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}mpOff();UP=true;V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(S.tab=='fav'||S.tab=='home')render();if(pop!==1&&history.state&&history.state.p)history.back()};
+const close=pop=>{saveP();wdOff();gen++;ori(S.dev=='tv'?'landscape':'portrait');bars(false);if(hls){hls.destroy();hls=null}mpOff();UP=true;V.pause();V.removeAttribute('src');V.load();P.hidden=true;spin(false);if(['fav','home','movie','series'].includes(S.tab))render();if(pop!==1&&history.state&&history.state.p)history.back()};
 $('#bk').onclick=()=>close();
 setInterval(()=>{if(!P.hidden&&cur&&live())epgBar()},3e4);
 addEventListener('popstate',()=>{if(!P.hidden)close(1)});
