@@ -69,7 +69,7 @@ input:focus,textarea:focus{border-color:rgba(255,60,75,.8);background:rgba(255,2
   margin-top:var(--ovy); margin-bottom:var(--ovy);
 }
 header{display:flex;gap:.7em;align-items:center;padding:calc(env(safe-area-inset-top) + .6em) 1em .45em}
-header .logo{font-size:1.35em;white-space:nowrap}
+header .logo{font-size:1.35em;white-space:nowrap;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
 header form{flex:1;min-width:0}
 header input{display:block;flex:none;min-width:0;width:100%;border-radius:99px;padding:.6em 1em .6em 2.7em;background:rgba(255,255,255,.07) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a99fa3' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") .85em center/1.2em no-repeat}
 #chips{display:flex;gap:.5em;overflow-x:auto;padding:.3em 1em;scrollbar-width:none}

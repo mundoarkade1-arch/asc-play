@@ -14,15 +14,24 @@ jobs:
     timeout-minutes: 30
     env:
       BASE_VERSION_CODE: 10000
-      VERSION_NAME: 1.0.0
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
-      - uses: actions/setup-java@v4
-        with: {distribution: temurin, java-version: 17}
-      - name: Calcular VERSION_CODE
-        run: echo "VERSION_CODE=$((BASE_VERSION_CODE + ${{ github.run_number }}))" >> $GITHUB_ENV
+      - name: Calcular Versao Automatica (VERSION_NAME e VERSION_CODE)
+        run: |
+          BASE_VERSION_CODE=10000
+          RUN_NUM=${{ github.run_number }}
+          VERSION_CODE=$((BASE_VERSION_CODE + RUN_NUM))
+          
+          # Calcula VERSION_NAME baseado no run_number para incrementar automaticamente (ex: 1.0.X)
+          # Exemplo: run_number 58 vira 1.0.58 (ou 1.1.${RUN_NUM}, etc.)
+          PATCH=$((RUN_NUM))
+          VERSION_NAME="1.0.${PATCH}"
+          
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "Versao gerada automaticamente: $VERSION_NAME ($VERSION_CODE)"
       - name: Validar secrets de assinatura
         env:
           KS_B64: ${{ secrets.KEYSTORE_B64 }}
