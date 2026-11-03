@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+// O GitHub Actions passa estas duas variáveis (ver .github/workflows/apk.yml).
+// BASE 10000 garante que o app nativo seja "mais novo" que o ASC play antigo (web) já instalado.
+def vCode = System.getenv('VERSION_CODE') ?: '10001'
+def vName = System.getenv('VERSION_NAME') ?: '2.0.0'
+
+android {
+    namespace 'com.ascplay.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.ascplay.app'
+        minSdk 24
+        targetSdk 34
+        versionCode = Integer.parseInt(vCode)
+        versionName = vName
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        // O build de release não deve falhar por aviso de lint (Media3 marca APIs como "instáveis").
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+dependencies {
+    def media3 = '1.8.0'
+    implementation "androidx.media3:media3-exoplayer:$media3"
+    implementation "androidx.media3:media3-exoplayer-hls:$media3"
+    implementation "androidx.media3:media3-exoplayer-dash:$media3"
+    implementation "androidx.media3:media3-ui:$media3"
+    implementation 'androidx.core:core:1.15.0'
+}
