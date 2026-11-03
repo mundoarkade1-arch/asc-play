@@ -34,6 +34,7 @@ final class NavBar {
             return;
         }
         nav.setVisibility(View.VISIBLE);
+        DeviceMode.configureNavigation(activity);
 
         int selectedId;
         switch (current) {

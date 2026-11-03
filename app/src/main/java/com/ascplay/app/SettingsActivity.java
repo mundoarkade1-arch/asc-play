@@ -41,11 +41,12 @@ public class SettingsActivity extends Activity {
 
     private static final int ROW_PARENTAL = 0;
     private static final int ROW_LOGIN = 1;
-    private static final int ROW_DEVICE = 2;
-    private static final int ROW_APP = 3;
-    private static final int ROW_UPDATE = 4;
-    private static final int ROW_CLEAR_DATA = 5;
-    private static final int ROW_COUNT = 6;
+    private static final int ROW_MODE = 2;
+    private static final int ROW_DEVICE = 3;
+    private static final int ROW_APP = 4;
+    private static final int ROW_UPDATE = 5;
+    private static final int ROW_CLEAR_DATA = 6;
+    private static final int ROW_COUNT = 7;
 
     private static final int COLOR_WHITE = 0xFFFFFFFF;
     private static final int COLOR_ERROR = 0xFFFF6B78;
@@ -80,6 +81,7 @@ public class SettingsActivity extends Activity {
 
         // Menu à esquerda (só ícones). Aqui o ícone Atualizar não tem o que recarregar.
         NavBar.bind(this, NavBar.SETTINGS, null);
+        DeviceMode.configurePhoneSettings(this);
 
         adapter = new RowAdapter();
         lvSettings.setAdapter(adapter);
@@ -108,6 +110,8 @@ public class SettingsActivity extends Activity {
                 return "Sobre o dispositivo";
             case ROW_APP:
                 return "Sobre o aplicativo";
+            case ROW_MODE:
+                return "Escolher dispositivo (" + DeviceMode.label(this) + ")";
             case ROW_CLEAR_DATA:
                 return "Apagar dados";
             default:
@@ -128,6 +132,10 @@ public class SettingsActivity extends Activity {
                 break;
             case ROW_APP:
                 showDetail(appText(), COLOR_WHITE);
+                break;
+            case ROW_MODE:
+                startActivity(new Intent(this, DeviceActivity.class));
+                finish();
                 break;
             case ROW_CLEAR_DATA:
                 confirmClearData();

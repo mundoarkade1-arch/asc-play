@@ -111,6 +111,7 @@ public class M3uBrowseActivity extends Activity {
         parentalOn = ParentalStore.isEnabled(this);
 
         setContentView(R.layout.activity_browse);
+        DeviceMode.configurePhoneBrowse(this);
         tvTitle = findViewById(R.id.tv_title);
         tvStatus = findViewById(R.id.tv_status);
         btnSearch = findViewById(R.id.btn_search_top);

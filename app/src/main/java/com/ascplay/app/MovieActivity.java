@@ -83,6 +83,7 @@ public class MovieActivity extends Activity {
         movieIcon = icon;
 
         setContentView(R.layout.activity_movie);
+        DeviceMode.configurePhoneMovie(this);
 
         ivCover = findViewById(R.id.iv_cover);
         tvTitle = findViewById(R.id.tv_title);
