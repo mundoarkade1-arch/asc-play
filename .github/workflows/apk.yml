@@ -3,6 +3,12 @@ on:
   workflow_dispatch:
   push:
     branches: [main, master]
+    paths:
+      - 'app/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/apk.yml'
 permissions:
   contents: write
 concurrency:
@@ -12,26 +18,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      BASE_VERSION_CODE: 10000
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: 22, cache: npm}
-      - name: Calcular Versao Automatica (VERSION_NAME e VERSION_CODE)
+
+      - name: Calcular versao (VERSION_CODE e VERSION_NAME)
         run: |
-          BASE_VERSION_CODE=10000
-          RUN_NUM=${{ github.run_number }}
-          VERSION_CODE=$((BASE_VERSION_CODE + RUN_NUM))
-          
-          # Calcula VERSION_NAME baseado no run_number para incrementar automaticamente (ex: 1.0.X)
-          # Exemplo: run_number 58 vira 1.0.58 (ou 1.1.${RUN_NUM}, etc.)
-          PATCH=$((RUN_NUM))
-          VERSION_NAME="1.0.${PATCH}"
-          
-          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-          echo "Versao gerada automaticamente: $VERSION_NAME ($VERSION_CODE)"
+          VERSION_CODE=$((10000 + ${{ github.run_number }}))
+          VERSION_NAME="2.0.${{ github.run_number }}"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "Versao: $VERSION_NAME ($VERSION_CODE)"
+
       - name: Validar secrets de assinatura
         env:
           KS_B64: ${{ secrets.KEYSTORE_B64 }}
@@ -43,75 +40,22 @@ jobs:
             echo "::error::KEYSTORE_B64 existe, mas faltam KEYSTORE_PASSWORD, KEY_ALIAS ou KEY_PASSWORD."
             exit 1
           fi
-      - name: Cache do Gradle (builds seguintes bem mais rapidos)
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: gradle-${{ runner.os }}-
+
       - name: Informar o repositorio ao app (para checar atualizacoes)
-        run: sed -i "s#__REPO__#${{ github.repository }}#g" www/index.html android-custom/UpdaterPlugin.java
-      - name: Instalar dependencias (versoes travadas pelo package-lock.json)
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            echo "::warning::package-lock.json nao existe ainda: gerando agora."
-            npm install
-          fi
-      - name: Checagem estatica do codigo antes do build
-        run: |
-          node --check www/app.js
-          node --check www/recovery.js
-          node -e '
-            const fs = require("fs");
-            const html = fs.readFileSync("www/index.html", "utf8");
-            const symbolIds = [...html.matchAll(/<symbol[^>]+id="([^"]+)"/g)].map(m => m[1]);
-            const uses = [...html.matchAll(/<use[^>]+href="#([^"]+)"/g)].map(m => m[1]);
-            const missing = uses.filter(u => !symbolIds.includes(u));
-            if (missing.length > 0) {
-              console.error("ERRO: Symbols faltando no index.html:", missing);
-              process.exit(1);
-            }
-            const duplicates = symbolIds.filter((id, i) => symbolIds.indexOf(id) !== i);
-            if (duplicates.length > 0) {
-              console.error("ERRO: Symbols duplicados no index.html:", duplicates);
-              process.exit(1);
-            }
-            console.log("Validacao de HTML/JS concluida com sucesso.");
-          '
-      - name: Baixar o leitor de MPEG-TS (canais .ts) para dentro do app
-        run: |
-          npm install --no-save --no-package-lock mpegts.js@1.7.3
-          cp node_modules/mpegts.js/dist/mpegts.js www/mpegts.min.js
-          test -s www/mpegts.min.js
-          ls -la www/mpegts.min.js
-      - name: Salvar package-lock.json no repositorio (so na primeira vez)
-        if: github.ref_name == 'main'
-        run: |
-          if ! git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json
-            git commit -m "Adiciona package-lock.json"
-            git push || echo "::warning::Nao consegui salvar o package-lock.json (tente rodar o workflow de novo)."
-          fi
-      - run: npx cap add android
-      - run: bash scripts/setup.sh
-      - name: APK de teste (sem chave fixa) - desligar checagem de assinatura
-        env:
-          KS_B64: ${{ secrets.KEYSTORE_B64 }}
-        run: |
-          if [ -z "$KS_B64" ]; then
-            F=$(find android/app/src/main/java -name SecurePlugin.java | head -n1)
-            sed -i 's/\(EXPECTED_CERT = \)"[^"]*"/\1""/' "$F"
-            grep -n 'EXPECTED_CERT =' "$F"
-            echo "::warning::Sem chave fixa: checagem de assinatura desligada neste APK de teste."
-          fi
-      - run: npx cap sync android
-      - run: cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon --build-cache
+        run: sed -i "s#__REPO__#${{ github.repository }}#g" app/src/main/java/com/ascplay/app/Updater.java
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Compilar o APK
+        run: gradle assembleRelease --no-daemon
+
       - name: Assinar o APK
         env:
           KS_B64: ${{ secrets.KEYSTORE_B64 }}
@@ -128,11 +72,12 @@ jobs:
             KS_PASS=android; KS_ALIAS=key0; KEY_PASS=android
           fi
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)
-          IN=$(ls android/app/build/outputs/apk/release/*.apk | head -n1)
+          IN=$(ls app/build/outputs/apk/release/*.apk | head -n1)
           "$BT/zipalign" -p 4 "$IN" aligned.apk
           "$BT/apksigner" sign --ks release.keystore --ks-key-alias "$KS_ALIAS" --ks-pass "pass:$KS_PASS" --key-pass "pass:$KEY_PASS" --out ASC-play.apk aligned.apk
           "$BT/apksigner" verify --print-certs ASC-play.apk
           rm -f release.keystore aligned.apk
+
       - name: Criar version.json
         env:
           NOTES: ${{ github.event.head_commit.message }}
@@ -142,10 +87,12 @@ jobs:
             --arg url "https://github.com/${{ github.repository }}/releases/download/v${VERSION_CODE}/ASC-play.apk" \
             --arg notes "$NOTES" '{code:$code,name:$name,url:$url,sha256:$sha,notes:$notes}' > version.json
           cat version.json
+
       - uses: actions/upload-artifact@v4
         with:
           name: ASC-play-apk
           path: ASC-play.apk
+
       - name: Publicar Release (download e atualizacao)
         if: env.HAS_KEY == 'true' && github.ref_name == 'main'
         env:
@@ -153,7 +100,6 @@ jobs:
         run: |
           TAG="v${VERSION_CODE}"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG ja existe (re-execucao): atualizando os arquivos."
             gh release upload "$TAG" ASC-play.apk version.json --clobber
             gh release edit "$TAG" --latest
           else
