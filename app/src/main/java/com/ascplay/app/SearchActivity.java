@@ -86,6 +86,7 @@ public class SearchActivity extends Activity {
         // A busca não tem categorias: esconde a lista da esquerda
         ListView lvCategories = findViewById(R.id.lv_categories);
         lvCategories.setVisibility(View.GONE);
+        DeviceMode.configurePhoneBrowse(this);
 
         gvItems.setHorizontalSpacing(dp(10));
         gvItems.setVerticalSpacing(dp(10));

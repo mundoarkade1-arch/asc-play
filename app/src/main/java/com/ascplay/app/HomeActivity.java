@@ -143,6 +143,7 @@ public class HomeActivity extends Activity {
         parentalSeen = ParentalStore.isEnabled(this);
 
         setContentView(R.layout.activity_home);
+        DeviceMode.configureNavigation(this);
 
         groupContinue = findViewById(R.id.group_continue);
         railContinue = findViewById(R.id.rail_continue);

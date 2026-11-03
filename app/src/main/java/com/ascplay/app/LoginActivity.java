@@ -59,6 +59,12 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (!DeviceMode.isChosen(this)) {
+            startActivity(new Intent(this, DeviceActivity.class));
+            finish();
+            return;
+        }
+
         // Já existe login salvo? Vai direto para a página inicial.
         // (O botão "Trocar login" da página inicial pede para mostrar esta tela.)
         CredentialStore.Credentials saved = CredentialStore.load(this);
