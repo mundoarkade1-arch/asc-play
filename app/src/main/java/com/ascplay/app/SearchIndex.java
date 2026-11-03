@@ -121,6 +121,12 @@ public final class SearchIndex {
      */
     public static void prebuildAsync(final Context ctx, final String server, final String user,
                                      final String pass) {
+        // DESLIGADO de propósito: baixar a lista inteira (canais, filmes e séries) em segundo plano
+        // disputava internet e processador com o vídeo e deixava canais, filmes e séries lentos.
+        // O índice agora só é montado na primeira pesquisa (SearchIndex.search).
+        if (true) {
+            return;
+        }
         final Context app = ctx.getApplicationContext();
         Thread t = new Thread(new Runnable() {
             @Override

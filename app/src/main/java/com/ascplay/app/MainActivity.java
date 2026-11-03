@@ -1,6 +1,8 @@
 package com.ascplay.app;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -34,8 +36,13 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy;
+import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy;
+import androidx.media3.extractor.DefaultExtractorsFactory;
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.ui.PlayerView;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -171,6 +178,23 @@ public class MainActivity extends Activity {
     // Tentativas de reconectar depois de uma queda de internet (zera quando o vídeo volta a tocar)
     private int errorRetries = 0;
     private static final int MAX_ERROR_RETRIES = 4;
+    // Canal ao vivo do servidor: o formato .ts abre bem mais rápido que o .m3u8. Guardamos o que funcionou por último.
+    private static final String PREFS = "asc_player";
+    private static final String KEY_LIVE_TS = "live_ts";
+    // Verdadeiro enquanto toca um canal .ts do servidor: erro de endereço (401, 403, 404...) não insiste, vai logo para o plano B
+    private volatile boolean fastFail = false;
+    // A fila de troca de canal só começa depois que o canal abriu (ou 8 s depois), para não disputar a internet
+    private boolean queueStarted = false;
+    private final Runnable startQueueTick = new Runnable() {
+        @Override
+        public void run() {
+            if (queueStarted || channelQueue == null || isFinishing() || isDestroyed()) {
+                return;
+            }
+            queueStarted = true;
+            channelQueue.start();
+        }
+    };
     private final Runnable retryPlay = new Runnable() {
         @Override
         public void run() {
@@ -343,6 +367,7 @@ public class MainActivity extends Activity {
 
         item = new XtreamApi.Item(kind, id, name == null ? "" : name, "", "", "", ext, url);
         streamUrl = XtreamApi.streamUrl(creds.server, creds.user, creds.pass, item);
+        preferLiveFormat();
 
         // "Continue assistindo": nome e capa que a tela anterior mandou (a capa é opcional)
         baseName = name == null ? "" : name;
@@ -394,7 +419,36 @@ public class MainActivity extends Activity {
                             }
                         }
                     });
-            channelQueue.start();
+            // Começa quando o canal abrir (ou em 8 s, se não abrir), para não disputar a internet com o vídeo
+            handler.postDelayed(startQueueTick, 8000L);
+        }
+    }
+
+    /** Canal ao vivo do servidor: começa pelo .ts (abre mais rápido); se o último que funcionou foi o .m3u8, começa por ele. */
+    private void preferLiveFormat() {
+        if (item == null || item.kind != XtreamApi.Kind.LIVE || !item.url.isEmpty()
+                || streamUrl == null || !streamUrl.endsWith(".m3u8")) {
+            return;
+        }
+        SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
+        if (sp.getBoolean(KEY_LIVE_TS, true)) {
+            streamUrl = streamUrl.substring(0, streamUrl.length() - ".m3u8".length()) + ".ts";
+        }
+    }
+
+    /** O canal abriu: guarda se foi pelo .ts ou pelo .m3u8, para a próxima vez já começar pelo certo. */
+    private void rememberLiveFormat() {
+        if (item == null || item.kind != XtreamApi.Kind.LIVE || !item.url.isEmpty()
+                || streamUrl == null) {
+            return;
+        }
+        boolean ts = streamUrl.endsWith(".ts");
+        if (!ts && !streamUrl.endsWith(".m3u8")) {
+            return;
+        }
+        SharedPreferences sp = getSharedPreferences(PREFS, MODE_PRIVATE);
+        if (sp.getBoolean(KEY_LIVE_TS, true) != ts) {
+            sp.edit().putBoolean(KEY_LIVE_TS, ts).apply();
         }
     }
 
@@ -708,6 +762,7 @@ public class MainActivity extends Activity {
         handler.removeCallbacks(saveTick);
         handler.removeCallbacks(skipTick);
         nowbarToken++;
+        handler.removeCallbacks(startQueueTick);
         if (channelQueue != null) {
             channelQueue.close();
             channelQueue = null;
@@ -836,6 +891,7 @@ public class MainActivity extends Activity {
         item = new XtreamApi.Item(XtreamApi.Kind.LIVE, next.id, next.name == null ? "" : next.name,
                 "", "", "", ext, url);
         streamUrl = XtreamApi.streamUrl(creds.server, creds.user, creds.pass, item);
+        preferLiveFormat();
         triedTs = false;
         triedHlsMime = false;
         forceMime = null;
@@ -943,33 +999,71 @@ public class MainActivity extends Activity {
         if (player != null || streamUrl == null) {
             return;
         }
+        boolean liveNow = item != null && item.kind == XtreamApi.Kind.LIVE;
+
+        // Memória do aparelho: define o tamanho máximo da reserva de vídeo e se o vídeo é limitado a 1080p.
+        ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        int heapMb = am != null ? am.getMemoryClass() : 64;
+        long totalMb = 0L;
+        if (am != null) {
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            totalMb = mi.totalMem / (1024L * 1024L);
+        }
+        boolean weak = heapMb <= 128 || (totalMb > 0L && totalMb < 1600L);
+
+        // Abre rápido: se a internet está lenta, não fica esperando mais que isso para tentar o plano B.
         DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
                 .setUserAgent(USER_AGENT)
                 .setAllowCrossProtocolRedirects(true)
-                .setConnectTimeoutMs(TIMEOUT_MS)
-                .setReadTimeoutMs(TIMEOUT_MS);
+                .setConnectTimeoutMs(liveNow ? 8000 : 12000)
+                .setReadTimeoutMs(liveNow ? 10000 : 20000);
 
         // Seleção de vídeo: até 4K/60 (TVs novas). O player escolhe a maior qualidade que a TV
         // aguenta e cabe na tela (setViewportSizeToPhysicalDisplaySize); não "inventa" qualidade.
+        // Aparelho fraco (pouca memória): no máximo 1080p, para não travar.
         DefaultTrackSelector trackSelector = new DefaultTrackSelector(this);
         trackSelector.setParameters(trackSelector.buildUponParameters()
-                .setMaxVideoSize(3840, 2160)
+                .setMaxVideoSize(weak ? 1920 : 3840, weak ? 1080 : 2160)
                 .setMaxVideoFrameRate(60)
                 .setViewportSizeToPhysicalDisplaySize(this, true)
                 .build());
 
-        // Buffer: canal ao vivo guarda pouco (entra rápido e fica perto do "ao vivo");
-        // filme e episódio guardam mais (menos travadas em internet instável).
-        boolean liveNow = item != null && item.kind == XtreamApi.Kind.LIVE;
+        // Buffer (reserva de vídeo). Começa a tocar logo (1,5 s no ao vivo, 2 s em filme), mas depois
+        // de uma travada espera juntar mais (5 s e 6 s) para não ficar travando toda hora.
+        // O limite em bytes protege a memória (antes a reserva só era limitada por tempo e podia
+        // encher a memória em filme 4K).
+        long bufferMb = Math.max(24L, Math.min(liveNow ? 48L : 160L, heapMb * (liveNow ? 25L : 35L) / 100L));
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                        liveNow ? 10000 : 20000,   // mínimo que tenta manter
-                        liveNow ? 30000 : 60000,   // máximo guardado
-                        liveNow ? 1000 : 1500,     // para começar a tocar
-                        liveNow ? 2500 : 3000)     // para voltar depois de travar
-                .setBackBuffer(liveNow ? 0 : 20000, false)
-                .setPrioritizeTimeOverSizeThresholds(true)
+                        liveNow ? 15000 : 30000,   // mínimo que tenta manter
+                        liveNow ? 40000 : 120000,  // máximo guardado
+                        liveNow ? 1500 : 2000,     // para começar a tocar
+                        liveNow ? 5000 : 6000)     // para voltar depois de travar
+                .setTargetBufferBytes((int) (bufferMb * 1024L * 1024L))
+                .setPrioritizeTimeOverSizeThresholds(false)
+                .setBackBuffer(liveNow ? 0 : 10000, false)
                 .build();
+
+        // Canal .ts do servidor com erro de endereço (401, 403, 404, 410): não insiste, vai logo para o .m3u8.
+        LoadErrorHandlingPolicy errorPolicy = new DefaultLoadErrorHandlingPolicy() {
+            @Override
+            public long getRetryDelayMsFor(LoadErrorHandlingPolicy.LoadErrorInfo loadErrorInfo) {
+                IOException e = loadErrorInfo.exception;
+                if (fastFail && e instanceof HttpDataSource.InvalidResponseCodeException) {
+                    int code = ((HttpDataSource.InvalidResponseCodeException) e).responseCode;
+                    if (code >= 400 && code < 500 && code != 408 && code != 429) {
+                        return C.TIME_UNSET;
+                    }
+                }
+                return super.getRetryDelayMsFor(loadErrorInfo);
+            }
+        };
+
+        // Canal .ts: aceita vídeo que começa sem quadro-chave "completo" (comum em IPTV) e abre mais rápido.
+        DefaultExtractorsFactory extractors = new DefaultExtractorsFactory()
+                .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
+                        | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
 
         // Se o decodificador de hardware preferido falhar, tenta o próximo da lista.
         DefaultRenderersFactory renderers = new DefaultRenderersFactory(this)
@@ -979,7 +1073,8 @@ public class MainActivity extends Activity {
         player = new ExoPlayer.Builder(this, renderers)
                 .setTrackSelector(trackSelector)
                 .setLoadControl(loadControl)
-                .setMediaSourceFactory(new DefaultMediaSourceFactory(http))
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(http, extractors)
+                        .setLoadErrorHandlingPolicy(errorPolicy))
                 .build();
         playerView.setPlayer(player);
         playerView.requestFocus();
@@ -1021,6 +1116,11 @@ public class MainActivity extends Activity {
                     errorRetries = 0;
                     status.setVisibility(View.GONE);
                     saveProgress();
+                    rememberLiveFormat();
+                    if (!queueStarted && channelQueue != null) {
+                        handler.removeCallbacks(startQueueTick);
+                        handler.postDelayed(startQueueTick, 1500L);
+                    }
                     if (!nowbarShownOnce) {
                         nowbarShownOnce = true;
                         showNowbar();
@@ -1060,11 +1160,16 @@ public class MainActivity extends Activity {
                 // Canal ao vivo do servidor: se não entregou HLS (.m3u8), tenta uma vez o .ts.
                 // (Na lista M3U o endereço é o que veio na lista: não mexemos nele.)
                 if (item != null && item.kind == XtreamApi.Kind.LIVE && item.url.isEmpty()
-                        && !triedTs && streamUrl != null && streamUrl.endsWith(".m3u8")) {
+                        && !triedTs && streamUrl != null
+                        && (streamUrl.endsWith(".m3u8") || streamUrl.endsWith(".ts"))) {
                     triedTs = true;
                     failLog = fmtName + ": " + shortErr;
                     errorRetries = 0;
-                    streamUrl = streamUrl.substring(0, streamUrl.length() - ".m3u8".length()) + ".ts";
+                    if (streamUrl.endsWith(".ts")) {
+                        streamUrl = streamUrl.substring(0, streamUrl.length() - ".ts".length()) + ".m3u8";
+                    } else {
+                        streamUrl = streamUrl.substring(0, streamUrl.length() - ".m3u8".length()) + ".ts";
+                    }
                     playCurrent();
                     return;
                 }
@@ -1125,6 +1230,7 @@ public class MainActivity extends Activity {
         showStatus("Carregando...");
         MediaItem.Builder mediaBuilder = new MediaItem.Builder().setUri(Uri.parse(streamUrl));
         boolean liveStream = item != null && item.kind == XtreamApi.Kind.LIVE;
+        fastFail = liveStream && item.url.isEmpty() && streamUrl.endsWith(".ts");
         if (forceMime != null) {
             mediaBuilder.setMimeType(forceMime);
         }
