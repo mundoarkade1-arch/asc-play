@@ -157,7 +157,7 @@ public final class PinDialog {
         b.setMinimumWidth(0);
         b.setMinimumHeight(0);
         b.setFocusable(true);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(104), dp(46));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(104), dp(keyHeightDp()));
         lp.setMargins(dp(4), dp(3), dp(4), dp(3));
         b.setLayoutParams(lp);
         b.setOnClickListener(v -> onKey(label));
@@ -208,6 +208,12 @@ public final class PinDialog {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         lp.setMargins(0, dp(2), 0, dp(2));
         return lp;
+    }
+
+    /** Altura das teclas: 46dp na TV; menor em tela baixa, para o teclado caber inteiro. */
+    private int keyHeightDp() {
+        int h = Math.round((ScreenFit.heightDp(activity) - 175f) / 4f) - 6;
+        return Math.max(30, Math.min(46, h));
     }
 
     private int dp(int v) {

@@ -26,12 +26,13 @@
         android:fillViewport="true">
 
     <LinearLayout
+        android:id="@+id/login_box"
         android:layout_width="560dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingTop="32dp"
-        android:paddingBottom="32dp">
+        android:paddingTop="@dimen/login_pad_v"
+        android:paddingBottom="@dimen/login_pad_v">
 
         <LinearLayout
             android:id="@+id/group_update"
@@ -91,7 +92,7 @@
             android:gravity="center"
             android:text="ASC play"
             android:textColor="#FF2A3D"
-            android:textSize="36sp"
+            android:textSize="@dimen/login_title_text"
             android:textStyle="bold" />
 
         <TextView
@@ -101,7 +102,7 @@
             android:gravity="center"
             android:text="@string/login_title"
             android:textColor="#F7F3F4"
-            android:textSize="26sp" />
+            android:textSize="@dimen/login_sub_text" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -151,13 +152,13 @@
                 android:hint="@string/hint_server"
                 android:imeOptions="actionNext"
                 android:inputType="textUri"
-                android:minHeight="56dp"
+                android:minHeight="@dimen/field_min_h"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
                 android:textColorHint="#8A7F83"
-                android:textSize="20sp" />
+                android:textSize="@dimen/field_text" />
 
             <EditText
                 android:id="@+id/et_user"
@@ -168,13 +169,13 @@
                 android:hint="@string/hint_user"
                 android:imeOptions="actionNext"
                 android:inputType="textNoSuggestions"
-                android:minHeight="56dp"
+                android:minHeight="@dimen/field_min_h"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
                 android:textColorHint="#8A7F83"
-                android:textSize="20sp" />
+                android:textSize="@dimen/field_text" />
 
             <EditText
                 android:id="@+id/et_pass"
@@ -185,13 +186,13 @@
                 android:hint="@string/hint_pass"
                 android:imeOptions="actionDone"
                 android:inputType="textPassword"
-                android:minHeight="56dp"
+                android:minHeight="@dimen/field_min_h"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
                 android:textColorHint="#8A7F83"
-                android:textSize="20sp" />
+                android:textSize="@dimen/field_text" />
         </LinearLayout>
 
         <LinearLayout
@@ -210,13 +211,13 @@
                 android:hint="@string/hint_m3u"
                 android:imeOptions="actionDone"
                 android:inputType="textUri"
-                android:minHeight="56dp"
+                android:minHeight="@dimen/field_min_h"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
                 android:textColorHint="#8A7F83"
-                android:textSize="20sp" />
+                android:textSize="@dimen/field_text" />
         </LinearLayout>
 
         <Button
@@ -225,11 +226,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:background="@drawable/bg_button"
-            android:minHeight="60dp"
+            android:minHeight="@dimen/enter_min_h"
             android:text="@string/btn_enter"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
-            android:textSize="22sp"
+            android:textSize="@dimen/enter_text"
             android:textStyle="bold" />
 
         <TextView

@@ -128,6 +128,8 @@ public class BrowseActivity extends Activity {
         lvCategories.setDividerHeight(dp(6));
         gvItems.setHorizontalSpacing(dp(10));
         gvItems.setVerticalSpacing(dp(10));
+        // Número de colunas conforme a largura da tela (TV: 5; celular: menos)
+        ScreenFit.fitColumns(gvItems, getResources().getDimensionPixelSize(R.dimen.grid_col_w), 5);
 
         // Botão "Pesquisar" fixo: sempre à vista, acima da lista de categorias (R4-1).
         // Foco: do botão, baixo vai à lista; do alto da lista, cima volta ao botão.

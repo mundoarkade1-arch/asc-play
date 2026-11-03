@@ -8,7 +8,7 @@
     <include
         android:id="@+id/group_nav"
         layout="@layout/layout_nav"
-        android:layout_width="110dp"
+        android:layout_width="@dimen/nav_w"
         android:layout_height="match_parent"
         android:visibility="gone" />
 
@@ -17,10 +17,10 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingStart="24dp"
-        android:paddingTop="20dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="16dp">
+        android:paddingStart="@dimen/screen_pad_h"
+        android:paddingTop="@dimen/screen_pad_top"
+        android:paddingEnd="@dimen/screen_pad_h"
+        android:paddingBottom="@dimen/screen_pad_bottom">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -34,14 +34,14 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:textColor="#FF2A3D"
-                android:textSize="30sp"
+                android:textSize="@dimen/title_text"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="@dimen/row_mt"
             android:layout_weight="1"
             android:orientation="horizontal">
 
@@ -53,8 +53,8 @@
 
                 <TextView
                     android:id="@+id/btn_search_top"
-                    android:layout_width="190dp"
-                    android:layout_height="52dp"
+                    android:layout_width="@dimen/cat_w"
+                    android:layout_height="@dimen/btn_search_h"
                     android:layout_marginBottom="8dp"
                     android:background="@drawable/bg_button"
                     android:clickable="true"
@@ -65,13 +65,13 @@
                     android:singleLine="true"
                     android:text="Pesquisar"
                     android:textColor="#FFFFFF"
-                    android:textSize="18sp"
+                    android:textSize="@dimen/cat_text"
                     android:textStyle="bold"
                     android:visibility="gone" />
 
                 <ListView
                     android:id="@+id/lv_categories"
-                    android:layout_width="190dp"
+                    android:layout_width="@dimen/cat_w"
                     android:layout_height="0dp"
                     android:layout_weight="1"
                     android:cacheColorHint="@android:color/transparent"
@@ -93,7 +93,7 @@
                     android:layout_height="match_parent"
                     android:cacheColorHint="@android:color/transparent"
                     android:clipToPadding="false"
-                    android:columnWidth="158dp"
+                    android:columnWidth="@dimen/grid_col_w"
                     android:horizontalSpacing="0dp"
                     android:listSelector="@android:color/transparent"
                     android:numColumns="5"

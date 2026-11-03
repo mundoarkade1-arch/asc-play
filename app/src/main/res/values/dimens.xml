@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tamanhos que se adaptam à ALTURA da tela (o app é só paisagem, então altura = menor lado).
+  - values/            : telas baixas (celular, menos de 400dp de altura)
+  - values-h400dp/     : telas médias (400dp a 479dp)
+  - values-h480dp/     : TV e telas grandes (480dp ou mais). São os tamanhos ORIGINAIS do app.
+  Todo nome novo aqui precisa existir nos TRÊS arquivos.
+-->
+<resources>
+    <!-- Menu à esquerda -->
+    <dimen name="nav_w">96dp</dimen>
+    <dimen name="nav_pad_v">4dp</dimen>
+    <dimen name="nav_btn_h">48dp</dimen>
+    <dimen name="nav_btn_mv">2dp</dimen>
+    <dimen name="nav_btn_mh">4dp</dimen>
+    <dimen name="nav_btn_pv">2dp</dimen>
+    <dimen name="nav_icon">24dp</dimen>
+    <dimen name="nav_text">11sp</dimen>
+
+    <!-- Telas com menu: margens, título, categorias, grade -->
+    <dimen name="screen_pad_h">12dp</dimen>
+    <dimen name="screen_pad_h_lg">16dp</dimen>
+    <dimen name="screen_pad_h_xl">16dp</dimen>
+    <dimen name="screen_pad_top">8dp</dimen>
+    <dimen name="screen_pad_bottom">6dp</dimen>
+    <dimen name="row_mt">6dp</dimen>
+    <dimen name="title_text">22sp</dimen>
+    <dimen name="title_text_sm">20sp</dimen>
+    <dimen name="cat_w">140dp</dimen>
+    <dimen name="cat_text">15sp</dimen>
+    <dimen name="cat_item_h">40dp</dimen>
+    <dimen name="btn_search_h">40dp</dimen>
+
+    <!-- Cartões das abas e da busca -->
+    <dimen name="card_w">112dp</dimen>
+    <dimen name="grid_col_w">120dp</dimen>
+    <dimen name="card_img_h">90dp</dimen>
+    <dimen name="card_initial_text">28sp</dimen>
+    <dimen name="card_name_text">12sp</dimen>
+
+    <!-- Tela inicial -->
+    <dimen name="poster_w">112dp</dimen>
+    <dimen name="channel_w">164dp</dimen>
+    <dimen name="rail_h_poster">214dp</dimen>
+    <dimen name="rail_h_channel">150dp</dimen>
+    <dimen name="section_text">15sp</dimen>
+    <dimen name="home_brand_text">20sp</dimen>
+
+    <!-- Ajustes -->
+    <dimen name="settings_list_w">230dp</dimen>
+    <dimen name="detail_text">15sp</dimen>
+
+    <!-- Páginas de filme e de série -->
+    <dimen name="series_cover_w">84dp</dimen>
+    <dimen name="series_cover_h">126dp</dimen>
+    <dimen name="body_text">13sp</dimen>
+    <dimen name="movie_body_text">14sp</dimen>
+    <dimen name="btn_text">15sp</dimen>
+    <dimen name="movie_btn_text">16sp</dimen>
+    <dimen name="btn_min_h">38dp</dimen>
+    <dimen name="btn_pad_h">16dp</dimen>
+    <dimen name="btn_mt">4dp</dimen>
+    <dimen name="movie_pad_v">8dp</dimen>
+    <dimen name="movie_gap">16dp</dimen>
+    <dimen name="movie_cover_max_w">220dp</dimen>
+    <integer name="series_plot_lines">2</integer>
+
+    <!-- Login -->
+    <dimen name="login_pad_v">12dp</dimen>
+    <dimen name="login_title_text">26sp</dimen>
+    <dimen name="login_sub_text">18sp</dimen>
+    <dimen name="field_min_h">44dp</dimen>
+    <dimen name="field_text">16sp</dimen>
+    <dimen name="enter_min_h">48dp</dimen>
+    <dimen name="enter_text">18sp</dimen>
+</resources>

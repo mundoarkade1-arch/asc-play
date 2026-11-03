@@ -12,11 +12,11 @@
     android:ellipsize="end"
     android:focusable="true"
     android:maxLines="2"
-    android:minHeight="52dp"
+    android:minHeight="@dimen/cat_item_h"
     android:gravity="center_vertical"
     android:paddingStart="14dp"
     android:paddingTop="8dp"
     android:paddingEnd="14dp"
     android:paddingBottom="8dp"
     android:textColor="#F7F3F4"
-    android:textSize="18sp" />
+    android:textSize="@dimen/cat_text" />

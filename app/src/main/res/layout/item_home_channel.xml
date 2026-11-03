@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="220dp"
+    android:layout_width="@dimen/channel_w"
     android:layout_height="match_parent"
     android:layout_margin="5dp"
     android:background="@drawable/bg_card_home"

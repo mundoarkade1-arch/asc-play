@@ -89,6 +89,8 @@ public class SearchActivity extends Activity {
 
         gvItems.setHorizontalSpacing(dp(10));
         gvItems.setVerticalSpacing(dp(10));
+        // Número de colunas conforme a largura da tela (TV: 5; celular: menos)
+        ScreenFit.fitColumns(gvItems, getResources().getDimensionPixelSize(R.dimen.grid_col_w), 5);
         itemAdapter = new ItemAdapter();
         gvItems.setAdapter(itemAdapter);
         gvItems.setOnItemClickListener((parent, view, position, id) -> {

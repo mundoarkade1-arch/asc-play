@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Telas médias (400dp a 479dp de altura). Ver comentário em values/dimens.xml. -->
+<resources>
+    <dimen name="nav_w">104dp</dimen>
+    <dimen name="nav_pad_v">8dp</dimen>
+    <dimen name="nav_btn_h">56dp</dimen>
+    <dimen name="nav_btn_mv">3dp</dimen>
+    <dimen name="nav_btn_mh">6dp</dimen>
+    <dimen name="nav_btn_pv">3dp</dimen>
+    <dimen name="nav_icon">28dp</dimen>
+    <dimen name="nav_text">12sp</dimen>
+
+    <dimen name="screen_pad_h">18dp</dimen>
+    <dimen name="screen_pad_h_lg">24dp</dimen>
+    <dimen name="screen_pad_h_xl">32dp</dimen>
+    <dimen name="screen_pad_top">14dp</dimen>
+    <dimen name="screen_pad_bottom">10dp</dimen>
+    <dimen name="row_mt">10dp</dimen>
+    <dimen name="title_text">26sp</dimen>
+    <dimen name="title_text_sm">23sp</dimen>
+    <dimen name="cat_w">165dp</dimen>
+    <dimen name="cat_text">16sp</dimen>
+    <dimen name="cat_item_h">46dp</dimen>
+    <dimen name="btn_search_h">46dp</dimen>
+
+    <dimen name="card_w">130dp</dimen>
+    <dimen name="grid_col_w">138dp</dimen>
+    <dimen name="card_img_h">110dp</dimen>
+    <dimen name="card_initial_text">32sp</dimen>
+    <dimen name="card_name_text">13sp</dimen>
+
+    <dimen name="poster_w">130dp</dimen>
+    <dimen name="channel_w">192dp</dimen>
+    <dimen name="rail_h_poster">248dp</dimen>
+    <dimen name="rail_h_channel">176dp</dimen>
+    <dimen name="section_text">16sp</dimen>
+    <dimen name="home_brand_text">22sp</dimen>
+
+    <dimen name="settings_list_w">285dp</dimen>
+    <dimen name="detail_text">17sp</dimen>
+
+    <dimen name="series_cover_w">120dp</dimen>
+    <dimen name="series_cover_h">180dp</dimen>
+    <dimen name="body_text">14sp</dimen>
+    <dimen name="movie_body_text">16sp</dimen>
+    <dimen name="btn_text">18sp</dimen>
+    <dimen name="movie_btn_text">20sp</dimen>
+    <dimen name="btn_min_h">44dp</dimen>
+    <dimen name="btn_pad_h">22dp</dimen>
+    <dimen name="btn_mt">8dp</dimen>
+    <dimen name="movie_pad_v">16dp</dimen>
+    <dimen name="movie_gap">22dp</dimen>
+    <dimen name="movie_cover_max_w">280dp</dimen>
+    <integer name="series_plot_lines">3</integer>
+
+    <dimen name="login_pad_v">22dp</dimen>
+    <dimen name="login_title_text">30sp</dimen>
+    <dimen name="login_sub_text">22sp</dimen>
+    <dimen name="field_min_h">50dp</dimen>
+    <dimen name="field_text">18sp</dimen>
+    <dimen name="enter_min_h">54dp</dimen>
+    <dimen name="enter_text">20sp</dimen>
+</resources>

@@ -13,6 +13,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -55,7 +56,8 @@ public final class EpgDialog {
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        int pad = dp(activity, 26);
+        boolean compact = ScreenFit.heightDp(activity) < 400f;
+        int pad = dp(activity, compact ? 14 : 26);
         root.setPadding(pad, pad, pad, pad);
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(COLOR_PANEL);
@@ -72,7 +74,7 @@ public final class EpgDialog {
         TextView title = new TextView(activity);
         title.setText(channelName == null ? "" : channelName);
         title.setTextColor(COLOR_WHITE);
-        title.setTextSize(26);
+        title.setTextSize(compact ? 20 : 26);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         title.setMaxLines(1);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -113,7 +115,11 @@ public final class EpgDialog {
         closeLp.gravity = Gravity.END;
         root.addView(close, closeLp);
 
-        dialog.setContentView(root);
+        // Em tela baixa (celular), a janela rola em vez de cortar o que não cabe
+        ScrollView scroller = new ScrollView(activity);
+        scroller.addView(root, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        dialog.setContentView(scroller);
 
         // A tecla das três listras, APERTADA de novo, fecha a janela.
         // Só conta o aperto (ACTION_DOWN, primeira vez): a "tecla solta" (ACTION_UP) do aperto

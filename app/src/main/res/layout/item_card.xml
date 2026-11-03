@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="150dp"
+    android:layout_width="@dimen/card_w"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
     android:background="@drawable/bg_card"
@@ -11,7 +11,7 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="130dp"
+        android:layout_height="@dimen/card_img_h"
         android:background="@drawable/bg_poster">
 
         <TextView
@@ -20,7 +20,7 @@
             android:layout_height="match_parent"
             android:gravity="center"
             android:textColor="#FF6B78"
-            android:textSize="36sp"
+            android:textSize="@dimen/card_initial_text"
             android:textStyle="bold" />
 
         <ImageView
@@ -41,7 +41,7 @@
         android:maxLines="2"
         android:minLines="2"
         android:textColor="#F7F3F4"
-        android:textSize="14sp"
+        android:textSize="@dimen/card_name_text"
         android:textStyle="bold" />
 
     <TextView

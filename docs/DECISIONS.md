@@ -17,3 +17,13 @@ Ao vivo: 10 a 30 s. Filme e episódio: 20 a 60 s com 20 s para trás. Vídeo at�
 
 ## D6. Funções do app web ainda não portadas
 Favoritos, várias listas, PIN do app, aviso de vencimento, canal do cliente, bloqueio de capturas e EPG por XMLTV ficaram de fora da primeira versão para manter o código igual ao do tvbox (já testado). Entram depois, uma por vez.
+
+## D7. Adaptação à tela por tamanhos em dimens.xml (por altura)
+Motivo: o app precisa caber em celular (paisagem) e TV sem esconder nada e sem mudar o visual. O app é só paisagem, então a altura é o menor lado; três faixas (menor que 400dp, 400 a 479dp, 480dp ou mais). A faixa grande guarda os valores originais, então a TV fica igual. Colunas das grades são calculadas no código (ScreenFit) porque o XML não limita o máximo. Sem dependência nova.
+
+## D8. Paisagem nos dois sentidos, retrato fora
+Motivo: sensorLandscape deixa girar o celular de cabeça para baixo sem perder o layout. Retrato pediria outro desenho (menu embaixo), o que mudaria a aparência. Fica como possível passo futuro, só se o dono pedir.
+
+## D9. apk.yml trocado pelo do app nativo
+Motivo: o apk.yml do repositório ainda era o do app web (Node, Capacitor, www/). Ele não compilava o código nativo. O novo segue docs/ARCHITECTURE.md (Gradle 8.9, Java 17, versão 10000+N, __REPO__ trocado em Updater.java, mesma assinatura e Release).
+

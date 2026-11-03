@@ -125,6 +125,8 @@ public class M3uSeriesActivity extends Activity {
         btnWatch = findViewById(R.id.btn_watch);
         btnSeason = findViewById(R.id.btn_season);
         gvEpisodes = findViewById(R.id.gv_episodes);
+        // Até 15 colunas; em tela estreita, menos (cada número precisa de uns 40dp)
+        ScreenFit.fitColumns(gvEpisodes, Math.round(40 * getResources().getDisplayMetrics().density), 15);
         statusBox = (View) tvStatus.getParent().getParent();
 
         // As listas antigas ficam escondidas (o layout ainda as tem)

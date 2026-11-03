@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="150dp"
+    android:layout_width="@dimen/poster_w"
     android:layout_height="match_parent"
     android:layout_margin="5dp"
     android:background="@drawable/bg_card_home"
@@ -71,6 +71,6 @@
         android:maxLines="2"
         android:minLines="2"
         android:textColor="#FFF7F3F4"
-        android:textSize="14sp"
+        android:textSize="@dimen/card_name_text"
         android:textStyle="bold" />
 </LinearLayout>

@@ -120,3 +120,18 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - Identidade visual: ícone, ícone adaptável, banner da TV, brand_icon.png e banner_bg.jpg vêm do repositório asc-play (assets/ e www/). Nome do app: "ASC play".
 - Não portado do ASC play web (ainda): favoritos, várias listas salvas, bloqueio do app por PIN, aviso de vencimento com notificação, "Canal do cliente", bloqueio de capturas de tela, EPG por link XMLTV (a programação do servidor Xtream, via player_api, funciona como no TV Box).
 - Velocidade (ASC play): SearchIndex.prebuildAsync monta os 3 índices de busca em segundo plano 6 s depois de abrir a Home (login por servidor); validade 6 h, teto 400000 itens/120 MB; a busca confere o nome antes de separar os campos. EpgCache: 200 canais, 5 min, 4 pedidos ao mesmo tempo. ImageLoader: cache 32 MB, imagens até 384 px, 4 downloads ao mesmo tempo. Abas: páginas de 60 itens pedidas a 24 do fim. http.maxConnections=16 (LoginActivity e HomeActivity).
+
+
+## Adaptação à tela (celular e TV)
+Os números de dp/sp escritos nas seções acima (menu 110dp, categorias 190dp, cartão 150dp, grade de 5 colunas, capa da série 160x240 etc.) valem para TV e telas grandes (altura 480dp ou mais). Em telas menores o app usa tamanhos menores, escolhidos sozinhos pelo Android. O visual (cores, formas, ícones, textos, ordem dos botões) é o mesmo.
+- Tamanhos: res/values/dimens.xml (altura menor que 400dp: celular), res/values-h400dp/dimens.xml (400dp a 479dp) e res/values-h480dp/dimens.xml (TV: são os valores ORIGINAIS). O app é só paisagem, então altura = menor lado da tela. TODO nome novo precisa existir nos três arquivos.
+- Menu: layout_nav.xml (e a cópia em activity_home.xml) agora é ScrollView > LinearLayout. Largura, altura dos botões, margens e letra vêm do dimens (nav_*). Os ícones ic_nav_*.xml usam @dimen/nav_icon. Se a tela for baixa demais, o menu rola (nada some). Foco e ids iguais.
+- ScreenFit.java (novo): fitColumns(grade, larguraDaColuna, máximo) escolhe quantas colunas cabem (abas e busca: até 5; episódios da série: até 15, mínimo 40dp cada) e refaz a conta se a janela mudar; limitWidth() limita a caixa do login (id login_box) a 560dp ou à largura da tela; heightDp/widthDp servem aos diálogos.
+- Cartões: item_card.xml e item_home_poster.xml/item_home_channel.xml usam card_w, card_img_h, poster_w, channel_w. A coluna da grade (grid_col_w) = card_w + 8dp.
+- Página da série: capa, botões, textos e linhas da sinopse (integer series_plot_lines) mudam com a altura. Página do filme: idem, e a sinopse tem altura mínima de 56dp.
+- Teclado de busca e teclado do PIN: teclas encolhem em tela estreita ou baixa (keyScale/keyHeightDp). EpgDialog: conteúdo dentro de ScrollView e margens menores em tela baixa.
+- MainActivity (player): tela cheia imersiva (onWindowFocusChanged/hideSystemBars); na TV não muda nada.
+- AndroidManifest.xml: screenOrientation = sensorLandscape (paisagem nos dois sentidos). Retrato NÃO é suportado.
+- .github/workflows/apk.yml: agora é o workflow do app NATIVO (Gradle 8.9, Java 17, 2.0.N). O antigo (Capacitor/Node) não compila este código.
+- Ainda não compilado nem testado em aparelho: conferir no Actions e testar num celular e numa TV.
+

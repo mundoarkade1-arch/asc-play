@@ -49,6 +49,13 @@ public class LoginActivity extends Activity {
     private boolean busy = false;
 
     @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Janela redimensionada: refaz a largura da caixa do login
+        ScreenFit.limitWidth(findViewById(R.id.login_box), 560, 16);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -63,6 +70,8 @@ public class LoginActivity extends Activity {
         }
 
         setContentView(R.layout.activity_login);
+        // A caixa do login tem até 560dp, mas nunca passa da largura da tela
+        ScreenFit.limitWidth(findViewById(R.id.login_box), 560, 16);
 
         btnXtream = findViewById(R.id.btn_mode_xtream);
         btnM3u = findViewById(R.id.btn_mode_m3u);

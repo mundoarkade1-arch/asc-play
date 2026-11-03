@@ -116,6 +116,7 @@ public final class SearchKeyboard {
                 if (label.length() > 1) {
                     width = "Espaço".equals(label) ? 300 : 120;
                 }
+                width = Math.max(24, Math.round(width * keyScale()));
                 Button key = makeKey(label, width);
                 key.setOnClickListener(v -> onKey(label));
                 final String options = accentsFor(label);
@@ -214,7 +215,7 @@ public final class SearchKeyboard {
         b.setMinimumWidth(0);
         b.setMinimumHeight(0);
         b.setFocusable(true);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(widthDp), dp(44));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(widthDp), dp(keyHeightDp()));
         lp.setMargins(dp(3), dp(3), dp(3), dp(3));
         b.setLayoutParams(lp);
         return b;
@@ -280,6 +281,18 @@ public final class SearchKeyboard {
         lp.gravity = Gravity.CENTER_HORIZONTAL;
         lp.setMargins(0, dp(2), 0, dp(2));
         return lp;
+    }
+
+    /** Fator de largura das teclas: 1 na TV; menor em tela estreita (a fileira tem uns 700dp). */
+    private float keyScale() {
+        float scale = (ScreenFit.widthDp(activity) - 56f) / 700f;
+        return Math.max(0.4f, Math.min(1f, scale));
+    }
+
+    /** Altura das teclas: 44dp na TV; menor em tela baixa, para o teclado caber inteiro. */
+    private int keyHeightDp() {
+        int h = Math.round((ScreenFit.heightDp(activity) - 140f) / 5f) - 6;
+        return Math.max(30, Math.min(44, h));
     }
 
     private int dp(int v) {
