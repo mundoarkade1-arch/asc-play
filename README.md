@@ -6,7 +6,7 @@ Para entender o projeto, comece por `AGENTS.md` e `docs/STATUS.md`.
 
 ## Como gerar o APK
 
-**Actions → Gerar APK → Run workflow** para iniciar manualmente. O workflow também compila automaticamente alterações em `app/`, `build.gradle`, `settings.gradle`, `gradle.properties` ou no próprio workflow, nas branches `main` e `master`. O APK fica como artefato da execução; na branch `main`, com os Secrets de assinatura configurados, também é publicado em Releases.
+**Actions → Gerar APK → Run workflow** para iniciar manualmente. O workflow também compila automaticamente a cada push para as branches `main` e `master`. O APK fica como artefato da execução; na branch `main`, com os Secrets de assinatura configurados, também é publicado em Releases.
 
 ### Secrets de assinatura (Settings → Secrets and variables → Actions)
 
