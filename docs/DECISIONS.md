@@ -27,3 +27,12 @@ Motivo: sensorLandscape deixa girar o celular de cabeça para baixo sem perder o
 ## D9. apk.yml trocado pelo do app nativo
 Motivo: o apk.yml do repositório ainda era o do app web (Node, Capacitor, www/). Ele não compilava o código nativo. O novo segue docs/ARCHITECTURE.md (Gradle 8.9, Java 17, versão 10000+N, __REPO__ trocado em Updater.java, mesma assinatura e Release).
 
+
+## D10. Correção de velocidade e travadas (canal, filme e série)
+Problema: canal ao vivo demorava muito para abrir e travava; filmes e séries também.
+Causas achadas: (1) no app web (www/app.js) o vigia reiniciava o canal depois de 8 s (ao vivo) ou 4 s parado, e alternava entre hls.js, leitor nativo e .ts sem dar tempo de nenhum abrir; o leitor .ts (mpegts.js) cortava a reserva de vídeo para 1,5 s; filme e série eram recarregados do zero depois de 6 s parados; (2) no app nativo, o SearchIndex.prebuildAsync baixava a lista inteira de canais, filmes e séries em segundo plano e disputava internet e processador com o vídeo; a reserva de 60 s em filme 4K podia encher a memória.
+Decisões:
+- Canal ao vivo do servidor: tenta .ts primeiro (abre em poucos segundos) e cai para .m3u8 se falhar; o formato que funcionou por último é lembrado (web: localStorage asc_pfh; nativo: SharedPreferences asc_player/live_ts).
+- Vigia do web mais paciente: ao vivo abrindo 10 s (.ts) ou 18 s (.m3u8), ao vivo tocando 12 s, filme abrindo 40 s, filme tocando 25 s. Ao vivo que não abre passa para o outro formato.
+- Web: reserva do hls.js ao vivo de 30 a 60 s; mpegts.js sem cortar a reserva (máx. 16 s, sobra 6 s); no .ts, se a reserva cai abaixo de 1,5 s toca a 0,93x até juntar 4 s; hls.js e mpegts.js carregam em segundo plano 5 s depois de abrir o app; filme e série em arquivo tocam direto.
+- Nativo: SearchIndex.prebuildAsync DESLIGADO (o índice só é montado na primeira pesquisa). Não religar. Reserva limitada em bytes pela memória do aparelho; depois de travar espera 5 s (ao vivo) ou 6 s (filme); aparelho fraco (memória de app até 128 MB ou RAM abaixo de 1,6 GB) limita o vídeo a 1080p; erro 4xx no .ts vai direto para o .m3u8; a fila de troca de canal só começa depois que o canal abre (ou 8 s depois).
