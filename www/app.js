@@ -318,9 +318,9 @@ function ui(){P.classList.remove('h');clearTimeout(ht);ht=setTimeout(()=>!V.paus
 function epgBar(){const E=$('#epg'),lv=live(),x=lv?epgOf(cur):null;$('#pe').textContent=cur.g||'';E.hidden=!lv;if(!lv)return;
  E.innerHTML=x?`<div class="n">Agora: ${esc(x.p.t)} <span style="font-weight:400">• ${hm(x.p.s)}–${hm(x.p.e)}</span></div><div class="bar"><i style="width:${Math.min(100,Math.max(0,(Date.now()-x.p.s)/(x.p.e-x.p.s)*100))}%"></i></div>`+(x.nx?`<div class="x">A seguir: ${esc(x.nx.t)} • ${hm(x.nx.s)}</div>`:''):'<div class="x">Programação indisponível</div>'}
 function saveP(done){if(!cur||live())return;const d=V.duration||0,t=V.currentTime;if(!isFinite(d)||!d)return;const p=ST.pos,o=p[cur.u];p[cur.u]={t,d,done:!!(done||t/d>=.92||(o&&typeof o=='object'&&o.done)),at:Date.now()};saveState()}
-/* Buffer sob medida: abre rápido (começa no 1º trecho) e guarda ~20-30s à frente para não travar */
+/* Buffer sob medida (v2): abre rápido (começa no 1º trecho) e guarda ~30-60s à frente no ao vivo para não travar */
 const HC=lv=>({xhrSetup:(x,u)=>{x.open('GET',PX(u),true)},enableWorker:true,lowLatencyMode:false,startFragPrefetch:true,capLevelToPlayerSize:true,testBandwidth:false,progressive:false,
- maxBufferLength:lv?15:30,maxMaxBufferLength:lv?30:60,maxBufferSize:lv?30e6:60e6,backBufferLength:lv?5:20,
+ maxBufferLength:30,maxMaxBufferLength:60,maxBufferSize:lv?50e6:60e6,backBufferLength:lv?10:20,
  liveSyncDurationCount:lv?3:3,liveMaxLatencyDurationCount:lv?10:Infinity,maxBufferHole:.6,nudgeMaxRetry:8,
  manifestLoadingTimeOut:10000,manifestLoadingMaxRetry:2,manifestLoadingRetryDelay:300,
  levelLoadingTimeOut:8000,levelLoadingMaxRetry:4,levelLoadingRetryDelay:500,
@@ -332,18 +332,21 @@ let mp=null,MLP;const TSU=/\.ts(\?|$)/i,mpOff=()=>{if(mp){try{mp.destroy()}catch
 ML=()=>window.mpegts?Promise.resolve():(MLP=MLP||new Promise(r=>{const s=document.createElement('script');s.src='mpegts.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
+setTimeout(()=>{try{ML();HL()}catch{}},5000);
 /* Canais Xtream: o mesmo canal pode existir como .m3u8 e/ou .ts. Guardamos as variantes e passamos para a próxima se o servidor responder 404/403 */
 const XL=/^(https?:\/\/[^/]+\/(?:live\/)?[^/]+\/[^/]+\/\d+)(\.m3u8|\.ts)?(\?.*)?$/i;
-let CAND=[],ci=0,PREFX=0;
-const cands=u=>{const m=u.match(XL);if(!m)return[u];const b=m[1],q=m[3]||'',a=[b+'.m3u8'+q,b+'.ts'+q];return PREFX?a.reverse():a};
+let CAND=[],ci=0,PREFH=0;try{PREFH=+LS.asc_pfh||0}catch{}
+const cands=u=>{const m=u.match(XL);if(!m)return[u];const b=m[1],q=m[3]||'',a=[b+'.ts'+q,b+'.m3u8'+q];return PREFH?a.reverse():a};
 const nextCand=()=>{if(ci+1>=CAND.length)return false;ci++;spin(true);src(cur.u,0,1,false);return true};
-function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;UP=false;viaNat=!!forceNat;
- const nativ=()=>{viaNat=true;V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
- if(hls&&!fresh&&!forceNat&&hlsLv&&live()&&!(at>0)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
+function src(u,at,fresh,forceNat){const g=++gen;if(live())u=CAND[ci]||u;UP=false;viaNat=!!forceNat;try{V.playbackRate=1}catch{}
+ const nativ=()=>{viaNat=true;try{V.preload='auto'}catch{}V.src=u;if(at>0)V.addEventListener('loadedmetadata',()=>{try{V.currentTime=at}catch{}},{once:true});V.play().catch(()=>{})};
+ if(hls&&!fresh&&!forceNat&&hlsLv&&live()&&!(at>0)&&!TSU.test(u)){try{hls.stopLoad();hls.loadSource(u);hls.startLoad(-1);return}catch{}}
  if(hls){hls.destroy();hls=null}mpOff();
+ /* Filme e série em arquivo (mp4, mkv...): toca direto, sem esperar o hls.js carregar */
+ if(!live()&&/\.(mp4|mkv|avi|mov|m4v|webm)(\?|$)/i.test(u)){nativ();return}
  /* Canal .ts (fluxo MPEG-TS puro): o Android não toca direto, então usamos o leitor mpegts.js */
  if(live()&&TSU.test(u)){viaNat=true;ML().then(()=>{if(g!=gen)return;
-   if(window.mpegts&&mpegts.isSupported()){const p=mp=mpegts.createPlayer({type:'mpegts',isLive:true,url:/^https?:\/\//i.test(u)&&nat()?location.origin+PX(u):u},{enableWorker:false,liveBufferLatencyChasing:true,liveBufferLatencyMaxLatency:6,liveBufferLatencyMinRemain:1.5,autoCleanupSourceBuffer:true});
+   if(window.mpegts&&mpegts.isSupported()){const p=mp=mpegts.createPlayer({type:'mpegts',isLive:true,url:/^https?:\/\//i.test(u)&&nat()?location.origin+PX(u):u},{enableWorker:false,stashInitialSize:128*1024,liveBufferLatencyChasing:true,liveBufferLatencyMaxLatency:16,liveBufferLatencyMinRemain:6,autoCleanupSourceBuffer:true,autoCleanupMaxBackwardDuration:30,autoCleanupMinBackwardDuration:15});
     p.attachMediaElement(V);p.on(mpegts.Events.ERROR,(t,d,i)=>{if(p!=mp)return;const cd=i&&i.code;if(!started&&[401,403,404,410].includes(cd)&&nextCand())return;dbg('Canal .ts: '+d+(cd?' (HTTP '+cd+')':'')+(i&&i.msg?' '+String(i.msg).slice(0,70):''));setTimeout(()=>{if(p==mp&&!P.hidden&&cur)recover()},800)});
     p.load();Promise.resolve(p.play()).catch(()=>{})}
    else dbg('Este canal só existe em .ts e o leitor não carregou.')});return}
@@ -368,13 +371,18 @@ function tick(){if(P.hidden||!cur)return;if(UP&&V.paused)return;
  if(V.paused)V.play().catch(()=>{});
  const t=V.currentTime,adv=Math.abs(t-lastT)>.25;lastT=t;
  if(V.seeking||dr){stuck=0;return}
- if(adv&&V.readyState>=2){started=true;if(live()&&CAND.length>1)PREFX=/\.ts(\?|$)/i.test(CAND[ci]||'')?1:0;stuck=0;rc=0;spin(false);return}
+ if(adv&&V.readyState>=2){started=true;if(live()&&CAND.length>1){const pf=/\.m3u8(\?|$)/i.test(CAND[ci]||'')?1:0;if(pf!=PREFH){PREFH=pf;try{LS.asc_pfh=pf}catch{}}}stuck=0;rc=0;spin(false);cushion(t);return}
  stuck++;if(stuck>=2)spin(true);
  for(let i=0;i<V.buffered.length;i++){const s=V.buffered.start(i);if(s>t&&s-t<3){try{V.currentTime=s+.05}catch{}break}}
- if(live()&&!started&&stuck==15)toast('Este canal está demorando para abrir…');
- if(stuck>=(started?(live()?4:6):(live()?8:12)))recover()}
+ if(live()&&!started&&stuck==12)toast('Este canal está demorando para abrir…');
+ if(stuck>=lim())recover()}
+/* Quanto o vigia espera parado antes de tentar de novo: ao vivo abrindo (.ts 10 s, .m3u8 18 s), ao vivo tocando 12 s, filme abrindo 40 s, filme tocando 25 s */
+const lim=()=>live()?(started?12:(/\.m3u8(\?|$)/i.test(CAND[ci]||'')?18:10)):(started?25:40);
+/* Canal .ts: se a reserva de vídeo está baixa, toca um pouquinho mais devagar até juntar uns 4 s de folga */
+function cushion(t){if(!live()||!mp||V.paused)return;let a=0;for(let i=0;i<V.buffered.length;i++)if(V.buffered.start(i)<=t+.2&&V.buffered.end(i)>t)a=V.buffered.end(i)-t;
+ try{if(a<1.5&&V.playbackRate==1)V.playbackRate=.93;else if(a>=4&&V.playbackRate<1)V.playbackRate=1}catch{}}
 function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
- if(live()&&!started){spin(true);if(viaNat&&CAND.length>1)ci=(ci+1)%CAND.length;src(cur.u,0,1,!viaNat);return}
+ if(live()&&!started){spin(true);if(CAND.length>1){ci=(ci+1)%CAND.length;src(cur.u,0,1,false)}else src(cur.u,0,1,!viaNat);return}
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
  if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
