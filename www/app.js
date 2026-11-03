@@ -582,7 +582,7 @@ $('#pa').onclick=()=>{const t=$('#ta');if(t.hidden){t.hidden=false;t.focus();$('
  try{await loadVault();await migrate()}catch(e){console.warn(e)}
  syncScr();
  if(PIN.on)await unlockLoop();
- if(!S.dev)show('setup');else{setDev(S.dev);await boot()}
+ if(!S.dev){ori('auto');show('setup')}else{setDev(S.dev);await boot()}
  setTimeout(()=>{try{HL()}catch{}},1500);setTimeout(()=>checkUpd(),4000)
 }catch(e){bootErr((e&&e.message)||e)}})();
 addEventListener('error',e=>{const t=e.target;if(t&&t.tagName=='IMG')t.remove()},true);
