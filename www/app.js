@@ -192,6 +192,7 @@ MN.addEventListener('pointerout',()=>tip.hidden=true);MN.addEventListener('focus
 /* ---------- Sheets ---------- */
 const sh=h=>{$('#sh').onclick=null;$('#sh').innerHTML=h;$('#sheet').hidden=false;const f=$('#sh button');f&&f.focus()};
 $('#sheet').onclick=e=>{if(e.target.id=='sheet')$('#sheet').hidden=true};
+$('#sh').addEventListener('click',e=>{const b=e.target.closest('button[data-dev]');if(!b)return;const d=b.dataset.dev;if(d!='ph'&&d!='tv')return;setDev(d);$('#sheet').hidden=true;if(S.items.length){show('app');nav();render()}else boot()});
 const fav=u=>{const i=S.fav.indexOf(u);i<0?S.fav.push(u):S.fav.splice(i,1);saveState();return i<0};
 const xapi=()=>{try{const b=new URL(CL().u||''),u=b.searchParams.get('username'),p=b.searchParams.get('password');if(u&&p)return`${b.origin}/player_api.php?username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`}catch{}};
 let XS;const gs=()=>XS=XS||tf(xapi()+'&action=get_series',6e4).then(r=>r.json()).then(l=>{const m=new Map();for(const x of l)m.set(nz(title(x.name||'')),x);return m}).catch(e=>{XS=null;throw e});
@@ -273,7 +274,6 @@ $('#cfg').onclick=()=>{const e=expAt(),d=e?daysTo(e):0,
  ver().then(v=>{const x=$('#a13 small');if(x)x.textContent=v?v.name:'—'});
  $('#a13').onclick=async()=>{const v=await ver();toast(v?'ASC play '+v.name+' (código '+v.code+')':'A versão aparece no app instalado (APK).',1)};
  $('#a2').onclick=()=>sh('<b>Escolher dispositivo</b><button class="btn'+(S.dev=='ph'?' p':'')+'" data-dev="ph"><svg class="i"><use href="#phone"/></svg>Smartphone</button><button class="btn'+(S.dev=='tv'?' p':'')+'" data-dev="tv"><svg class="i"><use href="#tv"/></svg>Smart TV / TV Box</button>');
- $('#sh').onclick=e=>{const b=e.target.closest('[data-dev]');if(!b)return;setDev(b.dataset.dev);$('#sheet').hidden=true;if(S.items.length){show('app');nav();render()}else boot()};
  $('#a5').onclick=pickCC;
  $('#a10').onclick=()=>{LS.asc_sc=LS.asc_sc=='1'?'0':'1';lastSc='';syncScr();$('#sheet').hidden=true;toast(LS.asc_sc=='1'?'Capturas bloqueadas nas telas de login e listas.':'Capturas liberadas.',1)}};
 
