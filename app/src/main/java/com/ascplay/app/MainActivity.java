@@ -27,6 +27,7 @@ import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -113,7 +114,7 @@ public class MainActivity extends Activity {
     /** Texto de cada episódio da fila, ex.: "Temporada 2 - Episódio 5" (mesma ordem da fila). Opcional. */
     public static final String EXTRA_LIST_LABELS = "list_labels";
 
-    private static final String USER_AGENT = "ASC-Play/1.0 (Android)";
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     private static final int TIMEOUT_MS = 15000;
     private static final long NOWBAR_HIDE_MS = 6000L;
     private static final long LABEL_HIDE_MS = 5000L;
@@ -164,6 +165,8 @@ public class MainActivity extends Activity {
     private boolean triedTs = false;
     // Canal ao vivo cujo endereço não tem ".m3u8": se o player não reconhecer o formato, tenta como HLS
     private boolean triedHlsMime = false;
+    // Resultado de cada formato tentado no canal ao vivo (só o código HTTP, nunca o endereço)
+    private String failLog = "";
     private String forceMime = null;
     // Tentativas de reconectar depois de uma queda de internet (zera quando o vídeo volta a tocar)
     private int errorRetries = 0;
@@ -817,6 +820,7 @@ public class MainActivity extends Activity {
         triedHlsMime = false;
         forceMime = null;
         errorRetries = 0;
+        failLog = "";
         playCurrent();
         if (m3u) {
             // Lista M3U não tem guia: mostra só o nome do canal
@@ -1014,11 +1018,32 @@ public class MainActivity extends Activity {
 
             @Override
             public void onPlayerError(PlaybackException error) {
+                int httpCode = -1;
+                Throwable cause = error.getCause();
+                if (cause instanceof HttpDataSource.InvalidResponseCodeException) {
+                    httpCode = ((HttpDataSource.InvalidResponseCodeException) cause).responseCode;
+                }
+                String shortErr = httpCode > 0 ? "HTTP " + httpCode : error.getErrorCodeName();
+                String fmtName = streamUrl != null && streamUrl.endsWith(".m3u8") ? ".m3u8"
+                        : streamUrl != null && streamUrl.endsWith(".ts") ? ".ts" : "canal";
+                // Servidor ocupado (502/503/504/429): tenta de novo antes de desistir
+                boolean busy = httpCode == 502 || httpCode == 503 || httpCode == 504
+                        || httpCode == 429;
+                if (busy && errorRetries < MAX_ERROR_RETRIES && player != null) {
+                    errorRetries++;
+                    showStatus("Servidor ocupado (" + httpCode + "). Tentando de novo ("
+                            + errorRetries + "/" + MAX_ERROR_RETRIES + ")...");
+                    handler.removeCallbacks(retryPlay);
+                    handler.postDelayed(retryPlay, 1500L * errorRetries);
+                    return;
+                }
                 // Canal ao vivo do servidor: se não entregou HLS (.m3u8), tenta uma vez o .ts.
                 // (Na lista M3U o endereço é o que veio na lista: não mexemos nele.)
                 if (item != null && item.kind == XtreamApi.Kind.LIVE && item.url.isEmpty()
                         && !triedTs && streamUrl != null && streamUrl.endsWith(".m3u8")) {
                     triedTs = true;
+                    failLog = fmtName + ": " + shortErr;
+                    errorRetries = 0;
                     streamUrl = streamUrl.substring(0, streamUrl.length() - ".m3u8".length()) + ".ts";
                     playCurrent();
                     return;
@@ -1052,7 +1077,8 @@ public class MainActivity extends Activity {
                     return;
                 }
                 // Não mostra a mensagem completa: ela pode conter o endereço com a senha.
-                showStatus("Não foi possível tocar (" + error.getErrorCodeName() + ").");
+                String detail = (failLog.isEmpty() ? "" : failLog + "\n") + fmtName + ": " + shortErr;
+                showStatus("Não foi possível tocar.\n" + detail);
             }
         });
 

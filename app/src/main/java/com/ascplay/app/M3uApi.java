@@ -81,7 +81,7 @@ public final class M3uApi {
     private static final int MAX_NAME = 200;
     private static final int MAX_CATEGORIES = 3000;
     private static final int MAX_EPISODES = 500;
-    private static final String USER_AGENT = "ASC-Play/1.0 (Android)";
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     private static final Pattern ATTR = Pattern.compile("([\\w-]+)=\"([^\"]*)\"");
     private static final Pattern EP = Pattern.compile(

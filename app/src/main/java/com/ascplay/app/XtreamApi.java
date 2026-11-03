@@ -182,7 +182,7 @@ public final class XtreamApi {
     private static final int MAX_EPISODES = 500;
     private static final int MAX_PLOT = 1200;
     private static final int MAX_META_PART = 60;
-    private static final String USER_AGENT = "ASC-Play/1.0 (Android)";
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     // M11: regra preparada uma vez só (antes era recriada a cada item na busca).
     private static final Pattern MARKS = Pattern.compile("\\p{M}+");

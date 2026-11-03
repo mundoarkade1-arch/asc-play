@@ -25,7 +25,7 @@ public final class LoginChecker {
     private static final int MAX_REDIRECTS = 5;
     private static final int MAX_JSON_BYTES = 256 * 1024;
     private static final int MAX_M3U_PEEK_BYTES = 4096;
-    private static final String USER_AGENT = "ASC-Play/1.0 (Android)";
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     /** O servidor recusou o login (o Android às vezes devolve isso como erro de IO). */
     private static final class AuthRefusedException extends IOException {

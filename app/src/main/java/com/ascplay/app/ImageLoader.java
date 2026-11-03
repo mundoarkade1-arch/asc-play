@@ -37,7 +37,7 @@ public final class ImageLoader {
     private static final int TIMEOUT_MS = 8000;
     private static final int MAX_REDIRECTS = 4;
     private static final int MAX_FAILED = 500;
-    private static final String USER_AGENT = "ASC-Play/1.0 (Android)";
+    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final ExecutorService POOL = Executors.newFixedThreadPool(2);
