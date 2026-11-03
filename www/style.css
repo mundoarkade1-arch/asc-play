@@ -76,7 +76,7 @@ header input{display:block;flex:none;min-width:0;width:100%;border-radius:99px;p
 .chip{flex:none;border:1px solid var(--ln);background:rgba(255,255,255,.06);border-radius:99px;padding:.4em 1em;cursor:pointer;white-space:nowrap}
 main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.6em 1em 6.4em;overscroll-behavior:contain;scrollbar-width:none}
 main::-webkit-scrollbar{display:none}
-#grid{display:grid;gap:.9em;grid-template-columns:repeat(auto-fill,minmax(9.5em,1fr))}
+#grid{display:grid;gap:.9em;grid-template-columns:repeat(auto-fill,minmax(11em,1fr))}
 .continue-action{grid-column:1/-1;justify-self:start}
 .card{background:var(--c);border-radius:var(--rad);border:1px solid rgba(255,255,255,.06);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;contain:content;box-shadow:0 8px 22px rgba(0,0,0,.4);transition:transform .16s ease,box-shadow .16s ease}
 .card:active{transform:scale(.96)}
@@ -94,7 +94,7 @@ nav button{background:none;border:0;display:flex;flex-direction:column;align-ite
 nav .on{color:#fff}nav .on svg{opacity:1}
 body.tv #app{padding-left:6.8em}body.tv nav button{flex:none;padding:.5em .9em}
 body.tv nav{top:0;bottom:0;left:0;right:auto;width:6.5em;flex-direction:column;justify-content:center;gap:.5em;border:0;border-right:1px solid var(--ln);border-radius:0;padding:1em .4em;-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(14,10,12,.97);box-shadow:none}
-body.tv header{padding-top:1em}body.tv #grid{grid-template-columns:repeat(auto-fill,minmax(11em,1fr));gap:1.2em}
+body.tv header{padding-top:1em}body.tv #grid{grid-template-columns:repeat(auto-fill,minmax(12.5em,1fr));gap:1.2em}
 body.tv main{padding-bottom:2em}
 body.tv .card:focus{transform:scale(1.05);z-index:2}
 #tip{position:fixed;z-index:20;width:19em;background:rgba(18,12,14,.96);border:1px solid var(--ln);border-radius:16px;padding:.8em;box-shadow:0 14px 34px rgba(0,0,0,.65);pointer-events:none;font-size:.85em}
@@ -143,11 +143,11 @@ body.tv main.hm{padding-bottom:1em}
 .sub small{color:var(--m);font-size:.7em;padding:0 .3em}
 .sx{display:flex;align-items:center;justify-content:space-between;gap:.6em;padding:0 .2em .25em}.sx h2{font-size:1.02em;font-weight:800;letter-spacing:-.01em}
 .sx .chip{padding:.15em .8em;font-size:.8em}
-.rail{flex:0 1 min(9.5em,20dvh);min-height:4.5em;display:flex;align-items:stretch;gap:.7em;overflow-x:auto;overflow-y:hidden;margin:0 -1em;padding:.1em 1em .25em;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding:0 1em}
+.rail{flex:0 1 min(12em,26dvh);min-height:6.5em;display:flex;align-items:stretch;gap:.7em;overflow-x:auto;overflow-y:hidden;margin:0 -1em;padding:.1em 1em .25em;scrollbar-width:none;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scroll-padding:0 1em}
 .rail::-webkit-scrollbar{display:none}
 .rail .card{flex:none;aspect-ratio:.62;scroll-snap-align:start}.rail .card.tv{aspect-ratio:1.35}
 .rail .card .im{flex:1;min-height:0;aspect-ratio:auto}
-.rail .card b{font-size:.75em;padding:.3em .5em .15em;display:block;flex:none;white-space:nowrap;text-overflow:ellipsis}
+.rail .card b{font-size:.8em;padding:.3em .5em .15em;display:block;flex:none;white-space:nowrap;text-overflow:ellipsis}
 .rail .card:not(.tv) b{padding-bottom:.4em}
 .rail .card .now{padding:0 .5em .3em;min-height:0}
 .rail .card.vm{background:linear-gradient(160deg,#3b0b11,#161214);align-items:center;justify-content:center;gap:.3em;font-weight:700;font-size:.8em;text-align:center;border:1px dashed rgba(255,255,255,.25)}
