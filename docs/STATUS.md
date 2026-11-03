@@ -1,23 +1,24 @@
 # Status do projeto
 
-Última atualização: 03/11/2026 (adaptação à tela feita; ainda NÃO compilada nem testada)
-Regras de trabalho: AGENTS.md. Mapa e limites: docs/ARQUIVOS.md. Montagem e versão: docs/ARCHITECTURE.md. Decisões: docs/DECISIONS.md.
+Última atualização: 03/11/2026 (interface híbrida restaurada; preparação do Android passou, APK ainda não compilado)
+Regras: `AGENTS.md`. Arquitetura: `docs/ARCHITECTURE.md`. Decisões: `docs/DECISIONS.md`.
 
 ## Fase atual
-Migração do ASC play (web/Capacitor) para nativo, usando o código do asc-tvbox como base. Agora também adaptado a celular (paisagem) e TV.
+Retomada do app híbrido Android com Capacitor. O mesmo APK oferece modo Smartphone vertical e modo Smart TV/TV Box horizontal.
 
 ## Feito
-- Código do asc-tvbox copiado, pacote com.ascplay.app, nome "ASC play", ícones e banners do asc-play.
-- Player Media3 1.8.0 (+DASH), buffer por tipo, decoder fallback, 4K limitado à tela, reconexão automática.
-- TrackDialog: áudio e legendas pela tecla de menu em filme e episódio.
-- Adaptação à tela (D7): tamanhos por altura em values*/dimens.xml, menu que rola, colunas calculadas (ScreenFit), teclados e janela da programação adaptados, player em tela cheia, paisagem nos dois sentidos.
-- apk.yml trocado pelo do app nativo (D9).
+- Restaurados os arquivos web, configuração Capacitor, dependências, plugins e recursos necessários para gerar o APK híbrido.
+- A tela inicial pergunta o dispositivo; a preferência é salva e pode ser trocada em Ajustes.
+- No Smartphone, a busca fica em cima e a navegação embaixo; no modo TV, a interface muda para uso horizontal com controle remoto.
+- A lista de episódios é exibida em grupos de 50, permitindo percorrer 200 episódios em quatro grupos ou mais quando existirem.
+- O workflow foi ligado novamente ao build Capacitor e dispara em qualquer push para `main`/`master`.
+- A preparação Android e a sincronização do Capacitor passaram localmente. A compilação local não passou porque o ambiente usa Java 25 e não tem Android SDK; o workflow configura Java 17.
+- O código Android nativo anterior foi mantido no repositório, sem ser removido.
 
 ## Falta
-- Rodar o Actions e corrigir erro de compilação, se houver (nada foi compilado ainda).
-- Testar numa TV e num celular em paisagem: menu inteiro visível, grades sem cartões sobrepostos, página da série e do filme inteiras, teclado de busca, login.
-- Apagar do repositório as pastas e arquivos do app web antigo (www, android-custom, scripts, assets, capacitor.config.json, package.json, package-lock.json, app_full.js), como diz o README.
-- Opcional, só se o dono pedir: modo retrato, favoritos, várias listas, PIN do app, aviso de vencimento, EPG por XMLTV, R8 (minificação) para APK menor.
+- Enviar estas alterações ao GitHub e confirmar que o Actions compila o APK.
+- Instalar e testar em smartphone retrato e TV/TV Box: seleção inicial, busca, categorias, navegação, troca em Ajustes e séries longas.
+- Corrigir qualquer erro que apareça no Actions ou nos testes nos aparelhos.
 
-## Perguntas abertas
-- Confirmar que os Secrets de assinatura do repositório asc-play são os mesmos do app antigo (senão o Android pede para desinstalar o antigo).
+## Observação
+As alterações ainda precisam de build e teste em aparelhos reais. O código nativo anterior não é a base do workflow atual.

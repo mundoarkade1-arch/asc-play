@@ -1,6 +1,17 @@
 # Mapa dos arquivos e limites conhecidos
 
-> Este mapa nasceu no asc-tvbox (app nativo para TV boxes antigos) e vale para o ASC play nativo, que usa o mesmo código-base. Onde o texto fala do "TX9" ou de "Android 7.1", leia como "aparelho de teste do TV Box"; o ASC play mira TVs mais novas (ver docs/TARGET_DEVICES.md). Diferenças do ASC play: ver o fim deste arquivo, seção "Só no ASC play".
+> A descrição detalhada de telas e classes nativas abaixo é uma referência do app nativo que existiu neste repositório; esses arquivos foram mantidos, mas não são usados pelo workflow atual. O app ativo é híbrido: `www/` com Capacitor e plugins em `android-custom/`. O mapa das telas nativas foi preservado para não perder informações do trabalho anterior.
+
+## Arquivos ativos do app híbrido
+
+- `www/index.html`, `www/style.css`, `www/app.js`: seleção inicial do dispositivo, interface, listas e reprodução.
+- `www/recovery.js`: recuperação de erros locais.
+- `android-custom/`: integração Capacitor com orientação, tela imersiva, cofre seguro, proxy e atualização.
+- `scripts/setup.sh`: prepara o Android gerado pelo Capacitor, ícones, banner, permissões e segurança.
+- `capacitor.config.json`, `package.json`, `package-lock.json`: configuração e dependências.
+- `.github/workflows/apk.yml`: instala, valida e compila o APK híbrido em qualquer push para `main` ou `master`.
+
+No modo Smartphone, a interface é vertical, com busca no alto e navegação embaixo. No modo Smart TV/TV Box, a interface é horizontal e usa o controle remoto. A escolha fica salva e pode ser trocada em Ajustes. Os episódios são paginados em grupos de 50, sem limite fixo de 200.
 
 Muda pouco. O andamento fica em docs/STATUS.md. Montagem e versão: docs/ARCHITECTURE.md.
 Java: app/src/main/java/com/ascplay/app/. Layouts: app/src/main/res/layout/. Ícones e fundos: app/src/main/res/drawable/ e app/src/main/res/mipmap-*/.
@@ -134,4 +145,3 @@ Os números de dp/sp escritos nas seções acima (menu 110dp, categorias 190dp, 
 - AndroidManifest.xml: screenOrientation = sensorLandscape (paisagem nos dois sentidos). Retrato NÃO é suportado.
 - .github/workflows/apk.yml: agora é o workflow do app NATIVO (Gradle 8.9, Java 17, 2.0.N). O antigo (Capacitor/Node) não compila este código.
 - Ainda não compilado nem testado em aparelho: conferir no Actions e testar num celular e numa TV.
-

@@ -9,7 +9,7 @@
 Só dá para abrir os arquivos .md por link, não os de código. O código dos agentes anteriores NÃO está na sua memória.
 
 ## O projeto
-ASC play: app de IPTV nativo (Java + Media3/ExoPlayer, sem WebView) para Android TV, TV boxes e Smart TVs mais novas. Ele nasceu do código do asc-tvbox (mesmo visual e mesmas telas: início, canais com guia, filmes, séries, continuar assistindo, busca, controle parental, ajustes) e substitui o ASC play antigo, que era uma página web dentro do Capacitor. O controle remoto tem setas, OK, voltar, home e uma tecla de três listras (chega como tecla de menu). Mesmo applicationId do app antigo (com.ascplay.app), então atualiza por cima se for assinado com a mesma chave.
+ASC play: aplicativo híbrido Android para smartphone, Android TV, Smart TVs e TV boxes. A interface principal está em `www/` e usa Capacitor; plugins Java em `android-custom/` fazem a integração com o aparelho. Na primeira abertura, a pessoa escolhe Smartphone (vertical, com navegação embaixo e busca no alto) ou Smart TV/TV Box (horizontal, para controle remoto). A escolha pode ser trocada em Ajustes. Há canais com guia, filmes, séries, continuar assistindo, busca, favoritos e controle parental. O controle remoto usa setas, OK, voltar, home e tecla de menu. O applicationId continua `com.ascplay.app`; atualizar por cima exige a mesma chave de assinatura.
 
 ## COMO FALAR COM O DONO (ele é MUITO LEIGO)
 - Português simples, frases curtas, uma ideia por frase. Palavra técnica só com explicação curta entre parênteses, na primeira vez.
@@ -27,7 +27,7 @@ ASC play: app de IPTV nativo (Java + Media3/ExoPlayer, sem WebView) para Android
 ## Links diretos
 - ver ou editar: https://github.com/mundoarkade1-arch/asc-play/edit/main/CAMINHO
 - criar: https://github.com/mundoarkade1-arch/asc-play/new/main/PASTA?filename=NOME
-- Java: app/src/main/java/com/ascplay/app/ ; layouts: app/src/main/res/layout/
+- Interface: www/index.html, www/style.css e www/app.js; integração Android: android-custom/
 - Mostrar um arquivo: abre o link, Ctrl+A, Ctrl+C, cola na conversa, sem Commit.
 - Salvar: Ctrl+A, Delete, colar o código completo, Commit changes e, na janelinha, Commit changes de novo.
 - Espere "feito" ou "verde" antes do próximo passo. Se ele não disser se o Actions ficou verde, pergunte.
@@ -38,6 +38,7 @@ ASC play: app de IPTV nativo (Java + Media3/ExoPlayer, sem WebView) para Android
 - Se uma colagem for cortada (erro "reached end of file while parsing"), peça só as últimas linhas e mande SÓ o pedaço que falta.
 - Código que deixa de usar algo primeiro, layout depois. Classe nova primeiro, registro no AndroidManifest.xml depois, botões por último.
 - Tela nova do servidor: crie tela irmã para a lista M3U.
+- Na interface híbrida, mantenha navegação por toque no Smartphone e por setas/OK/Voltar na TV. Preserve as duas orientações e a troca de dispositivo em Ajustes.
 - Não adicione dependências sem justificar em docs/DECISIONS.md. Não use nome de classe interna igual ao do Java (ex.: Entry).
 - App leve. Peça só o que está na tela, nunca guarde listas inteiras; leia a lista M3U aos poucos.
 - Tudo navegável só com setas, OK e Voltar (e modo mouse), com foco bem visível.

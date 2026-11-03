@@ -1,6 +1,7 @@
 # Aparelhos alvo
 
-- Alvo principal: Android TV / Google TV, Smart TVs com Android e TV boxes recentes (Android 7.0 ou mais novo, API 24+), em tela 1080p ou 4K, controle remoto com setas, OK, Voltar, Home e tecla de menu (três listras).
-- O app é só paisagem e navegável só com o controle (foco visível em tudo). Toque funciona, mas não é o foco.
-- O asc-tvbox continua sendo o app para aparelhos antigos (Android 5 a 7.1, pouca RAM). Esta versão já tem um buffer maior e aceita 4K, então não é feita para 1 GB de RAM.
-- Ainda não testado em nenhum aparelho. Primeiro teste: instalar, entrar com servidor ou M3U, abrir um canal, trocar de canal (cima/baixo), abrir a programação (tecla de menu), abrir um filme e apertar a tecla de menu para ver "Áudio e legendas".
+- Alvos: celulares Android com tela sensível ao toque e Android TV / Google TV, Smart TVs com Android e TV boxes.
+- Na primeira abertura, a pessoa escolhe Smartphone ou Smart TV/TV Box. O modo Smartphone usa retrato, busca no alto e navegação embaixo. O modo TV usa paisagem e é navegável com setas, OK, Voltar, Home e tecla de menu.
+- Ajustes permite trocar o modo depois da escolha inicial. A orientação muda junto com a interface.
+- Séries mostram os episódios em blocos de 50 por temporada, para listas com 200 episódios ou mais.
+- Ainda falta testar em aparelhos reais. Teste no celular: escolha Smartphone, procure uma categoria, abra uma série longa e confirme rolagem, busca e navegação inferior; em Ajustes, troque para TV. Teste na TV: escolha Smart TV/TV Box, navegue com o controle, abra um canal, guia, filme e episódios.

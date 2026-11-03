@@ -1,19 +1,26 @@
 # Arquitetura
 
-## Tecnologia
-- Android nativo em Java 17, sem WebView. Pacote/applicationId com.ascplay.app. minSdk 24, compileSdk 35, targetSdk 34. Sem minificação.
-- Dependências (app/build.gradle): androidx.media3 exoplayer, exoplayer-hls, exoplayer-dash e ui (versão 1.8.0) e androidx.core 1.15.0. Qualquer dependência nova precisa de justificativa em docs/DECISIONS.md.
-- Telas em Activities, listas em ListView/GridView, imagens pelo ImageLoader próprio, rede com HttpURLConnection.
+## Tecnologia ativa
+
+- App híbrido Android com Capacitor 6. A interface e as funções ficam em `www/`; o Android hospeda essa interface em uma WebView.
+- `android-custom/` contém os plugins Java usados pela interface para orientação, tela imersiva, armazenamento seguro, proxy de rede e atualização.
+- `package.json` e `package-lock.json` fixam as dependências. `capacitor.config.json` define `com.ascplay.app`, o nome e a pasta `www`.
+- A seleção de dispositivo é salva no aparelho. Smartphone usa a interface vertical; Smart TV/TV Box usa a interface horizontal. Ajustes permite trocar o modo.
+- Os arquivos Gradle do app nativo anterior continuam no repositório como referência, mas não são usados pelo workflow ativo.
 
 ## Como o APK é gerado
-- .github/workflows/apk.yml ("Gerar APK"). Roda a cada mudança em main/master e à mão (workflow_dispatch). Gradle 8.9, Java 17, AGP 8.7.3.
-- VERSION_CODE = 10000 + número da execução; VERSION_NAME = 2.0.N. O app/build.gradle lê as duas variáveis. O 10000 garante versão maior que a do app web antigo.
-- O workflow troca __REPO__ em Updater.java pelo repositório real.
-- Assinatura: Secrets KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD (os mesmos do app antigo, para atualizar por cima). NUNCA pedir esses valores ao dono. Sem a chave, o APK é só de teste e NÃO é publicado.
-- Com a chave, o Actions cria a Release "vN" com ASC-play.apk e version.json (code, name, url, sha256, notes).
+
+- `.github/workflows/apk.yml` ("Gerar APK") roda em qualquer push para `main` ou `master` e também pode ser iniciado manualmente.
+- O workflow usa Node.js 22 e Java 17, instala as dependências com `npm ci`, verifica os arquivos web, instala o leitor MPEG-TS, prepara o Android pelo Capacitor e compila com Gradle.
+- `scripts/setup.sh` copia e registra os plugins Java, aplica a versão, prepara os ícones e o banner, configura o Manifest e executa as verificações de segurança.
+- `VERSION_CODE` é `10000 + número da execução`; `VERSION_NAME` é `2.0.N`. Isso mantém o código acima do app antigo.
+- A assinatura usa `KEYSTORE_B64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` e `KEY_PASSWORD`. Nunca pedir ou registrar esses valores. Sem eles, o workflow gera somente um APK de teste.
+- Com os Secrets, o Actions publica `ASC-play.apk` e `version.json` em uma Release do próprio repositório.
 
 ## Atualização automática
-- Updater.java confere a versão publicada em Releases e, se for maior, oferece instalar (aviso na página inicial e opção em Ajustes). Só aceita APK do próprio repositório e com SHA-256.
+
+`UpdaterPlugin.java` consulta as Releases do próprio repositório, valida o SHA-256 e a assinatura antes de oferecer a atualização.
 
 ## Mapa dos arquivos e regras
-Veja docs/ARQUIVOS.md.
+
+Veja `docs/ARQUIVOS.md`. A descrição detalhada das telas Android nativas nesse arquivo é do código anterior e está mantida como referência; o APK atual usa a interface híbrida em `www/`.

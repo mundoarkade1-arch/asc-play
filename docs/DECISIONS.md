@@ -36,3 +36,9 @@ Decisões:
 - Vigia do web mais paciente: ao vivo abrindo 10 s (.ts) ou 18 s (.m3u8), ao vivo tocando 12 s, filme abrindo 40 s, filme tocando 25 s. Ao vivo que não abre passa para o outro formato.
 - Web: reserva do hls.js ao vivo de 30 a 60 s; mpegts.js sem cortar a reserva (máx. 16 s, sobra 6 s); no .ts, se a reserva cai abaixo de 1,5 s toca a 0,93x até juntar 4 s; hls.js e mpegts.js carregam em segundo plano 5 s depois de abrir o app; filme e série em arquivo tocam direto.
 - Nativo: SearchIndex.prebuildAsync DESLIGADO (o índice só é montado na primeira pesquisa). Não religar. Reserva limitada em bytes pela memória do aparelho; depois de travar espera 5 s (ao vivo) ou 6 s (filme); aparelho fraco (memória de app até 128 MB ou RAM abaixo de 1,6 GB) limita o vídeo a 1080p; erro 4xx no .ts vai direto para o .m3u8; a fila de troca de canal só começa depois que o canal abre (ou 8 s depois).
+
+## D11. Retomar o app híbrido para Smartphone e TV
+Motivo: o dono quer um único APK com interface vertical de toque no Smartphone e interface horizontal para controle remoto na TV, podendo trocar de modo em Ajustes. A base híbrida preservada no histórico já contém essa seleção e as duas interfaces; o código nativo anterior permanece no repositório, mas deixa de ser compilado pelo workflow ativo.
+- O workflow volta a gerar Android com Capacitor a partir de `www/` e roda em qualquer push para `main`/`master`.
+- Episódios são exibidos em grupos de 50 por temporada; não há limite fixo de 200.
+- Ao atualizar da versão Android nativa, não migrar logins, favoritos ou progresso para o armazenamento híbrido; a pessoa entra novamente, e os dados antigos ficam preservados no armazenamento privado do aparelho.
