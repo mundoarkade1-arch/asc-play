@@ -35,11 +35,11 @@ public final class SearchIndex {
         boolean isCancelled();
     }
 
-    /** Validade do índice: 2 horas. Para mudar, mude só este número. */
-    private static final long TTL_MS = 2L * 60L * 60L * 1000L;
+    /** Validade do índice: 6 horas (o ASC play monta o índice em segundo plano ao abrir). Para mudar, mude só este número. */
+    private static final long TTL_MS = 6L * 60L * 60L * 1000L;
     /** Teto de itens e de tamanho do arquivo. */
-    private static final int MAX_ITEMS = 200000;
-    private static final long MAX_FILE_BYTES = 60L * 1024L * 1024L;
+    private static final int MAX_ITEMS = 400000;
+    private static final long MAX_FILE_BYTES = 120L * 1024L * 1024L;
     private static final String DIR = "search_index";
     private static final String SEP = "\t";
 
@@ -82,15 +82,21 @@ public final class SearchIndex {
                 if ((count & 1023) == 0 && cancel != null && cancel.isCancelled()) {
                     return;
                 }
-                String[] f = line.split(SEP, -1);
-                if (f.length < 6) {
+                // O nome é o último campo: confere o nome ANTES de separar os campos
+                // (só separa quando acha; a busca fica bem mais rápida).
+                int lastTab = line.lastIndexOf('\t');
+                if (lastTab < 0) {
                     continue;
                 }
-                String name = f[5];
+                String name = line.substring(lastTab + 1);
                 if (!XtreamApi.matchesWords(name, words)) {
                     continue;
                 }
                 if (skipAdult && ParentalStore.isAdultName(name)) {
+                    continue;
+                }
+                String[] f = line.split(SEP, -1);
+                if (f.length < 6) {
                     continue;
                 }
                 XtreamApi.Item item = new XtreamApi.Item(kind, f[0], name, f[1], f[2], f[3], f[4]);
@@ -106,6 +112,36 @@ public final class SearchIndex {
                 // nada a fazer
             }
         }
+    }
+
+    /**
+     * Monta, em segundo plano, os índices de canais, filmes e séries que faltam ou estão velhos,
+     * para a primeira pesquisa já ser rápida. Falha em silêncio (a busca monta sozinha depois).
+     * Pode ser chamado na thread principal: roda numa thread própria, de prioridade baixa.
+     */
+    public static void prebuildAsync(final Context ctx, final String server, final String user,
+                                     final String pass) {
+        final Context app = ctx.getApplicationContext();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                XtreamApi.Kind[] kinds = {XtreamApi.Kind.LIVE, XtreamApi.Kind.MOVIE,
+                        XtreamApi.Kind.SERIES};
+                for (XtreamApi.Kind k : kinds) {
+                    try {
+                        File f = fileFor(app, server, user, k);
+                        if (!isFresh(f)) {
+                            build(f, server, user, pass, k, null);
+                        }
+                    } catch (Exception e) {
+                        // sem rede ou lista enorme: a pesquisa tenta de novo quando for usada
+                    }
+                }
+            }
+        }, "search-prebuild");
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.setDaemon(true);
+        t.start();
     }
 
     /** Apaga todos os índices (para usar, por exemplo, em "Trocar de lista"). */

@@ -24,8 +24,8 @@ public final class EpgCache {
         void onEpg(XtreamApi.Epg epg);
     }
 
-    private static final int MAX_ENTRIES = 80;
-    private static final long TTL_MS = 60000L;
+    private static final int MAX_ENTRIES = 200;
+    private static final long TTL_MS = 5L * 60000L;
 
     private static final class CacheEntry {
         final XtreamApi.Epg epg;
@@ -45,7 +45,7 @@ public final class EpgCache {
                 }
             };
 
-    private static final ExecutorService POOL = Executors.newFixedThreadPool(2);
+    private static final ExecutorService POOL = Executors.newFixedThreadPool(4);
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private EpgCache() {

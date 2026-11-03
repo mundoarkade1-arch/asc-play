@@ -14,6 +14,14 @@ import android.widget.TextView;
 
 public class LoginActivity extends Activity {
 
+    // Mais conexões ao mesmo tempo com o servidor (capas, guia e listas carregam em paralelo).
+    // Só vale se for definido antes da primeira conexão do app.
+    static {
+        System.setProperty("http.maxConnections", "16");
+        System.setProperty("http.keepAlive", "true");
+    }
+
+
     private static final int COLOR_NEUTRAL = 0xFFFFFFFF;
     private static final int COLOR_ERROR = 0xFFFF6B78;
     private static final int COLOR_OK = 0xFF4ADE80;

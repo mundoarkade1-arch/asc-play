@@ -56,9 +56,9 @@ import java.util.Set;
  */
 public class BrowseActivity extends Activity {
 
-    private static final int PAGE = 40;
+    private static final int PAGE = 60;
     private static final int MAX_ITEMS = 5000;
-    private static final int LOAD_AHEAD = 12;
+    private static final int LOAD_AHEAD = 24;
     private static final int COLOR_NEUTRAL = 0xFFA99FA3;
     private static final int COLOR_ERROR = 0xFFFF6B78;
     private static final String LOCK = "\uD83D\uDD12 ";

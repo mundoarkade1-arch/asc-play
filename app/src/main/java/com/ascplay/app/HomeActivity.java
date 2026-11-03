@@ -59,6 +59,14 @@ import java.util.Locale;
  */
 public class HomeActivity extends Activity {
 
+    // Mais conexões ao mesmo tempo com o servidor (capas, guia e listas carregam em paralelo).
+    // Só vale se for definido antes da primeira conexão do app.
+    static {
+        System.setProperty("http.maxConnections", "16");
+        System.setProperty("http.keepAlive", "true");
+    }
+
+
     public static final String EXTRA_KIND = "kind";
     public static final String EXTRA_ID = "id";
     public static final String EXTRA_EXT = "ext";
@@ -182,6 +190,16 @@ public class HomeActivity extends Activity {
         });
 
         loadAllRails();
+
+        // Pesquisa rápida: monta os índices de busca em segundo plano (só login por servidor)
+        if (CredentialStore.MODE_XTREAM.equals(creds.mode)) {
+            final CredentialStore.Credentials c = creds;
+            navHome.postDelayed(() -> {
+                if (!isFinishing() && !isDestroyed()) {
+                    SearchIndex.prebuildAsync(this, c.server, c.user, c.pass);
+                }
+            }, 6000);
+        }
 
         checkForUpdate();
     }
