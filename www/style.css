@@ -137,7 +137,10 @@ video{width:100%;height:100%;background:#000;object-fit:cover;transform:translat
 .empty{grid-column:1/-1;text-align:center;color:var(--m);padding:3em 1em}
 #home{flex:1;min-height:0;display:flex;flex-direction:column;gap:.5em}
 main.hm{overflow:hidden;display:flex;flex-direction:column}main.hm #more{display:none}
-body.tv main.hm{padding-bottom:1em}
+body.tv main.hm{padding-bottom:1em;overflow-y:auto;display:block}
+body.tv #home{min-height:max-content;gap:1em}
+body.tv main.hm .sec,body.tv main.hm .sub{flex:none;min-height:max-content}
+body.tv main.hm .rail{flex:none;height:min(20em,34dvh);min-height:14em}
 .sec{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
 .sub{flex:0 1 auto;min-height:0;display:flex;flex-direction:column}
 .sub small{color:var(--m);font-size:.7em;padding:0 .3em}
