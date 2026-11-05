@@ -17,7 +17,7 @@ No modo Smartphone, a interface é vertical, com busca no alto e navegação emb
 
 Ao processar uma lista, `www/app.js` mostra o andamento da leitura e a quantidade de itens encontrados; antes de guardar os dados, informa que está salvando a lista.
 
-No player ao vivo, o vigia espera 12 s sem avanço antes de recuperar um canal já iniciado; durante a abertura, espera 10 s para `.ts` e 18 s para HLS. Se o servidor não iniciar o primeiro formato, tenta a variante disponível antes de alternar para a reprodução nativa. Isso evita reinícios prematuros do canal.
+No player ao vivo, o vigia espera 12 s sem avanço antes de recuperar um canal já iniciado; durante a abertura, espera 10 s para `.ts` e 18 s para HLS. Se o servidor não iniciar o primeiro formato, tenta a variante disponível antes de alternar para a reprodução nativa. Para HLS, `recoverMediaError()` só é usado quando o elemento de vídeo informa erro de decodificação; em uma pausa comum, o app retoma o carregamento sem reiniciar o mecanismo de áudio e vídeo.
 
 ## Referência histórica do app nativo
 
