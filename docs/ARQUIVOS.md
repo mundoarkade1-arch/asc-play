@@ -1,6 +1,8 @@
 # Mapa dos arquivos e limites conhecidos
 
-> A descrição detalhada de telas e classes nativas abaixo é uma referência do app nativo que existiu neste repositório; esses arquivos foram mantidos, mas não são usados pelo workflow atual. O app ativo é híbrido: `www/` com Capacitor e plugins em `android-custom/`. O mapa das telas nativas foi preservado para não perder informações do trabalho anterior.
+> **Versão ativa:** o APK atual é híbrido. A interface vem de `www/`, usa Capacitor e integrações Java de `android-custom/`; o workflow ativo está em `.github/workflows/apk.yml`. Para alterar o app atual, comece por esses arquivos e por `docs/ARCHITECTURE.md`.
+>
+> **Referência histórica:** o restante deste documento, a partir de “Referência histórica do app nativo”, descreve uma versão Android nativa anterior. Esses detalhes foram preservados para consulta, mas não representam o APK híbrido atual e não devem orientar mudanças nele sem nova conferência do código ativo.
 
 ## Arquivos ativos do app híbrido
 
@@ -13,11 +15,13 @@
 
 No modo Smartphone, a interface é vertical, com busca no alto e navegação embaixo. No modo Smart TV/TV Box, a interface é horizontal e usa o controle remoto. A escolha fica salva e pode ser trocada em Ajustes. Os episódios são paginados em grupos de 50, sem limite fixo de 200.
 
-Muda pouco. O andamento fica em docs/STATUS.md. Montagem e versão: docs/ARCHITECTURE.md.
-Java: app/src/main/java/com/ascplay/app/. Layouts: app/src/main/res/layout/. Ícones e fundos: app/src/main/res/drawable/ e app/src/main/res/mipmap-*/.
-Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app/build.gradle, build.gradle, settings.gradle, gradle.properties, .github/workflows/apk.yml. Textos: README.md, CLAUDE.md, llms.txt, AGENTS.md, docs/*.
+Ao processar uma lista, `www/app.js` mostra o andamento da leitura e a quantidade de itens encontrados; antes de guardar os dados, informa que está salvando a lista.
 
-## Fundos e cores (identidade ASC play)
+## Referência histórica do app nativo
+
+O mapa abaixo pertence à versão Android nativa anterior. Os arquivos listados podem continuar no repositório, mas não são a interface nem a base do APK atual. O andamento atual fica em `docs/STATUS.md`; a montagem atual está descrita em `docs/ARCHITECTURE.md`.
+
+### Fundos e cores (identidade ASC play)
 - res/drawable/bg_gradient.xml: fundo #09070A com dois brilhos radiais vermelhos discretos. Usado nas telas que já tinham o fundo comum, inclusive activity_login.xml; o login também mostra banner_bg com bg_banner_fade.
 - O PLAYER (activity_main.xml) continua PRETO, de propósito. A barra do player usa a cor vermelha ASC e controles claros.
 - Paleta principal: fundo #09070A, cartão #161214, cartão em foco #1E181B, texto #F7F3F4, cinza #A99FA3 e vermelho #FF2A3D. Botão principal: degradê #FF3B4E para #D3091B.
@@ -25,7 +29,7 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - bg_poster.xml é o fundo das capas em item_card.xml, item_continue.xml, activity_movie.xml e activity_series.xml.
 - bg_nav.xml dá fundo escuro próprio ao menu e tem uma linha clara à direita. Telas com menu não dependem mais de fundo transparente.
 
-## Telas
+### Telas
 - LoginActivity (activity_login.xml) + LoginChecker + CredentialStore: login por servidor (DNS, usuário, senha) ou lista M3U (campo m3uUrl, criptografado). LoginChecker confere antes de salvar: servidor via player_api.php (conta ativa e não vencida) e M3U lendo só o começo (precisa começar com #EXTM3U ou #EXTINF). Segue até 5 redirecionamentos, espera 15 s, não registra senha em log. Roda fora da thread principal.
 - HomeActivity (activity_home.xml): página inicial, com "Continue assistindo" (escondida se vazia), canais, filmes e séries (até 10 itens por faixa, mais "Ver mais"). Cada faixa rola na horizontal; a tela inteira rola na vertical para preservar capas grandes. Filmes, séries e continuar usam item_home_poster.xml (pôster com capa centerCrop, título em até 2 linhas; Continue também mostra posição e barra de progresso). Canais e o cartão "Ver mais" usam item_home_channel.xml (formato largo, logo fitCenter, título e programação). Os cartões usam bg_card_home.xml: sem borda normal; foco com contorno vermelho/branco e escala 1,05. Imagens arredondadas usam bg_home_image.xml; a barra de progresso usa bg_home_progress.xml. As fileiras deixam espaço nas bordas para o foco não ser cortado. No cartão "Ver mais", a seta direita não faz nada (setNextFocusRightId para ele mesmo); mudar de faixa só com cima e baixo. O menu à esquerda está ESCRITO DIRETO neste layout (cópia do layout_nav.xml, de propósito): mudou um, mude o outro. Fundo: bg_gradient. Tem o aviso de atualização. NÃO tem caixinha de prévia. A variável focusedLive guarda o canal ao vivo (servidor) com o foco, só para a tecla de menu e o OK segurado abrirem a programação. Ao abrir canal ao vivo, manda EXTRA_QUEUE = true, sem categoria.
   - Faixa "Continue assistindo": ids group_continue (grupo escondido por padrão, com peso 1 quando aparece) e rail_continue. loadContinue lê a ContinueStore FORA da thread principal (continueGen ignora respostas antigas) e é chamada no onResume e no Atualizar (reloadRails; também quando o controle parental muda). showContinue mostra até 10 itens (LIMIT), ignora item sem endereço e, com parental ligado, item com nome adulto. Cada cartão mostra capa, nome e "Parou em M:SS" (linha tv_now). Faixa vazia some; se o foco estava nela, vai para "Tela inicial" do menu. O último cartão trava a seta direita. O cartão "Ver mais ›" só aparece se há MAIS de 10 itens visíveis e abre a ContinueActivity.
@@ -58,19 +62,19 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - Cartões e linhas: item_card.xml (cartão grande: 150dp de largura, imagem de 130dp de altura, nome 14sp em 2 linhas, tem tv_now; usado nas abas e na busca), item_home_poster.xml (card de pôster para HomeActivity e Continue), item_home_channel.xml (card largo de canal para HomeActivity), bg_card_home.xml (foco dos cards da Home), bg_home_image.xml (placeholder arredondado), bg_home_progress.xml (barra de progresso de Continue), item_category.xml (linha de lista, fundo bg_card), item_continue.xml (linha da ContinueActivity), item_episode.xml (ver página da série).
 - Ícone do app: mipmap-mdpi até mipmap-xxxhdpi contém ic_launcher.png, ic_launcher_round.png e ic_launcher_foreground.png. mipmap-anydpi-v26 contém os ícones adaptáveis, com fundo preto. AndroidManifest.xml usa @mipmap/ic_launcher, @mipmap/ic_launcher_round e @drawable/banner. O banner da TV fica em drawable-xhdpi/banner.png; o banner de fundo do login e o ícone do cabeçalho ficam em drawable-nodpi/banner_bg.jpg e brand_icon.png. As imagens ainda dizem "ASC PLAY"; o visual novo ainda não foi testado no TX9.
 
-## Menu à esquerda (Rodada 6)
+### Menu à esquerda (Rodada 6)
 - layout_nav.xml: coluna group_nav de 110dp, fundo @drawable/bg_nav, padding vertical 10dp. Seis botões TextView: nav_home, nav_live, nav_movie, nav_series, nav_settings e nav_refresh (nesta ordem, todos juntos no alto, Atualizar é o último). Cada botão: altura FIXA de 62dp, margens 8dp nos lados e 4dp em cima e embaixo, fundo bg_button, clickable e focusable, ícone EM CIMA (drawableTop, padding 2dp) e nome embaixo (14sp, uma linha, centralizado); nav_text muda de cinza para branco quando selecionado ou focado. Cada botão tem nextFocusDown e nextFocusUp apontando para o vizinho, na ordem acima. Altura total: uns 440dp. Incluído (escondido por padrão, com 110dp no include) em activity_browse.xml e activity_settings.xml.
 - A tela inicial tem uma CÓPIA do menu escrita direto em activity_home.xml (igual ao layout_nav.xml). Mudou um, mude o outro.
 - NavBar.java: NavBar.bind(activity, abaAtual, aoAtualizar). Só usa os ids e o clique, não o tipo do botão. Tela inicial volta à HomeActivity; Canais, Filmes e Séries trocam de aba e fecham a de antes; Ajustes abre a SettingsActivity.
 - Ícones: ic_nav_home, ic_nav_live, ic_nav_movie, ic_nav_series, ic_nav_settings, ic_nav_refresh (traços brancos, 32dp). Fundos: bg_button, bg_card, bg_field, bg_nav, bg_poster e bg_card_home. bg_card_home usa foco com cantos arredondados e borda expandida para fora do cartão em todos os cards da Home; a capa mantém cantos arredondados próprios.
 
-## Dados e rede
+### Dados e rede
 - XtreamApi: Item (tem url e icon), Kind (LIVE, MOVIE, SERIES, EPISODE), Episode, Epg, Program, Details, ResultListener (interface: onItem(Item) devolve false para parar). Funções: items, episodes, epg, schedule, details, search, searchStream, streamAll, streamUrl, categories. NUNCA chamar na thread principal. A busca antiga (search/searchStream) pede a lista INTEIRA do tipo (get_vod_streams, get_series ou get_live_streams, sem filtro de categoria; limite 80 MB) e lê aos poucos, parando ao juntar o limite; search usa searchStream por dentro. Hoje é só a reserva da SearchActivity. streamAll(server, user, pass, kind, ResultListener) lê a lista inteira sem filtro, item por item; é usada pelo SearchIndex para montar o índice. normalizeText (tira acento e põe minúsculas) é package-private (o SearchIndex usa) e pula o Normalizer quando o texto só tem ASCII. searchWords e matchesWords são usadas também pela M3uApi.
 - M3uApi: lê a lista linha por linha, sem guardá-la inteira (para em 200 MB ou 1 minuto). Funções: sample, categories, page, episodes, search, searchStream. Séries agrupadas pelo título. A busca confere se o NOME tem as palavras ANTES de classificar o item (classify é pesado); search usa searchStream por dentro. Se a leitura cair no meio depois de achar algo, termina sem erro. NÃO usa o SearchIndex.
 - EpgCache: até 80 canais, 1 minuto cada, 2 pedidos ao mesmo tempo. EpgDialog: janela da programação (até 6), pede ao servidor só ao abrir, não usa o cache. Fecha com Voltar, botão Fechar ou a tecla de menu de novo.
 - ImageLoader: imagens com cache LRU de até 8 MB, downloads limitados a 2 MB e redução para até 256 px; as letras dos cards novos ficam visíveis enquanto a capa carrega ou quando falta imagem (tem clear()). Updater: atualização automática.
 
-## Guardado no aparelho (chave sempre em SHA-1, nunca texto)
+### Guardado no aparelho (chave sempre em SHA-1, nunca texto)
 - SeriesProgress: posição do episódio na fila de cada série (máx. 50).
 - PlaybackProgress: minuto e duração de filmes e episódios (máx. 300). Visto = 95% ou mais; parcial = 5 s ou mais e não terminou. Guarda só a chave embaralhada, NÃO guarda nome nem capa.
 - ContinueStore: lista do "Continue assistindo", máx. 25 itens (MAX_ITEMS), do mais novo ao mais antigo, TODA criptografada (AES-GCM, chave do Keystore com o mesmo alias do CredentialStore; plano B sem criptografia se o Keystore falhar). Item (ContinueStore.Saved): key (SHA-1 do endereço), kind ("movie" ou "episode"), name, icon, url (endereço completo do vídeo, pode ter senha), id, ext, seriesKey, posMs, durMs, time. UMA ENTRADA POR SÉRIE (M10): ao salvar um episódio, os outros episódios com a MESMA seriesKey saem (fica o mais novo) e repetições antigas são limpas; episódio sem seriesKey e filmes são agrupados só pelo endereço. Funções: save, list, remove(url), clear. Chamar de qualquer thread (são synchronized), mas é leitura de arquivo: HomeActivity e ContinueActivity leem fora da thread principal. A faixa mostra só os 10 mais novos; a ContinueActivity mostra todos. "Trocar de lista" chama clear.
@@ -80,7 +84,7 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - ParentalStore: senha de 4 números (PBKDF2 com SHA-1, pois o Android 7.1 não tem SHA-256 nesse método), trava depois de 5 erros, reconhece adulto pelo nome (e pela categoria na lista M3U).
 - PinDialog (teclado de números).
 
-## Regras técnicas que valem sempre
+### Regras técnicas da versão nativa
 - Lista M3U: o "id" dos itens é só o número de ordem; o player exige um número como id. Qualquer cópia da lista em disco precisa de limite de tamanho e de validade (o SearchIndex tem: 2 h, 200000 itens, 60 MB).
 - Telas de lista e de grade usam ListView/GridView e a LISTA ou GRADE controla o foco, a seleção, a rolagem e o clique (linha com setFocusable(false) e setClickable(false); clique por setOnItemClickListener). NUNCA deixar o item da lista/grade focável ou clicável: a rolagem para de funcionar (erro que aconteceu na página da série). Por isso a ordem do foco entre lista e grade é tratada no código (dispatchKeyEvent), não no layout.
 - Nas abas, a lista de categorias começa em "Todas as categorias": posição da lista = índice da categoria. O "Pesquisar" é o botão fixo btn_search_top, fora da lista.
@@ -99,7 +103,7 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - Android 7.1 sem PBKDF2 com SHA-256. Não usar nome de classe interna igual ao do Java (ex.: Entry).
 - Ver também as regras de código no AGENTS.md.
 
-## Limites conhecidos (não são erros)
+### Limites conhecidos da versão nativa
 - PESQUISA (M11): no servidor usa o SearchIndex. A primeira pesquisa de cada tipo (canais, filmes, séries), e a primeira depois de 2 h, baixa a lista toda e grava o índice: pode demorar de 30 s a mais de 1 min. As seguintes leem o arquivo e são rápidas (testado, "ficou bom"). Lista M3U NÃO usa o índice (o dono não usa M3U): busca antiga, que lê a lista inteira a cada pesquisa. Melhorias possíveis, só se o dono pedir: montar o índice em segundo plano ao abrir o app; contagem em "Buscando...".
 - "Trocar de lista" não chama SearchIndex.clear (só sobra arquivo no cache).
 - Lista M3U: sem guia de programação (decisão do dono); sem sinopse ("Sem sinopse nesta lista."); "Ver mais" e busca em lista grande podem levar até 1 minuto; cada página das abas relê a lista desde o começo, então páginas do fim de categoria grande demoram mais; categoria identificada pelo nome; séries achadas pelo título (episódio sem "S01E03" vai para a temporada 1); máx. 500 episódios por série; se a soma dos endereços da fila passar de 100 mil letras, o próximo episódio não toca sozinho e os rótulos "Temporada N - Episódio N" não vão.
@@ -122,7 +126,7 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - Testado no TX9 e funcionando: tudo até M13c, inclusive M9, M10, M11 (índice e teclado), M13 e M13c. A identidade visual ASC play ainda NÃO foi testada no TX9. O diagnóstico de imagem foi visto (resultado acima) e é temporário.
 
 
-## Só no ASC play (diferenças em relação ao asc-tvbox)
+### Só no ASC play (diferenças em relação ao asc-tvbox)
 - Pacote e applicationId: com.ascplay.app (o mesmo do ASC play web/Capacitor antigo, então o APK novo atualiza por cima do antigo, desde que assinado com a MESMA chave). minSdk 24, compileSdk 35, targetSdk 34, Java 17, AGP 8.7.3, Gradle 8.9.
 - Player: Media3 1.8.0 (exoplayer, hls, dash, ui). MainActivity.startPlayer: seleção até 4K/60 limitada ao tamanho real da tela (setViewportSizeToPhysicalDisplaySize); DefaultLoadControl com buffer curto no ao vivo (10 a 30 s) e maior em filme/episódio (20 a 60 s, 20 s de buffer para trás); DefaultRenderersFactory com decoder fallback; MediaItem.LiveConfiguration (0,97x a 1,03x) para voltar ao "ao vivo".
 - Recuperação de erro (MainActivity, onPlayerError): ao vivo .m3u8 sem resposta tenta .ts (como no TV Box); BEHIND_LIVE_WINDOW volta ao ao vivo; endereço ao vivo sem extensão que o player não reconhece é tentado como HLS (forceMime); queda de internet (IO_NETWORK_CONNECTION_FAILED, _TIMEOUT, IO_UNSPECIFIED) reconecta até 4 vezes (retryPlay, 1,5 s x tentativa) mantendo o minuto. Canais .ts (MPEG-TS) tocam direto no Media3: o mpegts.js do app web não é mais necessário.
@@ -133,7 +137,7 @@ Outros: res/values/strings.xml, res/xml/file_paths.xml, AndroidManifest.xml, app
 - Velocidade (ASC play): SearchIndex.prebuildAsync monta os 3 índices de busca em segundo plano 6 s depois de abrir a Home (login por servidor); validade 6 h, teto 400000 itens/120 MB; a busca confere o nome antes de separar os campos. EpgCache: 200 canais, 5 min, 4 pedidos ao mesmo tempo. ImageLoader: cache 32 MB, imagens até 384 px, 4 downloads ao mesmo tempo. Abas: páginas de 60 itens pedidas a 24 do fim. http.maxConnections=16 (LoginActivity e HomeActivity).
 
 
-## Adaptação à tela (celular e TV)
+### Adaptação à tela na versão nativa
 Os números de dp/sp escritos nas seções acima (menu 110dp, categorias 190dp, cartão 150dp, grade de 5 colunas, capa da série 160x240 etc.) valem para TV e telas grandes (altura 480dp ou mais). Em telas menores o app usa tamanhos menores, escolhidos sozinhos pelo Android. O visual (cores, formas, ícones, textos, ordem dos botões) é o mesmo.
 - Tamanhos: res/values/dimens.xml (altura menor que 400dp: celular), res/values-h400dp/dimens.xml (400dp a 479dp) e res/values-h480dp/dimens.xml (TV: são os valores ORIGINAIS). O app é só paisagem, então altura = menor lado da tela. TODO nome novo precisa existir nos três arquivos.
 - Menu: layout_nav.xml (e a cópia em activity_home.xml) agora é ScrollView > LinearLayout. Largura, altura dos botões, margens e letra vêm do dimens (nav_*). Os ícones ic_nav_*.xml usam @dimen/nav_icon. Se a tela for baixa demais, o menu rola (nada some). Foco e ids iguais.
