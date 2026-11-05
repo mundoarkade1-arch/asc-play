@@ -17,6 +17,8 @@ No modo Smartphone, a interface é vertical, com busca no alto e navegação emb
 
 Ao processar uma lista, `www/app.js` mostra o andamento da leitura e a quantidade de itens encontrados; antes de guardar os dados, informa que está salvando a lista.
 
+No player ao vivo, o vigia espera 12 s sem avanço antes de recuperar um canal já iniciado; durante a abertura, espera 10 s para `.ts` e 18 s para HLS. Se o servidor não iniciar o primeiro formato, tenta a variante disponível antes de alternar para a reprodução nativa. Isso evita reinícios prematuros do canal.
+
 ## Referência histórica do app nativo
 
 O mapa abaixo pertence à versão Android nativa anterior. Os arquivos listados podem continuar no repositório, mas não são a interface nem a base do APK atual. O andamento atual fica em `docs/STATUS.md`; a montagem atual está descrita em `docs/ARCHITECTURE.md`.
