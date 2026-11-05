@@ -324,7 +324,7 @@ let PLC;const pld=()=>PLC||(PLC=(()=>{const B=Hls.DefaultConfig.loader;return cl
   super.load(c,g,Object.assign({},cb,{onSuccess:(r,st,x,n)=>{try{if(r&&n&&n.getResponseHeader){r.url=n.getResponseHeader('X-Final-Url')||c.url}}catch{}return ok(r,st,x,n)}}))}}})());
 let mp=null,MLP;const TSU=/\.ts(\?|$)/i,mpOff=()=>{if(mp){try{mp.destroy()}catch{}mp=null}},
 ML=()=>window.mpegts?Promise.resolve():(MLP=MLP||new Promise(r=>{const s=document.createElement('script');s.src='mpegts.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
-let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false;
+let viaNat=false,hlsLv=false,HLP,gen=0,wd=null,lastT=-1,stuck=0,rc=0,started=false,UP=false,nativeTried=false;
 const HL=()=>window.Hls?Promise.resolve():(HLP=HLP||new Promise(r=>{const s=document.createElement('script');s.src='hls.min.js';s.onload=s.onerror=()=>r();document.head.append(s)}));
 /* Canais Xtream: o mesmo canal pode existir como .m3u8 e/ou .ts. Guardamos as variantes e passamos para a próxima se o servidor responder 404/403 */
 const XL=/^(https?:\/\/[^/]+\/(?:live\/)?[^/]+\/[^/]+\/\d+)(\.m3u8|\.ts)?(\?.*)?$/i;
@@ -365,16 +365,20 @@ function tick(){if(P.hidden||!cur)return;if(UP&&V.paused)return;
  if(adv&&V.readyState>=2){started=true;if(live()&&CAND.length>1)PREFX=/\.ts(\?|$)/i.test(CAND[ci]||'')?1:0;stuck=0;rc=0;spin(false);return}
  stuck++;if(stuck>=2)spin(true);
  for(let i=0;i<V.buffered.length;i++){const s=V.buffered.start(i);if(s>t&&s-t<3){try{V.currentTime=s+.05}catch{}break}}
- if(live()&&!started&&stuck==15)toast('Este canal está demorando para abrir…');
- if(stuck>=(started?(live()?4:6):(live()?8:12)))recover()}
+ if(live()&&!started&&stuck==12)toast('Este canal está demorando para abrir…');
+ const limit=live()?(started?12:(TSU.test(CAND[ci]||'')?10:18)):(started?6:12);
+ if(stuck>=limit)recover()}
 function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
- if(live()&&!started){spin(true);if(viaNat&&CAND.length>1)ci=(ci+1)%CAND.length;src(cur.u,0,1,!viaNat);return}
+ if(live()&&!started){spin(true);
+  if(ci+1<CAND.length){ci++;src(cur.u,0,1,false);return}
+  if(!nativeTried){nativeTried=true;src(cur.u,0,1,true);return}
+  ci=0;nativeTried=false;src(cur.u,0,1,false);return}
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
  if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
  src(cur.u,live()?0:V.currentTime,1,viaNat&&live())}
 addEventListener('online',()=>{if(!P.hidden&&cur){rc=0;recover()}});
-function play(it,list,from){cur=it;CAND=it.t=='tv'?cands(it.u):[it.u];ci=0;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
+function play(it,list,from){cur=it;CAND=it.t=='tv'?cands(it.u):[it.u];ci=0;nativeTried=false;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
  $('#pt').textContent=it.n;ic('#pv',tv?'sprev':'rw10');ic('#nx',tv?'snext':'fw10');ic('#pp','pause');$('#lv').hidden=!tv;UP=false;$('#sk').hidden=tv;$('#tm').hidden=tv;
  $('#pr').style.width=$('#bf').style.width='0';$('#th').style.left='0';$('#t1').textContent=$('#t2').textContent='0:00';
  $('#pf').classList.toggle('on',S.fav.includes(favK(it)));spin(true);src(it.u);wdOn();epgBar();ui();
