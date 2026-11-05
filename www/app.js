@@ -72,9 +72,9 @@ const title=n=>n.replace(/\s*[-–]?\s*(S|T)\d{1,2}\s?E\d{1,4}.*$|\s*[-–]?\s*\
 const ADG=/(^|[^a-z0-9])(adult[oa]?s?|xxx|porn[oa]?|erotic[oa]s?|sex|sexy|hentai|playboy|18 ?\+|\+ ?18|18plus)($|[^a-z0-9])/,ADN=/(^|[^a-z0-9])(xxx|playboy|sextreme|penthouse|brazzers|hustler|porn[oa]?|hentai|sexy ?hot|\+ ?18|18 ?\+)($|[^a-z0-9])/;
 const adCat=g=>ADG.test(nz(g||'')),adItem=i=>adCat(i.g)||ADN.test(nz(i.n||''));
 const AT=/([\w-]+)="([^"]*)"/g,AK={'tvg-logo':'l','group-title':'g','tvg-id':'id','tvg-name':'tn','tvg-plot':'p','plot':'p2','tvg-description':'p3','description':'p4'};
-async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1],L=t.length;let cur=null,pos=0,cnt=0;
+async function parse(t,progress){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tvg-url)="([^",]+)/i)||[])[1],L=t.length;let cur=null,pos=0,cnt=0;
  while(pos<L){let e=t.indexOf('\n',pos);if(e<0)e=L;const ln=t.slice(pos,e).trim();pos=e+1;
-  if((++cnt&16383)==0)await sleep(0);
+  if((++cnt&16383)==0){if(progress)progress(pos,L,out.length);await sleep(0)}
   if(!ln)continue;
   if(ln.startsWith('#EXTINF')){const ci=ln.lastIndexOf(','),a={};let m;AT.lastIndex=0;const hd=ci>0?ln.slice(0,ci):ln;
    while((m=AT.exec(hd))){const k=AK[m[1].toLowerCase()];if(k)a[k]=m[2]}
@@ -83,10 +83,11 @@ async function parse(t){const out=[],tvg=(t.slice(0,2000).match(/(?:url-tvg|x-tv
  return{out,tvg}}
 async function useList(text,meta,cached){
  if(text.length>LMAX){$('#st').textContent='Lista grande demais (máximo de cerca de 250 MB).';return false}
- $('#st').textContent='Processando a lista…';const{out,tvg}=await parse(text);if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
+ $('#st').textContent='Processando a lista…';const{out,tvg}=await parse(text,(pos,total,count)=>{
+  const pc=Math.min(100,Math.round(pos/total*100));$('#st').textContent=`Processando… ${pc}% · ${count.toLocaleString('pt-BR')} itens encontrados`});if(!out.length){$('#st').textContent='Nenhum canal encontrado. Confira se é uma lista M3U válida.';return false}
  if(meta){const i=LST.l.findIndex(x=>x.id==meta.id);if(i<0)LST.l.push(meta);else Object.assign(LST.l[i],meta);LST.act=meta.id}
  const l=CL();l.tvg=tvg||'';
- if(!cached)await kv('put','pl:'+l.id,await cEnc(text));
+ if(!cached){$('#st').textContent=`Salvando ${out.length.toLocaleString('pt-BR')} itens…`;await sleep(0);await kv('put','pl:'+l.id,await cEnc(text))}
  await saveL();
  S.items=out;S.by={tv:[],movie:[],series:[]};for(const i of out)S.by[i.t].push(i);S.hasE=0;S._sg=null;S.cat='Todos';S.tab='home';S.epg={};S.al={};XS=null;show('app');nav();render();
  const e=epgUrl();if(e)setTimeout(()=>loadEPG(e),2000);setTimeout(acct,3000);expSync();return true}
