@@ -375,7 +375,7 @@ function recover(){if(P.hidden||!cur)return;stuck=0;const n=++rc;
   ci=0;nativeTried=false;src(cur.u,0,1,false);return}
  if(!live()&&n>6){wdOff();gen++;if(hls){hls.destroy();hls=null}spin(false);toast('Não foi possível reproduzir. O servidor pode estar fora do ar ou o formato não é compatível.');return}
  spin(true);
- if(hls&&n%3){if(n%3==1)hls.startLoad(-1);else hls.recoverMediaError();V.play().catch(()=>{});return}
+ if(hls&&n%3){if(V.error&&V.error.code===3)hls.recoverMediaError();else hls.startLoad(-1);V.play().catch(()=>{});return}
  src(cur.u,live()?0:V.currentTime,1,viaNat&&live())}
 addEventListener('online',()=>{if(!P.hidden&&cur){rc=0;recover()}});
 function play(it,list,from){cur=it;CAND=it.t=='tv'?cands(it.u):[it.u];ci=0;nativeTried=false;zap=list&&list.length?list:[it];ori('landscape');bars(true);if(P.hidden)history.pushState({p:1},'');P.hidden=false;const tv=live();
